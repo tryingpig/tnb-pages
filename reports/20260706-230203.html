@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>주가 관성(자기상관) 3케이스 비교분석 — 일반·강세장·약세장</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif+KR:wght@400;500;700&display=swap');
+
+:root{
+  --orange:#FF8C00;
+  --gold:#9A7B2F;
+  --pentagon:#1B2A4A;
+  --bullgreen:#2E7D52;
+  --bearred:#C8392B;
+  --baseblue:#1A5C9E;
+  --card:#FAF9F6;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'Noto Serif KR',serif;
+  background:#ffffff;
+  color:#222;
+  line-height:1.75;
+  padding-bottom:60px;
+}
+b{color:var(--pentagon);}
+.brandbar{
+  background:var(--orange);
+  color:#fff;
+  font-family:'JetBrains Mono',monospace;
+  font-weight:700;
+  letter-spacing:2px;
+  text-align:center;
+  padding:10px 0;
+  border-radius:8px;
+  margin:20px auto 30px auto;
+  max-width:280px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.15);
+}
+.wrap{max-width:920px;margin:0 auto;padding:0 24px;}
+h1{
+  font-family:'Noto Serif KR',serif;
+  color:var(--pentagon);
+  font-size:1.85rem;
+  text-align:center;
+  line-height:1.5;
+  margin-bottom:8px;
+}
+.subtitle{
+  text-align:center;
+  color:var(--gold);
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.82rem;
+  letter-spacing:1px;
+  margin-bottom:36px;
+}
+.ov-label{
+  font-family:'JetBrains Mono',monospace;
+  color:var(--gold);
+  letter-spacing:3px;
+  font-size:0.85rem;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:12px;
+}
+.ov-label::after{content:"";flex:1;height:1px;background:var(--gold);opacity:0.4;}
+.ov-box{
+  border-left:4px solid var(--gold);
+  background:var(--card);
+  padding:20px 24px;
+  font-size:0.97rem;
+  margin-bottom:36px;
+}
+.keyfigures{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:16px;
+  margin-bottom:40px;
+}
+.kf-card{
+  background:var(--card);
+  border:1px solid #eae7df;
+  border-radius:10px;
+  padding:18px 16px;
+  text-align:center;
+}
+.kf-num{font-family:'DM Serif Display',serif;font-size:1.55rem;color:var(--pentagon);line-height:1.2;}
+.kf-unit{font-family:'JetBrains Mono',monospace;color:var(--gold);font-size:0.68rem;letter-spacing:1px;margin-top:2px;}
+.kf-desc{font-size:0.78rem;color:#444;margin-top:8px;}
+.quicknav{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+  margin-bottom:50px;
+}
+.qn-item{
+  border:1px solid #eae7df;
+  border-radius:8px;
+  padding:14px 10px;
+  text-align:center;
+  text-decoration:none;
+  color:var(--pentagon);
+}
+.qn-num{font-family:'JetBrains Mono',monospace;color:var(--gold);font-size:0.7rem;letter-spacing:1px;display:block;margin-bottom:6px;}
+.qn-label{font-size:0.8rem;}
+.sec-label{font-family:'JetBrains Mono',monospace;color:var(--gold);font-size:0.75rem;letter-spacing:2px;margin-top:52px;}
+h2{
+  font-family:'Noto Serif KR',serif;
+  color:var(--pentagon);
+  font-size:1.32rem;
+  border-bottom:3px solid var(--gold);
+  padding-bottom:10px;
+  margin-bottom:20px;
+  display:inline-block;
+}
+p{margin-bottom:14px;font-size:0.97rem;}
+.badge{
+  display:inline-block;
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.72rem;
+  color:#fff;
+  padding:3px 10px;
+  border-radius:20px;
+  margin:0 3px;
+  letter-spacing:0.5px;
+}
+.badge-blue{background:var(--baseblue);}
+.badge-green{background:var(--bullgreen);}
+.badge-red{background:var(--bearred);}
+.badge-pentagon{background:var(--pentagon);}
+.badge-gold{background:var(--gold);}
+.twocol{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  margin:22px 0;
+}
+.minicard{
+  background:var(--card);
+  border:1px solid #eae7df;
+  border-radius:8px;
+  padding:14px 16px;
+}
+.mc-h{font-family:'JetBrains Mono',monospace;color:var(--gold);font-size:0.7rem;letter-spacing:1px;margin-bottom:6px;}
+.mc-v{font-size:0.9rem;color:#222;}
+table.compare{
+  width:100%;
+  border-collapse:collapse;
+  margin:24px 0;
+  font-size:0.88rem;
+}
+table.compare th{
+  background:var(--pentagon);
+  color:#fff;
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.72rem;
+  letter-spacing:1px;
+  padding:10px 12px;
+  text-align:left;
+}
+table.compare td{
+  padding:10px 12px;
+  border-bottom:1px solid #eae7df;
+  vertical-align:top;
+}
+table.compare tr:nth-child(even) td{background:var(--card);}
+.callout{
+  background:var(--pentagon);
+  color:#eee;
+  border-left:6px solid var(--gold);
+  border-radius:0 8px 8px 0;
+  padding:26px 28px;
+  margin:50px 0;
+}
+.callout p{color:#e6e6e6;}
+.callout p:last-child{margin-bottom:0;}
+.callout b{color:var(--gold);}
+.callout h3{
+  font-family:'JetBrains Mono',monospace;
+  color:var(--gold);
+  font-size:0.85rem;
+  letter-spacing:2px;
+  margin-bottom:14px;
+}
+footer{
+  text-align:center;
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.72rem;
+  color:#999;
+  margin-top:60px;
+  letter-spacing:1px;
+}
+@media(max-width:700px){
+  .keyfigures{grid-template-columns:repeat(2,1fr);}
+  .quicknav{grid-template-columns:repeat(2,1fr);}
+  .twocol{grid-template-columns:1fr;}
+  table.compare{font-size:0.78rem;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="brandbar">by TNBfolio</div>
+
+<h1>주가에는 정말 관성이 없는가 — 일반·강세장·약세장 자기상관 3케이스 비교</h1>
+<div class="subtitle">AUTOCORRELATION ACROSS MARKET REGIMES · GENERAL vs BULL vs BEAR</div>
+
+<div class="ov-label">OVERVIEW</div>
+<div class="ov-box">
+원 강연 자료가 제시한 "주가에는 관성이 없다"는 무조건부(unconditional) 통계는 강세장·약세장을 구분하지 않고 전체 표본을 하나로 합쳐 계산한 결과다. 본 리포트는 이 일반통계 케이스, 강세장 국면만 따로 뗀 케이스, 약세장 국면만 따로 뗀 케이스, 이렇게 세 가지로 나누어 국제 학술 문헌의 실증 자료를 비교 분석한다. 일반통계에서는 미국 시장 기준 자기상관이 4분 만에 소멸해 20분 뒤에는 잡음 수준에 수렴하는 것으로 나타나지만, 국면을 분리하면 강세장에서는 양의 자기상관(모멘텀)이, 약세장·위기 국면에서는 오히려 음의 자기상관(반전)이 통계적으로 유의하게 나타나는 비대칭 구조가 드러난다. 이는 두 반대 방향의 신호가 전체 표본에서 서로 상쇄되어 "관성이 없다"는 결과로 나타날 수 있음을 시사한다. 마지막 섹션에서는 세 케이스를 종합해 개인 투자자에게 주는 실질적 시사점을 정리한다.
+</div>
+
+<div class="keyfigures">
+  <div class="kf-card">
+    <div class="kf-num">4</div>
+    <div class="kf-unit">MIN (US, GENERAL)</div>
+    <div class="kf-desc">미국 시장 일반통계 기준 자기상관 감쇠 특성시간(τ)</div>
+  </div>
+  <div class="kf-card">
+    <div class="kf-num">20</div>
+    <div class="kf-unit">MIN THRESHOLD</div>
+    <div class="kf-desc">이 시간이 지나면 자기상관이 잡음(noise) 수준으로 수렴</div>
+  </div>
+  <div class="kf-card">
+    <div class="kf-num">20 / 10</div>
+    <div class="kf-unit">MONTHS (BULL/BEAR)</div>
+    <div class="kf-desc">레짐전환모형 기준 강세장·약세장의 평균 지속 기간</div>
+  </div>
+  <div class="kf-card">
+    <div class="kf-num">0%</div>
+    <div class="kf-unit">SIGNIFICANT (BEAR)</div>
+    <div class="kf-desc">하락장 국면에서 통계적으로 유의했던 모멘텀 포트폴리오 비율</div>
+  </div>
+  <div class="kf-card">
+    <div class="kf-num">-20~-30%</div>
+    <div class="kf-unit">ρ (POST-CRISIS)</div>
+    <div class="kf-desc">서브프라임 위기 이후 S&amp;P500 옵션 내재 자기상관계수</div>
+  </div>
+  <div class="kf-card">
+    <div class="kf-num">1962–85</div>
+    <div class="kf-unit">FULL PERIOD REJECTED</div>
+    <div class="kf-desc">Lo·MacKinlay 연구가 랜덤워크 가설을 전 기간에 걸쳐 기각한 구간</div>
+  </div>
+</div>
+
+<div class="quicknav">
+  <a class="qn-item" href="#sec1"><span class="qn-num">01</span><span class="qn-label">일반(무조건부) 자기상관</span></a>
+  <a class="qn-item" href="#sec2"><span class="qn-num">02</span><span class="qn-label">강세장 자기상관</span></a>
+  <a class="qn-item" href="#sec3"><span class="qn-num">03</span><span class="qn-label">약세장 자기상관</span></a>
+  <a class="qn-item" href="#sec4"><span class="qn-num">04</span><span class="qn-label">종합비교·결론</span></a>
+</div>
+
+<div class="sec-label">CASE 01 — GENERAL STATISTICS</div>
+<h2 id="sec1"><span class="badge badge-gold">일반통계</span> 통계물리학 강연이 제시한 자기상관함수 분석</h2>
+<p>
+해당 강연 자료가 제시한 분석은 강세장과 약세장을 구분하지 않은 전체 기간의 풀링(pooling) 데이터를 사용한다. 한국 주식시장 데이터로 그린 자기상관함수는 하루만 지나도 거의 0으로 떨어지며, 1990년대 후반 미국 시장을 다룬 물리학 연구에서는 자기상관의 지수적 감쇠 특성시간(τ)이 약 4분에 불과하고, 20분이 지나면 상관함수가 완전히 잡음 수준으로 수렴한다는 결과가 보고된 바 있다. 이 연구는 이를 효율적 시장가설과 부합하는 결과로 해석하며, 가격에 단기 선형 상관관계가 존재하지 않는다는 점을 강조한다.
+</p>
+<p>
+다만 이와 별개로, Lo와 MacKinlay(1988)의 고전적 연구는 1962~1985년 뉴욕증권거래소·AMEX 주간(weekly) 수익률 데이터를 분산비율검정(variance ratio test)으로 분석한 결과, 전체 표본 기간과 거의 모든 하위 기간에서 랜덤워크 가설을 강하게 기각했다는 상반된 결과를 제시한다. 즉 초단기(분 단위)에서는 상관관계가 거의 사라지지만, 주간·월간 단위로 갈수록 약한 양의 자기상관이 잔존한다는 것이 후속 연구(Campbell·Lo·MacKinlay, 1996)들의 공통된 지적이다. 대만·유럽 신흥시장을 다룬 분산비율 연구들에서도 주간 데이터 기준으로는 랜덤워크 가설이 자주 기각되지만, 월간·분기·연간 단위로 갈수록 기각되지 않는 경우가 많아, 관측 주기에 따라 결론이 달라질 수 있음을 보여준다.
+</p>
+
+<div class="twocol">
+  <div class="minicard">
+    <div class="mc-h">초단기(분 단위) 일반통계</div>
+    <div class="mc-v">자기상관 거의 소멸 — 효율적시장가설과 부합 (τ≈4분, 20분 후 잡음 수준)</div>
+  </div>
+  <div class="minicard">
+    <div class="mc-h">주간·월간 단위 일반통계</div>
+    <div class="mc-v">약한 양의 자기상관 잔존 — Lo·MacKinlay(1988) 랜덤워크 기각</div>
+  </div>
+</div>
+
+<div class="sec-label">CASE 02 — BULL MARKET REGIME</div>
+<h2 id="sec2"><span class="badge badge-green">강세장</span> 상승 국면에서의 양의 자기상관(모멘텀)</h2>
+<p>
+강세장·약세장을 두 개의 국면(state)으로 나누는 레짐전환모형(regime-switching model) 연구는, 시장이 강세장과 약세장 사이를 전환한다는 단순한 가정만으로도 모멘텀과 이후의 평균회귀가 자연스럽게 재현된다는 점을 보인다. 이 모형에서 강세장 국면의 평균 지속 기간은 약 20개월로 설정되며, 시차(lag)가 커질수록 월별 수익률의 자기상관이 지수적으로 감소하는 패턴, 즉 국면이 지속되는 동안에는 단기 모멘텀이 존재한다는 결과가 도출된다.
+</p>
+<p>
+실증적으로도 강세장 국면에서 모멘텀 전략의 수익성이 두드러진다는 연구가 다수 존재한다. 중국 시장 개별종목 주간 모멘텀을 분석한 연구는 상승 국면(upside market state)에서는 유의한 모멘텀 포트폴리오가 다수 관측된 반면, 하락 국면에서는 유의한 포트폴리오가 하나도 없었다는 결과를 제시한다. 단기(1주) 구간에서는 상승 국면의 평균 수익률이 전체 표본 평균보다 뚜렷이 높게 나타나기도 했다. 이는 Cooper·Gutierrez·Hameed 계열의 고전적 시장상태(market state) 조건부 모멘텀 연구들이 오래전부터 지적해온 것과 같은 방향으로, 최근 시장이 상승세였던 국면 이후에 모멘텀 수익이 집중되고 하락세였던 국면 이후에는 모멘텀이 약화되거나 사라지는 비대칭성과 일치한다.
+</p>
+<p>
+행동재무학적으로는 상승장에서의 추세추종적 자금 유입(주가가 오르면 더 많은 투자자가 뒤따라 매수하는 군집행동)이 이러한 양의 자기상관을 강화하는 메커니즘으로 설명된다. 실제로 강세·약세장에서 투자자의 거래 행태 자체가 비대칭적이라는 점을 모형화한 에이전트 기반 연구도, 가격이 오를 때와 내릴 때 투자자의 거래 의향과 군집 성향이 다르게 나타난다는 전제를 사용한다.
+</p>
+
+<div class="twocol">
+  <div class="minicard">
+    <div class="mc-h">강세장 평균 지속 기간</div>
+    <div class="mc-v">약 20개월 (레짐전환모형 기준)</div>
+  </div>
+  <div class="minicard">
+    <div class="mc-h">상승 국면 모멘텀 포트폴리오</div>
+    <div class="mc-v">단기(1주) 구간에서 다수 유의, 수익률도 전체 평균 대비 상회</div>
+  </div>
+</div>
+
+<div class="sec-label">CASE 03 — BEAR MARKET REGIME</div>
+<h2 id="sec3"><span class="badge badge-red">약세장</span> 하락 국면에서의 음의 자기상관(반전)</h2>
+<p>
+약세장 국면을 따로 떼어보면 오히려 반대 방향, 즉 음의 자기상관(평균회귀·반전) 경향이 두드러진다는 근거가 축적되어 있다. Ian Martin(2021, Journal of Financial Econometrics)의 연구는 옵션 가격에서 역산한 S&amp;P500 지수의 자기상관을 6개월 지평에서 추정했는데, 서브프라임 위기 이전에는 자기상관이 거의 0에 가까웠지만 위기 이후(약세장·패닉 국면)에는 -20%에서 -30%에 달하는 뚜렷한 음의 값으로 전환됐다는 결과를 보고한다. 이는 정책 대응(양적완화 등)에 대한 기대가 시장 하락 이후 반등을 유도하는 구조와 맞물려 있다는 해석도 함께 제시된다.
+</p>
+<p>
+레짐전환모형 계열 연구에서도 약세장 국면의 개별 종목은 평균 수익률이 마이너스이면서 변동성은 강세장보다 훨씬 크다는 특징이 확인된다. 변동성이 커진 상태에서는 급락 이후 단기 반등(overshoot 후 correction) 패턴이 자주 나타나는데, 이것이 통계적으로 음의 자기상관, 즉 평균회귀 구조로 잡힌다. De Bondt·Thaler류의 반전(contrarian) 효과 연구 역시, 장기(3~5년) 관점에서 과거 낙폭이 컸던 손실주가 이후 손실을 회복하며 승자주를 능가하는 반전 현상을 보고하는데, 이는 약세장·패닉 국면에서 전형적으로 나타나는 음의 자기상관 구조와 궤를 같이한다.
+</p>
+<p>
+가상자산 시장을 다룬 최근 연구에서도 유사한 패턴이 관측된다. 강세장·약세장 구간을 나누어 자기상관을 계산했을 때, 약세장 구간에서는 1시간·24시간 단위 자기상관이 전체 표본 통계보다 뚜렷이 낮은(더 음의 방향에 가까운) 값을 보였다는 결과가 보고됐으며, 이는 하락 국면에서 시장이 오히려 더 효율적으로(혹은 반전 방향으로) 작동할 가능성을 시사한다.
+</p>
+
+<div class="twocol">
+  <div class="minicard">
+    <div class="mc-h">위기 이후 S&amp;P500 자기상관계수</div>
+    <div class="mc-v">-20% ~ -30% (서브프라임 위기 이후, Ian Martin 2021)</div>
+  </div>
+  <div class="minicard">
+    <div class="mc-h">약세장 국면 개별 종목 특징</div>
+    <div class="mc-v">평균수익률 마이너스 + 변동성 확대 → 반등에 의한 음의 상관 유발</div>
+  </div>
+</div>
+
+<div class="sec-label">CASE 04 — SYNTHESIS</div>
+<h2 id="sec4">종합비교 및 결론·시사점</h2>
+
+<table class="compare">
+<tr><th>구분</th><th>자기상관 방향</th><th>주요 메커니즘</th><th>근거 연구</th></tr>
+<tr>
+  <td>일반(무조건부)</td>
+  <td>거의 0에 수렴 (초단기), 약한 양의 값 (주·월간)</td>
+  <td>차익거래에 의한 즉각 소멸, 비동시거래 효과</td>
+  <td>물리학적 시장변동 연구(τ≈4분) · Lo·MacKinlay(1988)</td>
+</tr>
+<tr>
+  <td>강세장</td>
+  <td>양(+) — 모멘텀</td>
+  <td>추세추종적 군집매수, 국면 지속성</td>
+  <td>레짐전환모형(2023) · 상승국면 조건부 모멘텀 연구</td>
+</tr>
+<tr>
+  <td>약세장</td>
+  <td>음(-) — 반전/평균회귀</td>
+  <td>패닉 매도 후 반등, 정책기대 반영, 변동성 급증</td>
+  <td>Ian Martin(2021) · De Bondt·Thaler류 반전효과 · 레짐 변동성 연구</td>
+</tr>
+</table>
+
+<div class="callout">
+<h3>TNBfolio 종합 시사점</h3>
+<p>
+세 케이스를 종합하면, 원 강연 자료가 제시한 "관성이 없다"는 결론은 틀린 것이 아니라 강세장의 양의 상관과 약세장의 음의 상관이 서로 상쇄되어 나타난 평균적 결과로 재해석할 수 있다. 전체 표본을 하나로 풀링하면 두 반대 방향의 신호가 서로를 지워버려 근사적으로 0에 가까운 값이 관측되는 것이며, 이는 통계적으로 흔히 발생하는 심슨의 역설(Simpson's paradox)과 유사한 구조다. 국면을 분리해서 보면 강세장에서는 추세추종(모멘텀), 약세장에서는 역추세(반전) 전략이 각각 이론적으로 더 유리할 수 있다는 근거가 확인된다.
+</p>
+<p>
+다만 이 사실이 곧바로 국면을 구분해서 매매하면 초과수익을 낼 수 있다는 결론으로 이어지지는 않는다. 강세장과 약세장은 사후적으로만 명확히 구분되며, 실시간으로 현재가 어느 국면인지 판단하는 것 자체가 매우 어렵다는 근본적 한계가 있다. 실제로 레짐전환 판별 모형들도 국면을 확률적으로만 추정할 뿐, 전환 시점을 사전에 확정적으로 알려주지는 못한다. 또한 국면별 초과수익을 노린 전략은 거래비용과 국면 오판 리스크를 동반하기 때문에, 개인 투자자 입장에서 이를 실전에서 안정적으로 구현하기는 쉽지 않다.
+</p>
+<p>
+따라서 실질적인 시사점은 다음과 같이 정리된다. 첫째, 시장을 하나의 평균적 상태로만 이해하면 강세장의 추세와 약세장의 반전이라는 서로 다른 구조를 놓칠 수 있다는 점을 인지할 필요가 있다. 둘째, 그럼에도 국면을 정확히 실시간으로 식별해 전략을 전환하는 것은 전문 투자자에게도 어려운 과제이므로, 개인 투자자에게는 국면과 무관하게 꾸준히 매수하는 바이앤홀드·정액분할매수(ETF DCA) 전략이 여전히 현실적인 대안이다. 셋째, 약세장의 반전 구조를 활용하려는 시도(저가매수)는 이론적 근거가 있는 편이지만, 하락이 진행 중인 시점에 그 반등 시점을 정확히 포착하기 어렵다는 점에서 신중히 접근해야 한다.
+</p>
+</div>
+
+</div>
+<footer>TNBfolio · MARKET REGIME AUTOCORRELATION ANALYSIS · 2026</footer>
+</body>
+</html>
