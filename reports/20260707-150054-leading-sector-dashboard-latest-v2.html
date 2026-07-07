@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TNBFolio 주도섹터 V2 2026-07-07</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f0f2f5;
+      color: #222;
+      min-height: 100vh;
+    }
+    .page-header {
+      background: #1a237e;
+      color: white;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .page-header h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    .page-header .subtitle {
+      font-size: 0.78rem;
+      color: #b0bec5;
+      margin-top: 2px;
+    }
+    .sort-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .sort-label {
+      font-size: 0.75rem;
+      color: #b0bec5;
+    }
+    .sort-btn {
+      padding: 5px 14px;
+      border: 1.5px solid #5c6bc0;
+      background: transparent;
+      color: #c5cae9;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .sort-btn:hover { background: #3949ab; color: white; }
+    .sort-btn.active { background: #5c6bc0; color: white; border-color: #5c6bc0; }
+    .main-content { padding: 16px; max-width: 1800px; margin: 0 auto; }
+    .section { margin-bottom: 28px; }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      border-radius: 6px 6px 0 0;
+      margin-bottom: 0;
+    }
+    .section-header h2 { font-size: 1rem; font-weight: 700; }
+    .count-badge {
+      background: rgba(0,0,0,0.12);
+      color: inherit;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      padding: 12px;
+      background: rgba(255,255,255,0.4);
+      border-radius: 0 0 6px 6px;
+      border: 1px solid rgba(0,0,0,0.06);
+      border-top: none;
+      min-height: 60px;
+    }
+    @media (max-width: 1100px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 700px)  { .grid { grid-template-columns: repeat(1, 1fr); } }
+    .card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.10), 0 0 1px rgba(0,0,0,0.06);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: box-shadow 0.15s;
+    }
+    .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 10px 3px;
+      gap: 6px;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    .card-header-left {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      min-width: 0;
+      flex: 1;
+    }
+    .sector-tag {
+      background: #e8eaf6;
+      color: #3949ab;
+      font-size: 0.68rem;
+      padding: 1px 6px;
+      border-radius: 10px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .etf-name {
+      font-size: 0.78rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+    .change-pct {
+      font-size: 0.78rem;
+      font-weight: 700;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .card-header-right { flex-shrink: 0; }
+    .streak-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .holdings-btn {
+      display: inline-block;
+      padding: 2px 8px;
+      margin-right: 4px;
+      border: 1px solid #cfd8dc;
+      background: #eceff1;
+      color: #455a64;
+      border-radius: 10px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .holdings-btn:hover {
+      background: #455a64;
+      color: white;
+      border-color: #455a64;
+    }
+    .card-header-right {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      flex-shrink: 0;
+    }
+    /* Holdings Modal (클릭 = sticky 중앙 모달) */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+    /* Holdings Popover (hover = 버튼 옆 작은 팝오버) */
+    .popover {
+      position: fixed;
+      display: none;
+      background: white;
+      border: 1px solid #cfd8dc;
+      border-radius: 8px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+      width: 420px;
+      max-width: 90vw;
+      max-height: 60vh;
+      z-index: 9998;
+      overflow: hidden;
+      flex-direction: column;
+    }
+    .popover.open { display: flex; }
+    .popover-header {
+      padding: 8px 12px 6px;
+      border-bottom: 1px solid #f0f0f0;
+      background: #f5f7fa;
+    }
+    .popover-title-main {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #1a237e;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .popover-title-sub {
+      font-size: 0.72rem;
+      color: #607d8b;
+      margin-top: 2px;
+    }
+    .popover-body {
+      overflow-y: auto;
+      flex: 1;
+    }
+    .popover-body .holdings-table {
+      font-size: 0.78rem;
+    }
+    .popover-body .holdings-table th {
+      padding: 5px 8px;
+      font-size: 0.7rem;
+    }
+    .popover-body .holdings-table tbody td {
+      padding: 4px 8px;
+    }
+    .popover-footer {
+      padding: 5px 12px;
+      border-top: 1px solid #f0f0f0;
+      background: #fafafa;
+      font-size: 0.68rem;
+      color: #90a4ae;
+      text-align: right;
+    }
+    .modal-box {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: 720px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-header {
+      padding: 14px 18px 10px;
+      border-bottom: 1px solid #eceff1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: #f5f7fa;
+    }
+    .modal-title {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .modal-title-main {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #1a237e;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .modal-title-sub {
+      font-size: 0.78rem;
+      color: #607d8b;
+    }
+    .modal-close {
+      background: transparent;
+      border: none;
+      font-size: 1.6rem;
+      color: #607d8b;
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+    .modal-close:hover { background: #eceff1; color: #d32f2f; }
+    .modal-toolbar {
+      padding: 8px 18px;
+      border-bottom: 1px solid #f0f0f0;
+      background: #fafafa;
+    }
+    .modal-search {
+      width: 100%;
+      padding: 6px 10px;
+      border: 1px solid #cfd8dc;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      box-sizing: border-box;
+    }
+    .modal-body {
+      overflow-y: auto;
+      flex: 1;
+      padding: 0;
+    }
+    .holdings-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .holdings-table thead {
+      position: sticky;
+      top: 0;
+      background: white;
+      box-shadow: inset 0 -1px 0 #e0e0e0;
+      z-index: 1;
+    }
+    .holdings-table th {
+      text-align: right;
+      padding: 8px 12px;
+      font-weight: 600;
+      color: #455a64;
+      font-size: 0.78rem;
+      white-space: nowrap;
+      background: white;
+    }
+    .holdings-table th.col-name { text-align: left; }
+    .holdings-table th.col-rank,
+    .holdings-table th.col-code { text-align: center; }
+    .holdings-table tbody td {
+      padding: 7px 12px;
+      border-bottom: 1px solid #f0f0f0;
+      white-space: nowrap;
+    }
+    .holdings-table tbody tr:hover { background: #fafbfc; }
+    .holdings-table .col-rank { text-align: center; color: #78909c; }
+    .holdings-table .col-code { text-align: center; color: #546e7a; font-family: Consolas, monospace; }
+    .holdings-table .col-name { text-align: left; font-weight: 500; }
+    .holdings-table .col-pct { text-align: right; font-weight: 600; }
+    .holdings-table .col-weight { text-align: right; font-weight: 700; color: #1a237e; }
+    .modal-empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: #999;
+      font-size: 0.9rem;
+    }
+    .modal-footer {
+      padding: 8px 18px;
+      border-top: 1px solid #f0f0f0;
+      background: #fafafa;
+      font-size: 0.72rem;
+      color: #90a4ae;
+      display: flex;
+      justify-content: space-between;
+    }
+    body.modal-open { overflow: hidden; }
+    .card-subheader {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 10px;
+      padding: 2px 10px 4px;
+      font-size: 0.68rem;
+      color: #888;
+    }
+    .chart-container {
+      flex: 1;
+      position: relative;
+      min-height: 0;
+    }
+    .plotly-chart { width: 100%; height: 270px; }
+    .no-data {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 270px;
+      color: #bbb;
+      font-size: 0.85rem;
+    }
+    .empty-msg {
+      padding: 20px;
+      color: #999;
+      text-align: center;
+      font-size: 0.85rem;
+    }
+    .footer {
+      text-align: center;
+      padding: 20px;
+      color: #aaa;
+      font-size: 0.75rem;
+      border-top: 1px solid #e0e0e0;
+      margin-top: 20px;
+    }
+  </style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div>
+    <h1>TNBFolio 주도섹터 V2</h1>
+    <div class="subtitle">기준일: 2026-07-07 &nbsp;|&nbsp; 생성: 2026-07-07 14:04</div>
+  </div>
+  <div class="sort-controls">
+    <span class="sort-label">정렬:</span>
+    <button class="sort-btn active" data-sort="streak" onclick="sortCards('streak')">연속일수 순</button>
+    <button class="sort-btn " data-sort="sector" onclick="sortCards('sector')">섹터 순</button>
+  </div>
+</header>
+
+<main class="main-content">
+  
+<section class="section" data-group="sustained">
+  <div class="section-header" style="background:#e8f5e9;border-left:5px solid #4caf50">
+    <h2 style="color:#1b5e20">1. 주도섹터 (유지)</h2>
+    
+  </div>
+  <div class="grid" id="grid-sustained">
+    <div class="empty-msg">해당 없음</div>
+  </div>
+</section>
+<section class="section" data-group="entry">
+  <div class="section-header" style="background:#e3f2fd;border-left:5px solid #1976d2">
+    <h2 style="color:#0d47a1">2. 주도섹터 진입</h2>
+    <span class="count-badge">1개</span>
+  </div>
+  <div class="grid" id="grid-entry">
+    
+<div class="card"
+     data-code="0008T0"
+     data-streak="1"
+     data-sector-idx="4"
+     data-group="entry">
+  <div class="card-header">
+    <div class="card-header-left">
+      <span class="sector-tag" title="필수소비재·뷰티·K-푸드">필수소비재·…</span>
+      <span class="etf-name">SOL 화장품TOP3플러스</span>
+      <span class="change-pct" style="color:#e84545">+2.37%</span>
+    </div>
+    <div class="card-header-right">
+      <button class="holdings-btn" type="button"
+              onclick="openHoldingsModal('0008T0', 'SOL 화장품TOP3플러스')"
+              onmouseenter="hoverOpenHoldingsModal('0008T0', 'SOL 화장품TOP3플러스', this)"
+              onmouseleave="scheduleHoverClose()"
+              title="SOL 화장품TOP3플러스 구성종목 (호버 또는 클릭)">구성종목</button>
+      <span class="streak-badge" style="background:#0d47a1;color:#ffffff">+1일</span>
+    </div>
+  </div>
+  <div class="card-subheader">
+    <span class="last-close">종가 15,365원</span>
+    <span class="last-vol">거래량 1.2M</span>
+  </div>
+  <div class="chart-container">
+    <div id="chart-0008T0" class="plotly-chart"></div>
+  </div>
+</div>
+  </div>
+</section>
+<section class="section" data-group="exit">
+  <div class="section-header" style="background:#ffebee;border-left:5px solid #ef5350">
+    <h2 style="color:#b71c1c">3. 주도섹터 이탈</h2>
+    
+  </div>
+  <div class="grid" id="grid-exit">
+    <div class="empty-msg">해당 없음</div>
+  </div>
+</section>
+</main>
+
+<footer class="footer">
+  TNBFolio 주도섹터 V2 대시보드 &nbsp;·&nbsp; 생성 시각: 2026-07-07 14:04 &nbsp;·&nbsp; 기준일: 2026-07-07
+</footer>
+
+<!-- 구성종목 Popover (호버용) -->
+<div id="holdingsPopover" class="popover" role="tooltip"
+     onmouseenter="cancelHoverClose()"
+     onmouseleave="scheduleHoverClose()">
+  <div class="popover-header">
+    <div class="popover-title-main" id="popoverTitleMain">-</div>
+    <div class="popover-title-sub" id="popoverTitleSub">-</div>
+  </div>
+  <div class="popover-body">
+    <table class="holdings-table">
+      <thead>
+        <tr>
+          <th class="col-rank" style="width:34px">순위</th>
+          <th class="col-code" style="width:66px">코드</th>
+          <th class="col-name">종목명</th>
+          <th class="col-pct" style="width:64px">등락률</th>
+          <th class="col-weight" style="width:60px">비중%</th>
+        </tr>
+      </thead>
+      <tbody id="popoverTableBody"></tbody>
+    </table>
+    <div id="popoverEmpty" class="modal-empty" style="display:none; padding:20px;">구성종목 데이터 없음</div>
+  </div>
+  <div class="popover-footer" id="popoverFooter">-</div>
+</div>
+
+<!-- 구성종목 모달 (클릭 = sticky 중앙 모달) -->
+<div id="holdingsModal" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-box" role="document"
+       onclick="event.stopPropagation();">
+    <div class="modal-header">
+      <div class="modal-title">
+        <div class="modal-title-main" id="modalTitleMain">-</div>
+        <div class="modal-title-sub" id="modalTitleSub">-</div>
+      </div>
+      <button type="button" class="modal-close" aria-label="닫기" onclick="closeHoldingsModal()">×</button>
+    </div>
+    <div class="modal-toolbar">
+      <input type="text" class="modal-search" id="modalSearch"
+             placeholder="종목명/종목코드 검색..." oninput="filterHoldings()" />
+    </div>
+    <div class="modal-body">
+      <table class="holdings-table" id="holdingsTable">
+        <thead>
+          <tr>
+            <th class="col-rank" style="width:48px">순위</th>
+            <th class="col-code" style="width:80px">종목코드</th>
+            <th class="col-name">종목명</th>
+            <th class="col-pct" style="width:90px">등락률</th>
+            <th class="col-weight" style="width:80px">비중(%)</th>
+          </tr>
+        </thead>
+        <tbody id="holdingsTableBody"></tbody>
+      </table>
+      <div id="modalEmpty" class="modal-empty" style="display:none;">구성종목 데이터 없음</div>
+    </div>
+    <div class="modal-footer">
+      <span id="modalFooterLeft">-</span>
+      <span id="modalFooterRight">-</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var CHART_DATA = {"chart-0008T0": {"data": [{"type": "candlestick", "x": ["2026-02-06", "2026-02-09", "2026-02-10", "2026-02-11", "2026-02-12", "2026-02-13", "2026-02-19", "2026-02-20", "2026-02-23", "2026-02-24", "2026-02-25", "2026-02-26", "2026-02-27", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19", "2026-03-20", "2026-03-23", "2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-03", "2026-04-06", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-13", "2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17", "2026-04-20", "2026-04-21", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-04", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-06-01", "2026-06-02", "2026-06-04", "2026-06-05", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-12", "2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-19", "2026-06-22", "2026-06-23", "2026-06-24", "2026-06-25", "2026-06-26", "2026-06-29", "2026-06-30", "2026-07-01", "2026-07-02", "2026-07-03", "2026-07-06", "2026-07-07"], "open": [1.3304566702625031, 1.7979144192736385, 5.53757641136281, 6.83207479323984, 5.717367853290178, 4.7824523552678855, 5.142035239122622, 6.148867313915862, 6.040992448759441, 4.350952894642224, 4.638619201725991, 4.818410643653359, 4.458827759798623, 2.1215390147429014, -6.760158216468892, -6.32865875584322, -8.270406328658753, -8.773822366055374, -4.962243797195254, -4.135203164329382, -4.602660913340529, -6.005034160373968, -2.696871628910469, -4.3149946062567395, 0.1797914419273683, -1.0427903631787139, 1.1506652283351348, 1.0427903631787139, 3.4519956850054045, 2.8047464940668787, 1.7979144192736385, -3.308162531463499, 1.3304566702625031, 0.5753326141675563, 4.0632865875584345, 5.32182668104999, 3.5598705501618033, 0.5393743257820827, 0.21574973031284195, 1.8698309960445858, 4.2790363178712765, 7.335490830636471, 6.796116504854366, 14.347357065803678, 12.297734627831725, 14.886731391585762, 16.253146350233738, 18.302768788205693, 18.230852211434744, 18.015102481121904, 22.545846817691473, 24.163969795037765, 25.674217907227614, 22.941387989931684, 24.6314275440489, 21.790722761596548, 19.201725997842512, 17.367853290183376, 16.90039554117224, 17.224020136641506, 18.98597626752967, 18.77022653721683, 17.044228694714135, 13.16073354908307, 16.109313196691843, 8.989572096368214, 8.090614886731395, 7.0478245235526815, 5.32182668104999, 6.580366774541524, 8.486156058971584, 5.106076950737148, 3.8834951456310662, 3.3441208198489836, 2.265372168284796, 3.8475368572455926, 2.1934555915138487, 3.7756202804746453, -5.717367853290178, -4.710535778496938, -1.0787486515641875, -0.7910823444803983, 3.91945343401654, 2.2294138798993224, 3.6317871269327506, 3.1283710895361416, 1.8698309960445858, -1.4742898238043867, -2.8047464940668787, -3.991370010787487, -6.148867313915862, -4.099244875943908, -5.285868392664506, -5.2499101042790315, 0.28766630708378926, -0.14383315354189463, 7.22761596548005, 7.8748651564185534, 7.910823444804027, 6.688241639697945], "high": [1.6540812657317439, 6.292700467457757, 7.0478245235526815, 7.22761596548005, 5.825242718446599, 6.076950737144915, 6.580366774541524, 6.796116504854366, 6.112909025530389, 5.681409564904705, 4.7824523552678855, 8.162531463502344, 5.501618122977336, 2.768788205681405, -4.279036317871265, -5.321826681049979, -3.6317871269327617, -6.616325062927009, -4.243078029485792, -2.049622437971954, -4.027328299172961, -0.46745774901114645, -2.1215390147429014, 0.6472491909385036, 1.7259978425026912, 1.6900395541172175, 6.292700467457757, 3.30816253146351, 3.811578568860119, 3.91945343401654, 1.9057892844300595, 3.487953973390856, 2.0855807263574277, 5.645451276519231, 4.998202085580727, 8.198489751887816, 3.9554117224020136, 2.5170801869830894, 4.243078029485803, 2.8407047824523524, 8.522114347357057, 10.032362459546928, 14.131607335490838, 14.527148507731024, 14.77885652642934, 16.00143833153542, 18.734268248831356, 19.237684286227985, 18.446601941747566, 20.496224379719518, 22.977346278317157, 25.20676015821648, 25.674217907227614, 24.451636102121533, 25.53038475368572, 21.790722761596548, 20.244516361021226, 17.475728155339798, 17.439769866954325, 18.842143113987774, 22.545846817691473, 22.042430780294865, 17.331895001797903, 15.929521754764476, 16.36102121539014, 9.744696152463138, 10.859403092412801, 7.6591154261057115, 6.256742179072283, 9.564904710535771, 9.313196691837478, 6.400575332614178, 3.91945343401654, 3.8834951456310662, 5.753326141675652, 3.8475368572455926, 4.135203164329382, 4.422869471413171, -3.5598705501618144, 0.6472491909385036, 1.8122977346278324, 2.1934555915138487, 4.2790363178712765, 4.0632865875584345, 6.903991370010787, 3.6677454153182243, 1.8698309960445858, -0.21574973031284195, -1.6181229773462813, 0.03595828838547366, -2.9485796476087733, -2.2294138798993113, -4.602660913340529, 1.1866235167206085, 2.1934555915138487, 6.724199928083419, 13.592233009708732, 9.528946422150298, 11.25494426465301, 14.742898238043868], "low": [-1.9057892844300595, 1.7979144192736385, 4.422869471413171, 5.429701546206411, 4.207119741100329, 3.703703703703698, 4.638619201725991, 4.638619201725991, 3.3800791082344572, 4.135203164329382, 3.416037396619931, 3.595828838547277, 3.3441208198489836, -2.9485796476087733, -13.628191298094205, -8.3423229054297, -8.270406328658753, -10.715569938870907, -6.83207479323984, -5.285868392664506, -5.93311758360302, -6.508450197770587, -6.040992448759441, -4.3149946062567395, -0.5034160373966201, -1.0787486515641875, 1.1506652283351348, -0.21574973031284195, -0.3595828838547255, 0.7910823444803983, -2.1215390147429014, -3.811578568860119, 0.10787486515642097, -0.39554117224019913, 2.481121898597616, 1.7979144192736385, 0.4314994606256839, -1.1147069399496612, -1.9777058612010068, -0.7551240560949246, 3.811578568860119, 7.2635742538655235, 6.796116504854366, 11.902193455591515, 11.36281912980943, 13.48435814455231, 16.217188061848265, 17.25997842502698, 17.18806184825603, 18.015102481121904, 19.525350593311753, 22.617763394462422, 22.581805106076946, 21.53901474289823, 20.819848975188783, 16.432937792161084, 16.79252067601582, 13.48435814455231, 13.196691837468544, 14.38331535418913, 18.374685364976617, 16.145271485077316, 11.686443725278671, 12.801150665228334, 10.75152822725638, 5.645451276519231, 6.22078389068681, 2.3372887450557434, 3.811578568860119, 6.112909025530389, 4.92628550880978, 1.9057892844300595, 0.28766630708378926, -0.5393743257820938, 1.6900395541172175, -0.39554117224019913, 0.7551240560949246, -1.9057892844300595, -6.43653362099964, -5.142035239122622, -1.438331535418913, -1.8698309960445858, -0.03595828838547366, 1.1147069399496612, 0.39554117224021024, 0.3595828838547366, -2.3013304566702586, -4.92628550880978, -4.92628550880978, -6.508450197770587, -7.910823444804027, -4.746494066882412, -8.378281193815173, -5.2499101042790315, -1.1147069399496612, -1.3664149586479657, 6.436533620999629, 4.1711614527148555, 5.93311758360302, 6.688241639697945], "close": [0.0, 5.53757641136281, 6.040992448759441, 5.681409564904705, 5.285868392664517, 4.602660913340517, 6.184825602301336, 4.92628550880978, 4.350952894642224, 4.494786048184096, 4.2790363178712765, 4.350952894642224, 4.135203164329382, -2.9485796476087733, -12.477526069759081, -6.9399496583962605, -3.6317871269327617, -8.522114347357068, -5.429701546206401, -4.386911183027687, -4.027328299172961, -2.265372168284785, -5.213951815893559, -1.0068320747932402, 0.46745774901115755, 0.3595828838547366, 4.243078029485803, -0.21574973031284195, 1.6900395541172175, 1.7979144192736385, -2.049622437971954, 3.3800791082344572, 0.61129090255303, 1.4742898238043978, 4.53074433656957, 2.5170801869830894, 1.1147069399496612, -0.5753326141675674, -1.7979144192736385, 0.6832074793239773, 6.256742179072283, 8.55807263574253, 13.987774181948943, 11.938151743976988, 14.419273642574604, 15.569938870909738, 18.122977346278326, 17.51168644372527, 17.295936713412452, 19.813016900395542, 20.676015821646885, 24.99101042790364, 23.157137720244524, 22.560230133045668, 21.035598705501624, 17.008270406328663, 17.116145271485085, 15.282272563825972, 14.491190219345551, 18.015102481121904, 18.590435095289457, 18.302768788205693, 12.189859762675304, 15.282272563825972, 10.859403092412801, 8.665947500898952, 6.328658755843231, 3.416037396619931, 4.7824523552678855, 7.4433656957928696, 5.897159295217547, 2.2294138798993224, 1.3664149586479768, 1.6540812657317439, 3.8475368572455926, 0.7551240560949246, 2.768788205681405, -0.8270406328658719, -6.32865875584322, 0.21574973031284195, 0.503416037396609, 1.6540812657317439, 0.39554117224021024, 2.4451636102121643, 0.503416037396609, 1.7979144192736385, -1.4742898238043867, -2.8047464940668787, -3.8834951456310662, -5.753326141675652, -3.487953973390867, -4.566702624955054, -6.32865875584322, 0.8629989212513456, -0.9349154980222929, 6.436533620999629, 7.1556993887091025, 6.9399496583962605, 7.946781733189501, 10.499820208558063], "increasing": {"line": {"color": "#e84545"}, "fillcolor": "#e84545"}, "decreasing": {"line": {"color": "#2979ff"}, "fillcolor": "#2979ff"}, "xaxis": "x", "yaxis": "y", "name": "상승률", "showlegend": false, "hoverinfo": "x+y", "yhoverformat": ".2f"}, {"type": "scatter", "x": ["2026-02-06", "2026-02-09", "2026-02-10", "2026-02-11", "2026-02-12", "2026-02-13", "2026-02-19", "2026-02-20", "2026-02-23", "2026-02-24", "2026-02-25", "2026-02-26", "2026-02-27", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19", "2026-03-20", "2026-03-23", "2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-03", "2026-04-06", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-13", "2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17", "2026-04-20", "2026-04-21", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-04", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-06-01", "2026-06-02", "2026-06-04", "2026-06-05", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-12", "2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-19", "2026-06-22", "2026-06-23", "2026-06-24", "2026-06-25", "2026-06-26", "2026-06-29", "2026-06-30", "2026-07-01", "2026-07-02", "2026-07-03", "2026-07-06", "2026-07-07"], "y": [-1.2657317511686417, -0.46925566343042346, 0.36677454153182243, 1.0679611650485477, 1.736785329018331, 2.351672060409915, 3.1373606616325045, 3.694714131607335, 4.097446961524631, 4.237684286227972, 4.352750809061479, 4.399496583962614, 4.466019417475731, 4.113628191298102, 3.1355627472132275, 2.461344839985613, 2.060409924487594, 1.4904710535778465, 1.1434735706580268, 0.7766990291262044, 0.5753326141675563, 0.18518518518517713, -0.3775620280474623, -0.7119741100323651, -0.9528946422150297, -1.1650485436893177, -1.2621359223300987, -1.5192376842862232, -1.652283351312478, -1.7871269327579986, -2.1035598705501646, -2.152103559870555, -2.3282991729593694, -2.1071556993887075, -1.2567421790722788, -0.7838906868033124, -0.5465659834591907, -0.14922689679971457, 0.03236245954691963, 0.28586839266451225, 0.8000719165767611, 1.341244156778143, 2.3013304566702697, 2.9485796476087733, 3.6461704422869445, 4.4066882416397, 5.100683207479317, 5.98705501618122, 6.767349874146, 7.668104998202097, 8.804386911183038, 9.88493347716648, 11.012225818051057, 12.066522833513126, 12.891765551959722, 13.616325062927004, 14.416396979503787, 15.209277238403462, 16.023732470334416, 16.890327220424318, 17.507011866235178, 17.994246673858317, 17.90435095289462, 18.07155699388707, 17.893563466378982, 17.54836389787846, 16.95864796835671, 16.253865516001433, 15.628191298094208, 15.00970873786407, 14.270765911542615, 13.132686084142398, 12.04314994606257, 10.997842502696864, 10.138439410284072, 9.325782092772394, 8.608414239482197, 7.802948579647606, 6.761956130888169, 5.871988493347713, 4.967637540453085, 4.135203164329382, 3.5454872348076316, 2.903631787126937, 2.385832434376134, 2.0424307802948682, 1.6522833513124668, 1.341244156778143, 0.9079467817331821, 0.24811218985976158, -0.22114347357066189, -0.5609492988133735, -0.9457029845379328, -0.9852571017619605, -1.224379719525348, -0.9403092412801128, -0.720963682128728, -0.3326141675656258, 0.38115785688601633, 0.8953613807982652], "mode": "lines", "line": {"color": "#00c853", "width": 1.5}, "xaxis": "x", "yaxis": "y", "name": "MA20", "showlegend": false, "hoverinfo": "skip"}, {"type": "bar", "x": ["2026-02-06", "2026-02-09", "2026-02-10", "2026-02-11", "2026-02-12", "2026-02-13", "2026-02-19", "2026-02-20", "2026-02-23", "2026-02-24", "2026-02-25", "2026-02-26", "2026-02-27", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19", "2026-03-20", "2026-03-23", "2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-03", "2026-04-06", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-13", "2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17", "2026-04-20", "2026-04-21", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-04", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-06-01", "2026-06-02", "2026-06-04", "2026-06-05", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-12", "2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-19", "2026-06-22", "2026-06-23", "2026-06-24", "2026-06-25", "2026-06-26", "2026-06-29", "2026-06-30", "2026-07-01", "2026-07-02", "2026-07-03", "2026-07-06", "2026-07-07"], "y": [815738.0, 981765.0, 573493.0, 343821.0, 568933.0, 475162.0, 355471.0, 423027.0, 431180.0, 422464.0, 631141.0, 877161.0, 456990.0, 536058.0, 634626.0, 424641.0, 240921.0, 366851.0, 213469.0, 153920.0, 99914.0, 381799.0, 119653.0, 464491.0, 211394.0, 114964.0, 783291.0, 620493.0, 247184.0, 182682.0, 114217.0, 570160.0, 219143.0, 555566.0, 331546.0, 365764.0, 167940.0, 117565.0, 274773.0, 186537.0, 1259878.0, 462004.0, 984970.0, 438952.0, 473132.0, 535254.0, 952722.0, 359852.0, 609899.0, 598691.0, 640102.0, 708050.0, 453959.0, 374154.0, 437915.0, 511418.0, 450990.0, 602910.0, 1014855.0, 877371.0, 1281271.0, 1662991.0, 601293.0, 721412.0, 444773.0, 442500.0, 221275.0, 346761.0, 550248.0, 397062.0, 463962.0, 328102.0, 359253.0, 547675.0, 484262.0, 484184.0, 255686.0, 202898.0, 197479.0, 193043.0, 245187.0, 111805.0, 426742.0, 286557.0, 471458.0, 415388.0, 276707.0, 311211.0, 205404.0, 565056.0, 200141.0, 329661.0, 363072.0, 428765.0, 234113.0, 481195.0, 2563239.0, 804035.0, 631762.0, 1152976.0], "marker": {"color": ["#2979ff", "#e84545", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#e84545", "#2979ff", "#2979ff", "#e84545", "#e84545", "#2979ff", "#e84545", "#e84545", "#e84545", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#e84545", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#e84545", "#e84545", "#2979ff", "#e84545", "#e84545", "#e84545", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#e84545", "#e84545", "#e84545", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#e84545", "#e84545"], "opacity": 0.7}, "xaxis": "x2", "yaxis": "y2", "name": "거래량", "showlegend": false, "hoverinfo": "x+y"}], "layout": {"paper_bgcolor": "white", "plot_bgcolor": "white", "margin": {"l": 8, "r": 50, "t": 4, "b": 26}, "font": {"size": 9, "color": "#333333"}, "showlegend": false, "dragmode": "pan", "yaxis": {"domain": [0.22, 1.0], "side": "right", "showgrid": true, "gridcolor": "#eeeeee", "gridwidth": 1, "tickfont": {"size": 9}, "ticksuffix": "%", "tickformat": ".1f", "zeroline": true, "zerolinecolor": "#bdbdbd", "zerolinewidth": 1, "automargin": true, "fixedrange": true}, "yaxis2": {"domain": [0.06, 0.2], "side": "right", "showgrid": false, "tickfont": {"size": 8}, "fixedrange": true}, "xaxis": {"type": "category", "rangeslider": {"visible": false}, "showgrid": false, "showticklabels": false, "ticks": "", "anchor": "y", "matches": "x2", "fixedrange": false, "autorange": false}, "xaxis2": {"type": "category", "rangeslider": {"visible": false}, "showgrid": false, "tickfont": {"size": 9}, "nticks": 6, "anchor": "y2", "fixedrange": false, "autorange": false, "range": [39.5, 99.5]}, "annotations": [{"text": "<b>0008T0</b><br><b>SOL 화장품TOP3플러스</b>", "xref": "paper", "yref": "paper", "x": 0.5, "y": 0.62, "showarrow": false, "align": "center", "font": {"size": 24, "color": "rgba(100,100,100,0.16)", "family": "Malgun Gothic, '맑은 고딕', sans-serif", "weight": 700}, "opacity": 1.0, "captureevents": false}], "autosize": true}}};
+  var HOLDINGS = {"0008T0": [{"rank": 1, "code": "278470", "name": "에이피알", "weight": 21.39, "change_pct": 5.15}, {"rank": 2, "code": "192820", "name": "코스맥스", "weight": 18.2, "change_pct": 1.29}, {"rank": 3, "code": "257720", "name": "실리콘투", "weight": 17.14, "change_pct": 1.74}, {"rank": 4, "code": "161890", "name": "한국콜마", "weight": 10.04, "change_pct": -0.09}, {"rank": 5, "code": "483650", "name": "달바글로벌", "weight": 8.7, "change_pct": 1.83}, {"rank": 6, "code": "241710", "name": "코스메카코리아", "weight": 7.27, "change_pct": -1.33}, {"rank": 7, "code": "051900", "name": "LG생활건강", "weight": 6.65, "change_pct": 2.42}, {"rank": 8, "code": "090430", "name": "아모레퍼시픽", "weight": 6.18, "change_pct": 1.98}, {"rank": 9, "code": "251970", "name": "펌텍코리아", "weight": 2.69, "change_pct": 4.98}, {"rank": 10, "code": "123330", "name": "제닉", "weight": 1.79, "change_pct": 0.0}, {"rank": 11, "code": "KRD010010001", "name": "원화현금", "weight": -0.04, "change_pct": null}]};
+  var HOLDINGS_REF_DATES = {"0008T0": "20260707"};
+  var HOLDINGS_CHANGE_REF_DATE = "2026-07-07 14:04 (\uc2e4\uc2dc\uac04)";
+  var _sorted_mode = 'streak';
+
+  // 카드 정렬
+  window.sortCards = function(mode) {
+    _sorted_mode = mode;
+    ['sustained', 'entry', 'exit'].forEach(function(group) {
+      var grid = document.getElementById('grid-' + group);
+      if (!grid) return;
+      var cards = Array.from(grid.querySelectorAll('.card'));
+      cards.sort(function(a, b) {
+        if (mode === 'streak') {
+          return parseInt(b.dataset.streak || 0) - parseInt(a.dataset.streak || 0);
+        } else {
+          return parseInt(a.dataset.sectorIdx || 999) - parseInt(b.dataset.sectorIdx || 999);
+        }
+      });
+      cards.forEach(function(card) { grid.appendChild(card); });
+    });
+    document.querySelectorAll('.sort-btn').forEach(function(btn) {
+      btn.classList.toggle('active', btn.dataset.sort === mode);
+    });
+  };
+
+  // IntersectionObserver로 뷰포트 진입 시 차트 렌더링 (성능 최적화)
+  var rendered = new Set();
+  function renderChart(divId) {
+    if (rendered.has(divId)) return;
+    var el = document.getElementById(divId);
+    if (!el) return;
+    var cd = CHART_DATA[divId];
+    if (!cd) return;
+    rendered.add(divId);
+    Plotly.newPlot(el, cd.data, cd.layout, {
+      responsive: true,
+      displayModeBar: 'hover',
+      displaylogo: false,
+      scrollZoom: true,
+      staticPlot: false,
+      doubleClick: 'reset',
+      modeBarButtonsToRemove: [
+        'lasso2d', 'select2d', 'autoScale2d',
+        'hoverClosestCartesian', 'hoverCompareCartesian',
+        'toggleSpikelines'
+      ]
+    });
+  }
+
+  function initCharts() {
+    if ('IntersectionObserver' in window) {
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            renderChart(entry.target.id);
+          }
+        });
+      }, { rootMargin: '200px' });
+      Object.keys(CHART_DATA).forEach(function(divId) {
+        var el = document.getElementById(divId);
+        if (el) observer.observe(el);
+      });
+    } else {
+      // fallback: 전체 렌더링
+      Object.keys(CHART_DATA).forEach(function(divId) {
+        renderChart(divId);
+      });
+    }
+  }
+
+  // ─── 구성종목 모달 ─────────────────────────────────────
+  var _currentHoldings = [];
+
+  function _fmtPct(v) {
+    if (v === null || v === undefined || isNaN(v)) return '-';
+    var sign = v >= 0 ? '+' : '';
+    return sign + Number(v).toFixed(2) + '%';
+  }
+
+  function _fmtWeight(v) {
+    if (v === null || v === undefined || isNaN(v)) return '-';
+    return Number(v).toFixed(2);
+  }
+
+  function _pctColor(v) {
+    if (v === null || v === undefined || isNaN(v) || v === 0) return '#9e9e9e';
+    return v > 0 ? '#e84545' : '#2979ff';
+  }
+
+  function _escapeHtml(s) {
+    if (s === null || s === undefined) return '';
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function _renderHoldingsRows(items) {
+    var tbody = document.getElementById('holdingsTableBody');
+    if (!items || items.length === 0) {
+      tbody.innerHTML = '';
+      document.getElementById('modalEmpty').style.display = 'block';
+      return;
+    }
+    document.getElementById('modalEmpty').style.display = 'none';
+    var html = '';
+    items.forEach(function(it) {
+      var pct = it.change_pct;
+      var pctStr = _fmtPct(pct);
+      var pctColor = _pctColor(pct);
+      html += '<tr>'
+        + '<td class="col-rank">' + (it.rank == null ? '-' : it.rank) + '</td>'
+        + '<td class="col-code">' + _escapeHtml(it.code) + '</td>'
+        + '<td class="col-name">' + _escapeHtml(it.name) + '</td>'
+        + '<td class="col-pct" style="color:' + pctColor + '">' + pctStr + '</td>'
+        + '<td class="col-weight">' + _fmtWeight(it.weight) + '</td>'
+        + '</tr>';
+    });
+    tbody.innerHTML = html;
+  }
+
+  var _hoverCloseTimer = null;
+  var _modalOpen = false;  // 클릭 모달이 열려있으면 hover popover 무시
+
+  function _cancelHoverCloseTimer() {
+    if (_hoverCloseTimer) {
+      clearTimeout(_hoverCloseTimer);
+      _hoverCloseTimer = null;
+    }
+  }
+
+  function _formatSubLine(items, refDate) {
+    var refFmt = refDate;
+    if (refDate && refDate.length === 8) {
+      refFmt = refDate.slice(0,4) + '-' + refDate.slice(4,6) + '-' + refDate.slice(6,8);
+    }
+    var parts = [];
+    if (items.length) parts.push('구성종목 (' + items.length + '개)');
+    if (refFmt) parts.push('보유 기준일: ' + refFmt);
+    if (HOLDINGS_CHANGE_REF_DATE) parts.push('등락률 기준: ' + HOLDINGS_CHANGE_REF_DATE);
+    return parts.join(' · ');
+  }
+
+  function _renderRowsTo(tbodyId, emptyId, items) {
+    var tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+    if (!items || items.length === 0) {
+      tbody.innerHTML = '';
+      var em = document.getElementById(emptyId);
+      if (em) em.style.display = 'block';
+      return;
+    }
+    var em = document.getElementById(emptyId);
+    if (em) em.style.display = 'none';
+    var html = '';
+    items.forEach(function(it) {
+      var pct = it.change_pct;
+      var pctStr = _fmtPct(pct);
+      var pctColor = _pctColor(pct);
+      html += '<tr>'
+        + '<td class="col-rank">' + (it.rank == null ? '-' : it.rank) + '</td>'
+        + '<td class="col-code">' + _escapeHtml(it.code) + '</td>'
+        + '<td class="col-name">' + _escapeHtml(it.name) + '</td>'
+        + '<td class="col-pct" style="color:' + pctColor + '">' + pctStr + '</td>'
+        + '<td class="col-weight">' + _fmtWeight(it.weight) + '</td>'
+        + '</tr>';
+    });
+    tbody.innerHTML = html;
+  }
+
+  // ─── 클릭: sticky 중앙 모달 ───────────────────────────────
+  window.openHoldingsModal = function(etfCode, etfName) {
+    var items = HOLDINGS[etfCode] || [];
+    _currentHoldings = items;
+    _modalOpen = true;
+    // hover popover 즉시 닫기
+    _hidePopover();
+
+    var refDate = HOLDINGS_REF_DATES[etfCode] || '';
+    document.getElementById('modalTitleMain').textContent = etfCode + ' ' + etfName;
+    document.getElementById('modalTitleSub').textContent = _formatSubLine(items, refDate);
+
+    document.getElementById('modalFooterLeft').textContent =
+      items.length ? '총 ' + items.length + '개 종목' : '';
+    var weightSum = items.reduce(function(a,it) {
+      return a + (it.weight || 0);
+    }, 0);
+    document.getElementById('modalFooterRight').textContent =
+      items.length ? '비중 합계: ' + weightSum.toFixed(2) + '%' : '';
+
+    document.getElementById('modalSearch').value = '';
+    _renderHoldingsRows(items);
+
+    var ov = document.getElementById('holdingsModal');
+    ov.classList.add('open');
+    ov.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('modal-open');
+  };
+
+  window.closeHoldingsModal = function() {
+    _modalOpen = false;
+    var ov = document.getElementById('holdingsModal');
+    ov.classList.remove('open');
+    ov.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('modal-open');
+  };
+
+  // ─── Hover: 버튼 옆 popover ───────────────────────────────
+  var _popoverAnchor = null;
+
+  function _positionPopover(btnEl) {
+    var pop = document.getElementById('holdingsPopover');
+    if (!pop || !btnEl) return;
+    // 일단 보이게 해서 크기 측정
+    pop.style.visibility = 'hidden';
+    pop.classList.add('open');
+    var btnRect = btnEl.getBoundingClientRect();
+    var popW = pop.offsetWidth || 420;
+    var popH = pop.offsetHeight || 300;
+    var viewportW = window.innerWidth;
+    var viewportH = window.innerHeight;
+
+    // 기본: 버튼 아래쪽 우측 정렬 (버튼 오른쪽 끝 기준으로 popover 우측 정렬)
+    var left = btnRect.right - popW;
+    var top = btnRect.bottom + 6;
+    // 우측이 화면 안에 들어오도록 보정
+    if (left < 8) left = 8;
+    if (left + popW > viewportW - 8) left = viewportW - popW - 8;
+    // 아래쪽 공간 부족하면 위쪽으로
+    if (top + popH > viewportH - 8) {
+      top = btnRect.top - popH - 6;
+      if (top < 8) top = 8;
+    }
+    pop.style.left = left + 'px';
+    pop.style.top = top + 'px';
+    pop.style.visibility = 'visible';
+  }
+
+  function _hidePopover() {
+    var pop = document.getElementById('holdingsPopover');
+    if (pop) pop.classList.remove('open');
+    _popoverAnchor = null;
+  }
+
+  window.hoverOpenHoldingsModal = function(etfCode, etfName, btnEl) {
+    if (_modalOpen) return;  // sticky 모달 열려있으면 hover 차단
+    _cancelHoverCloseTimer();
+
+    var items = HOLDINGS[etfCode] || [];
+    var refDate = HOLDINGS_REF_DATES[etfCode] || '';
+
+    document.getElementById('popoverTitleMain').textContent = etfCode + ' ' + etfName;
+    document.getElementById('popoverTitleSub').textContent = _formatSubLine(items, refDate);
+
+    _renderRowsTo('popoverTableBody', 'popoverEmpty', items);
+
+    var weightSum = items.reduce(function(a,it) { return a + (it.weight || 0); }, 0);
+    document.getElementById('popoverFooter').textContent =
+      items.length ? '총 ' + items.length + '개 · 비중 합계 ' + weightSum.toFixed(2) + '%' : '';
+
+    _popoverAnchor = btnEl || null;
+    _positionPopover(btnEl);
+  };
+
+  window.scheduleHoverClose = function() {
+    _cancelHoverCloseTimer();
+    _hoverCloseTimer = setTimeout(function() {
+      _hidePopover();
+    }, 250);
+  };
+
+  window.cancelHoverClose = function() {
+    _cancelHoverCloseTimer();
+  };
+
+  // 스크롤/리사이즈 시 popover 닫기 (위치가 어긋남)
+  window.addEventListener('scroll', function() { _hidePopover(); }, true);
+  window.addEventListener('resize', function() { _hidePopover(); });
+
+  window.filterHoldings = function() {
+    var q = (document.getElementById('modalSearch').value || '').trim().toLowerCase();
+    if (!q) {
+      _renderHoldingsRows(_currentHoldings);
+      return;
+    }
+    var filtered = _currentHoldings.filter(function(it) {
+      return (it.name || '').toLowerCase().indexOf(q) >= 0
+          || (it.code || '').toLowerCase().indexOf(q) >= 0;
+    });
+    _renderHoldingsRows(filtered);
+  };
+
+  // 모달 외부 클릭 / ESC 키 닫기
+  document.addEventListener('DOMContentLoaded', function() {
+    var ov = document.getElementById('holdingsModal');
+    if (ov) {
+      ov.addEventListener('click', function(e) {
+        if (e.target === ov) closeHoldingsModal();
+      });
+    }
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeHoldingsModal();
+  });
+
+  // 초기 정렬 적용 후 차트 초기화
+  document.addEventListener('DOMContentLoaded', function() {
+    sortCards(_sorted_mode);
+    initCharts();
+  });
+})();
+</script>
+</body>
+</html>
