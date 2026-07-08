@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TNBFolio 주도섹터 V2 2026-07-08</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f0f2f5;
+      color: #222;
+      min-height: 100vh;
+    }
+    .page-header {
+      background: #1a237e;
+      color: white;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .page-header h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    .page-header .subtitle {
+      font-size: 0.78rem;
+      color: #b0bec5;
+      margin-top: 2px;
+    }
+    .sort-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .sort-label {
+      font-size: 0.75rem;
+      color: #b0bec5;
+    }
+    .sort-btn {
+      padding: 5px 14px;
+      border: 1.5px solid #5c6bc0;
+      background: transparent;
+      color: #c5cae9;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .sort-btn:hover { background: #3949ab; color: white; }
+    .sort-btn.active { background: #5c6bc0; color: white; border-color: #5c6bc0; }
+    .main-content { padding: 16px; max-width: 1800px; margin: 0 auto; }
+    .section { margin-bottom: 28px; }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      border-radius: 6px 6px 0 0;
+      margin-bottom: 0;
+    }
+    .section-header h2 { font-size: 1rem; font-weight: 700; }
+    .count-badge {
+      background: rgba(0,0,0,0.12);
+      color: inherit;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      padding: 12px;
+      background: rgba(255,255,255,0.4);
+      border-radius: 0 0 6px 6px;
+      border: 1px solid rgba(0,0,0,0.06);
+      border-top: none;
+      min-height: 60px;
+    }
+    @media (max-width: 1100px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 700px)  { .grid { grid-template-columns: repeat(1, 1fr); } }
+    .card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.10), 0 0 1px rgba(0,0,0,0.06);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: box-shadow 0.15s;
+    }
+    .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 10px 3px;
+      gap: 6px;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    .card-header-left {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      min-width: 0;
+      flex: 1;
+    }
+    .sector-tag {
+      background: #e8eaf6;
+      color: #3949ab;
+      font-size: 0.68rem;
+      padding: 1px 6px;
+      border-radius: 10px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .etf-name {
+      font-size: 0.78rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+    .change-pct {
+      font-size: 0.78rem;
+      font-weight: 700;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .card-header-right { flex-shrink: 0; }
+    .streak-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .holdings-btn {
+      display: inline-block;
+      padding: 2px 8px;
+      margin-right: 4px;
+      border: 1px solid #cfd8dc;
+      background: #eceff1;
+      color: #455a64;
+      border-radius: 10px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .holdings-btn:hover {
+      background: #455a64;
+      color: white;
+      border-color: #455a64;
+    }
+    .card-header-right {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      flex-shrink: 0;
+    }
+    /* Holdings Modal (클릭 = sticky 중앙 모달) */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+    /* Holdings Popover (hover = 버튼 옆 작은 팝오버) */
+    .popover {
+      position: fixed;
+      display: none;
+      background: white;
+      border: 1px solid #cfd8dc;
+      border-radius: 8px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+      width: 420px;
+      max-width: 90vw;
+      max-height: 60vh;
+      z-index: 9998;
+      overflow: hidden;
+      flex-direction: column;
+    }
+    .popover.open { display: flex; }
+    .popover-header {
+      padding: 8px 12px 6px;
+      border-bottom: 1px solid #f0f0f0;
+      background: #f5f7fa;
+    }
+    .popover-title-main {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #1a237e;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .popover-title-sub {
+      font-size: 0.72rem;
+      color: #607d8b;
+      margin-top: 2px;
+    }
+    .popover-body {
+      overflow-y: auto;
+      flex: 1;
+    }
+    .popover-body .holdings-table {
+      font-size: 0.78rem;
+    }
+    .popover-body .holdings-table th {
+      padding: 5px 8px;
+      font-size: 0.7rem;
+    }
+    .popover-body .holdings-table tbody td {
+      padding: 4px 8px;
+    }
+    .popover-footer {
+      padding: 5px 12px;
+      border-top: 1px solid #f0f0f0;
+      background: #fafafa;
+      font-size: 0.68rem;
+      color: #90a4ae;
+      text-align: right;
+    }
+    .modal-box {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: 720px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-header {
+      padding: 14px 18px 10px;
+      border-bottom: 1px solid #eceff1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: #f5f7fa;
+    }
+    .modal-title {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .modal-title-main {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #1a237e;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .modal-title-sub {
+      font-size: 0.78rem;
+      color: #607d8b;
+    }
+    .modal-close {
+      background: transparent;
+      border: none;
+      font-size: 1.6rem;
+      color: #607d8b;
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+    .modal-close:hover { background: #eceff1; color: #d32f2f; }
+    .modal-toolbar {
+      padding: 8px 18px;
+      border-bottom: 1px solid #f0f0f0;
+      background: #fafafa;
+    }
+    .modal-search {
+      width: 100%;
+      padding: 6px 10px;
+      border: 1px solid #cfd8dc;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      box-sizing: border-box;
+    }
+    .modal-body {
+      overflow-y: auto;
+      flex: 1;
+      padding: 0;
+    }
+    .holdings-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .holdings-table thead {
+      position: sticky;
+      top: 0;
+      background: white;
+      box-shadow: inset 0 -1px 0 #e0e0e0;
+      z-index: 1;
+    }
+    .holdings-table th {
+      text-align: right;
+      padding: 8px 12px;
+      font-weight: 600;
+      color: #455a64;
+      font-size: 0.78rem;
+      white-space: nowrap;
+      background: white;
+    }
+    .holdings-table th.col-name { text-align: left; }
+    .holdings-table th.col-rank,
+    .holdings-table th.col-code { text-align: center; }
+    .holdings-table tbody td {
+      padding: 7px 12px;
+      border-bottom: 1px solid #f0f0f0;
+      white-space: nowrap;
+    }
+    .holdings-table tbody tr:hover { background: #fafbfc; }
+    .holdings-table .col-rank { text-align: center; color: #78909c; }
+    .holdings-table .col-code { text-align: center; color: #546e7a; font-family: Consolas, monospace; }
+    .holdings-table .col-name { text-align: left; font-weight: 500; }
+    .holdings-table .col-pct { text-align: right; font-weight: 600; }
+    .holdings-table .col-weight { text-align: right; font-weight: 700; color: #1a237e; }
+    .modal-empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: #999;
+      font-size: 0.9rem;
+    }
+    .modal-footer {
+      padding: 8px 18px;
+      border-top: 1px solid #f0f0f0;
+      background: #fafafa;
+      font-size: 0.72rem;
+      color: #90a4ae;
+      display: flex;
+      justify-content: space-between;
+    }
+    body.modal-open { overflow: hidden; }
+    .card-subheader {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 10px;
+      padding: 2px 10px 4px;
+      font-size: 0.68rem;
+      color: #888;
+    }
+    .chart-container {
+      flex: 1;
+      position: relative;
+      min-height: 0;
+    }
+    .plotly-chart { width: 100%; height: 270px; }
+    .no-data {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 270px;
+      color: #bbb;
+      font-size: 0.85rem;
+    }
+    .empty-msg {
+      padding: 20px;
+      color: #999;
+      text-align: center;
+      font-size: 0.85rem;
+    }
+    .footer {
+      text-align: center;
+      padding: 20px;
+      color: #aaa;
+      font-size: 0.75rem;
+      border-top: 1px solid #e0e0e0;
+      margin-top: 20px;
+    }
+  </style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div>
+    <h1>TNBFolio 주도섹터 V2</h1>
+    <div class="subtitle">기준일: 2026-07-08 &nbsp;|&nbsp; 생성: 2026-07-08 11:24</div>
+  </div>
+  <div class="sort-controls">
+    <span class="sort-label">정렬:</span>
+    <button class="sort-btn active" data-sort="streak" onclick="sortCards('streak')">연속일수 순</button>
+    <button class="sort-btn " data-sort="sector" onclick="sortCards('sector')">섹터 순</button>
+  </div>
+</header>
+
+<main class="main-content">
+  
+<section class="section" data-group="sustained">
+  <div class="section-header" style="background:#e8f5e9;border-left:5px solid #4caf50">
+    <h2 style="color:#1b5e20">1. 주도섹터 (유지)</h2>
+    
+  </div>
+  <div class="grid" id="grid-sustained">
+    <div class="empty-msg">해당 없음</div>
+  </div>
+</section>
+<section class="section" data-group="entry">
+  <div class="section-header" style="background:#e3f2fd;border-left:5px solid #1976d2">
+    <h2 style="color:#0d47a1">2. 주도섹터 진입</h2>
+    
+  </div>
+  <div class="grid" id="grid-entry">
+    <div class="empty-msg">해당 없음</div>
+  </div>
+</section>
+<section class="section" data-group="exit">
+  <div class="section-header" style="background:#ffebee;border-left:5px solid #ef5350">
+    <h2 style="color:#b71c1c">3. 주도섹터 이탈</h2>
+    <span class="count-badge">3개</span>
+  </div>
+  <div class="grid" id="grid-exit">
+    
+<div class="card"
+     data-code="228790"
+     data-streak="1"
+     data-sector-idx="4"
+     data-group="exit">
+  <div class="card-header">
+    <div class="card-header-left">
+      <span class="sector-tag" title="필수소비재·뷰티·K-푸드">필수소비재·…</span>
+      <span class="etf-name">TIGER 화장품</span>
+      <span class="change-pct" style="color:#2979ff">-3.33%</span>
+    </div>
+    <div class="card-header-right">
+      <button class="holdings-btn" type="button"
+              onclick="openHoldingsModal('228790', 'TIGER 화장품')"
+              onmouseenter="hoverOpenHoldingsModal('228790', 'TIGER 화장품', this)"
+              onmouseleave="scheduleHoverClose()"
+              title="TIGER 화장품 구성종목 (호버 또는 클릭)">구성종목</button>
+      <span class="streak-badge" style="background:#b71c1c;color:#ffffff">+1일</span>
+    </div>
+  </div>
+  <div class="card-subheader">
+    <span class="last-close">종가 3,770원</span>
+    <span class="last-vol">거래량 3.9M</span>
+  </div>
+  <div class="chart-container">
+    <div id="chart-228790" class="plotly-chart"></div>
+  </div>
+</div>
+<div class="card"
+     data-code="0008T0"
+     data-streak="1"
+     data-sector-idx="4"
+     data-group="exit">
+  <div class="card-header">
+    <div class="card-header-left">
+      <span class="sector-tag" title="필수소비재·뷰티·K-푸드">필수소비재·…</span>
+      <span class="etf-name">SOL 화장품TOP3플러스</span>
+      <span class="change-pct" style="color:#2979ff">-4.15%</span>
+    </div>
+    <div class="card-header-right">
+      <button class="holdings-btn" type="button"
+              onclick="openHoldingsModal('0008T0', 'SOL 화장품TOP3플러스')"
+              onmouseenter="hoverOpenHoldingsModal('0008T0', 'SOL 화장품TOP3플러스', this)"
+              onmouseleave="scheduleHoverClose()"
+              title="SOL 화장품TOP3플러스 구성종목 (호버 또는 클릭)">구성종목</button>
+      <span class="streak-badge" style="background:#b71c1c;color:#ffffff">+1일</span>
+    </div>
+  </div>
+  <div class="card-subheader">
+    <span class="last-close">종가 15,000원</span>
+    <span class="last-vol">거래량 640K</span>
+  </div>
+  <div class="chart-container">
+    <div id="chart-0008T0" class="plotly-chart"></div>
+  </div>
+</div>
+<div class="card"
+     data-code="479850"
+     data-streak="1"
+     data-sector-idx="4"
+     data-group="exit">
+  <div class="card-header">
+    <div class="card-header-left">
+      <span class="sector-tag" title="필수소비재·뷰티·K-푸드">필수소비재·…</span>
+      <span class="etf-name">HANARO K-뷰티</span>
+      <span class="change-pct" style="color:#2979ff">-2.69%</span>
+    </div>
+    <div class="card-header-right">
+      <button class="holdings-btn" type="button"
+              onclick="openHoldingsModal('479850', 'HANARO K-뷰티')"
+              onmouseenter="hoverOpenHoldingsModal('479850', 'HANARO K-뷰티', this)"
+              onmouseleave="scheduleHoverClose()"
+              title="HANARO K-뷰티 구성종목 (호버 또는 클릭)">구성종목</button>
+      <span class="streak-badge" style="background:#b71c1c;color:#ffffff">+1일</span>
+    </div>
+  </div>
+  <div class="card-subheader">
+    <span class="last-close">종가 16,455원</span>
+    <span class="last-vol">거래량 34K</span>
+  </div>
+  <div class="chart-container">
+    <div id="chart-479850" class="plotly-chart"></div>
+  </div>
+</div>
+  </div>
+</section>
+</main>
+
+<footer class="footer">
+  TNBFolio 주도섹터 V2 대시보드 &nbsp;·&nbsp; 생성 시각: 2026-07-08 11:24 &nbsp;·&nbsp; 기준일: 2026-07-08
+</footer>
+
+<!-- 구성종목 Popover (호버용) -->
+<div id="holdingsPopover" class="popover" role="tooltip"
+     onmouseenter="cancelHoverClose()"
+     onmouseleave="scheduleHoverClose()">
+  <div class="popover-header">
+    <div class="popover-title-main" id="popoverTitleMain">-</div>
+    <div class="popover-title-sub" id="popoverTitleSub">-</div>
+  </div>
+  <div class="popover-body">
+    <table class="holdings-table">
+      <thead>
+        <tr>
+          <th class="col-rank" style="width:34px">순위</th>
+          <th class="col-code" style="width:66px">코드</th>
+          <th class="col-name">종목명</th>
+          <th class="col-pct" style="width:64px">등락률</th>
+          <th class="col-weight" style="width:60px">비중%</th>
+        </tr>
+      </thead>
+      <tbody id="popoverTableBody"></tbody>
+    </table>
+    <div id="popoverEmpty" class="modal-empty" style="display:none; padding:20px;">구성종목 데이터 없음</div>
+  </div>
+  <div class="popover-footer" id="popoverFooter">-</div>
+</div>
+
+<!-- 구성종목 모달 (클릭 = sticky 중앙 모달) -->
+<div id="holdingsModal" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-box" role="document"
+       onclick="event.stopPropagation();">
+    <div class="modal-header">
+      <div class="modal-title">
+        <div class="modal-title-main" id="modalTitleMain">-</div>
+        <div class="modal-title-sub" id="modalTitleSub">-</div>
+      </div>
+      <button type="button" class="modal-close" aria-label="닫기" onclick="closeHoldingsModal()">×</button>
+    </div>
+    <div class="modal-toolbar">
+      <input type="text" class="modal-search" id="modalSearch"
+             placeholder="종목명/종목코드 검색..." oninput="filterHoldings()" />
+    </div>
+    <div class="modal-body">
+      <table class="holdings-table" id="holdingsTable">
+        <thead>
+          <tr>
+            <th class="col-rank" style="width:48px">순위</th>
+            <th class="col-code" style="width:80px">종목코드</th>
+            <th class="col-name">종목명</th>
+            <th class="col-pct" style="width:90px">등락률</th>
+            <th class="col-weight" style="width:80px">비중(%)</th>
+          </tr>
+        </thead>
+        <tbody id="holdingsTableBody"></tbody>
+      </table>
+      <div id="modalEmpty" class="modal-empty" style="display:none;">구성종목 데이터 없음</div>
+    </div>
+    <div class="modal-footer">
+      <span id="modalFooterLeft">-</span>
+      <span id="modalFooterRight">-</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var CHART_DATA = {"chart-228790": {"data": [{"type": "candlestick", "x": ["2026-02-09", "2026-02-10", "2026-02-11", "2026-02-12", "2026-02-13", "2026-02-19", "2026-02-20", "2026-02-23", "2026-02-24", "2026-02-25", "2026-02-26", "2026-02-27", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19", "2026-03-20", "2026-03-23", "2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-03", "2026-04-06", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-13", "2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17", "2026-04-20", "2026-04-21", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-04", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-06-01", "2026-06-02", "2026-06-04", "2026-06-05", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-12", "2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-19", "2026-06-22", "2026-06-23", "2026-06-24", "2026-06-25", "2026-06-26", "2026-06-29", "2026-06-30", "2026-07-01", "2026-07-02", "2026-07-03", "2026-07-06", "2026-07-07", "2026-07-08"], "open": [-3.552631578947374, 0.1315789473684159, 1.0526315789473717, 0.1315789473684159, -1.3157894736842146, -0.6578947368421018, -0.1315789473684159, -0.7894736842105288, -1.9736842105263164, -1.8421052631578894, -1.7105263157894735, -2.1052631578947323, -4.342105263157892, -11.315789473684212, -11.973684210526315, -14.473684210526317, -16.18421052631579, -12.368421052631584, -11.315789473684212, -12.763157894736842, -13.28947368421053, -11.184210526315786, -11.973684210526315, -9.078947368421053, -9.999999999999998, -8.81578947368421, -8.684210526315795, -6.184210526315792, -6.710526315789478, -7.236842105263152, -11.447368421052628, -8.289473684210524, -8.552631578947366, -5.921052631578949, -4.736842105263161, -6.842105263157894, -9.342105263157896, -9.473684210526311, -7.631578947368423, -6.315789473684208, -4.078947368421049, -4.868421052631577, 0.39473684210526994, -0.5263157894736858, 0.5263157894736858, 1.8421052631578894, 3.552631578947363, 2.763157894736845, 2.2368421052631593, 5.000000000000004, 6.578947368421062, 10.131578947368425, 9.210526315789469, 10.789473684210527, 7.6315789473684115, 6.052631578947376, 4.73684210526315, 4.6052631578947345, 4.73684210526315, 5.921052631578938, 6.052631578947376, 4.8684210526315885, 2.2368421052631593, 6.842105263157894, -0.2631578947368429, -1.8421052631578894, -3.026315789473688, -4.736842105263161, -3.9473684210526327, -0.39473684210525883, -4.342105263157892, -6.578947368421051, -7.105263157894736, -8.289473684210524, -8.947368421052627, -8.81578947368421, -8.157894736842108, -16.18421052631579, -15.263157894736846, -11.71052631578947, -12.105263157894742, -6.97368421052632, -7.631578947368423, -7.631578947368423, -8.421052631578952, -8.289473684210524, -10.65789473684211, -11.973684210526315, -13.026315789473685, -15.131578947368418, -12.236842105263158, -11.71052631578947, -10.65789473684211, -6.578947368421051, -6.447368421052635, -0.9210526315789447, 0.2631578947368318, -0.9210526315789447, -1.9736842105263164, 3.157894736842115], "high": [0.39473684210526994, 0.7894736842105177, 1.0526315789473717, 0.1315789473684159, 0.2631578947368318, 0.1315789473684159, 0.5263157894736858, -0.39473684210525883, -0.9210526315789447, -1.5789473684210575, 0.1315789473684159, -1.9736842105263164, -4.342105263157892, -11.315789473684212, -11.973684210526315, -10.789473684210527, -13.815789473684214, -11.71052631578947, -9.736842105263154, -11.578947368421055, -9.473684210526311, -10.394736842105267, -8.421052631578952, -7.763157894736839, -8.157894736842108, -3.9473684210526327, -6.578947368421051, -6.184210526315792, -5.263157894736848, -6.97368421052632, -5.394736842105264, -6.97368421052632, -4.868421052631577, -5.13157894736842, -2.631578947368418, -6.315789473684208, -7.499999999999996, -6.447368421052635, -6.842105263157894, -3.026315789473688, -2.368421052631575, -0.2631578947368429, 0.39473684210526994, 0.5263157894736858, 1.8421052631578894, 3.552631578947363, 3.6842105263157787, 3.289473684210531, 3.9473684210526327, 6.052631578947376, 9.736842105263154, 10.394736842105257, 9.868421052631572, 11.447368421052628, 7.6315789473684115, 7.8947368421052655, 4.8684210526315885, 4.6052631578947345, 5.789473684210522, 8.421052631578952, 8.947368421052637, 5.263157894736836, 5.789473684210522, 6.842105263157894, 1.0526315789473717, 0.6578947368421018, -2.894736842105261, -3.421052631578947, -1.5789473684210575, -0.39473684210525883, -3.552631578947374, -6.052631578947365, -6.97368421052632, -5.394736842105264, -7.105263157894736, -7.36842105263158, -6.97368421052632, -13.815789473684214, -9.999999999999998, -9.078947368421053, -8.289473684210524, -6.710526315789478, -6.97368421052632, -5.263157894736848, -6.710526315789478, -8.157894736842108, -9.868421052631582, -10.65789473684211, -10.131578947368425, -11.578947368421055, -10.131578947368425, -11.315789473684212, -5.000000000000004, -4.078947368421049, -1.0526315789473717, 5.13157894736842, 0.6578947368421018, 1.3157894736842035, 5.13157894736842, 4.473684210526319], "low": [-3.8157894736842057, -1.0526315789473717, -0.6578947368421018, -1.5789473684210575, -1.9736842105263164, -1.5789473684210575, -1.7105263157894735, -2.631578947368418, -2.2368421052631593, -3.157894736842104, -2.763157894736845, -3.552631578947374, -9.60526315789474, -19.21052631578948, -15.263157894736846, -14.73684210526316, -16.97368421052632, -13.684210526315788, -12.763157894736842, -13.28947368421053, -13.684210526315788, -13.28947368421053, -11.973684210526315, -9.342105263157896, -10.394736842105267, -8.81578947368421, -9.473684210526311, -9.342105263157896, -7.631578947368423, -9.999999999999998, -11.973684210526315, -8.684210526315795, -9.342105263157896, -6.97368421052632, -8.289473684210524, -9.078947368421053, -10.526315789473683, -10.921052631578942, -9.60526315789474, -6.578947368421051, -4.078947368421049, -4.868421052631577, -1.5789473684210575, -1.5789473684210575, -0.1315789473684159, 1.7105263157894735, 2.499999999999991, 1.7105263157894735, 2.2368421052631593, 3.6052631578947336, 6.578947368421062, 8.157894736842097, 7.8947368421052655, 7.105263157894748, 3.6842105263157787, 5.000000000000004, 1.8421052631578894, 1.9736842105263053, 2.894736842105261, 5.13157894736842, 3.6842105263157787, 1.3157894736842035, 2.2368421052631593, 1.3157894736842035, -3.68421052631579, -3.8157894736842057, -7.499999999999996, -5.921052631578949, -4.078947368421049, -4.342105263157892, -7.36842105263158, -9.999999999999998, -10.26315789473684, -8.684210526315795, -10.921052631578942, -10.131578947368425, -11.71052631578947, -16.447368421052634, -15.526315789473689, -12.105263157894742, -12.5, -10.131578947368425, -9.210526315789469, -9.868421052631582, -9.868421052631582, -11.05263157894737, -13.684210526315788, -13.815789473684214, -15.000000000000002, -15.921052631578947, -12.236842105263158, -14.34210526315789, -11.184210526315786, -7.105263157894736, -6.710526315789478, -1.3157894736842146, -3.9473684210526327, -3.157894736842104, -2.368421052631575, -1.9736842105263164], "close": [0.0, 0.2631578947368318, -0.2631578947368429, -0.39473684210525883, -1.0526315789473717, 0.0, -1.3157894736842146, -2.1052631578947323, -2.1052631578947323, -2.2368421052631593, -2.1052631578947323, -2.763157894736845, -9.60526315789474, -18.157894736842106, -13.28947368421053, -11.05263157894737, -15.000000000000002, -12.105263157894742, -11.842105263157897, -11.973684210526315, -9.999999999999998, -12.763157894736842, -9.999999999999998, -8.81578947368421, -9.342105263157896, -5.263157894736848, -9.210526315789469, -7.631578947368423, -7.236842105263152, -9.868421052631582, -5.52631578947368, -8.289473684210524, -7.8947368421052655, -5.394736842105264, -7.763157894736839, -8.421052631578952, -10.26315789473684, -10.789473684210527, -8.552631578947366, -4.342105263157892, -3.289473684210531, -0.2631578947368429, -1.4473684210526305, 0.1315789473684159, 1.4473684210526416, 3.289473684210531, 2.763157894736845, 1.8421052631578894, 3.4736842105263177, 4.8684210526315885, 9.473684210526322, 9.078947368421053, 8.421052631578952, 7.36842105263158, 4.263157894736835, 5.13157894736842, 3.289473684210531, 2.763157894736845, 5.13157894736842, 5.263157894736836, 4.8684210526315885, 1.9736842105263053, 5.657894736842106, 1.4473684210526416, -1.1842105263157876, -3.421052631578947, -6.315789473684208, -5.263157894736848, -2.2368421052631593, -3.421052631578947, -6.97368421052632, -8.947368421052627, -8.289473684210524, -7.105263157894736, -9.868421052631582, -8.421052631578952, -11.05263157894737, -16.315789473684205, -10.789473684210527, -10.789473684210527, -8.289473684210524, -9.473684210526311, -7.8947368421052655, -9.342105263157896, -8.026315789473681, -10.789473684210527, -11.71052631578947, -13.026315789473685, -13.94736842105263, -11.842105263157897, -11.447368421052628, -12.631578947368416, -5.13157894736842, -6.710526315789478, -1.3157894736842146, -0.5263157894736858, -1.3157894736842146, -1.9736842105263164, 2.6315789473684292, -0.7894736842105288], "increasing": {"line": {"color": "#e84545"}, "fillcolor": "#e84545"}, "decreasing": {"line": {"color": "#2979ff"}, "fillcolor": "#2979ff"}, "xaxis": "x", "yaxis": "y", "name": "상승률", "showlegend": false, "hoverinfo": "x+y", "yhoverformat": ".2f"}, {"type": "scatter", "x": ["2026-02-09", "2026-02-10", "2026-02-11", "2026-02-12", "2026-02-13", "2026-02-19", "2026-02-20", "2026-02-23", "2026-02-24", "2026-02-25", "2026-02-26", "2026-02-27", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19", "2026-03-20", "2026-03-23", "2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-03", "2026-04-06", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-13", "2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17", "2026-04-20", "2026-04-21", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-04", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-06-01", "2026-06-02", "2026-06-04", "2026-06-05", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-12", "2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-19", "2026-06-22", "2026-06-23", "2026-06-24", "2026-06-25", "2026-06-26", "2026-06-29", "2026-06-30", "2026-07-01", "2026-07-02", "2026-07-03", "2026-07-06", "2026-07-07", "2026-07-08"], "y": [-5.421052631578949, -4.756578947368418, -4.197368421052627, -3.6250000000000004, -3.0855263157894774, -2.440789473684213, -1.9868421052631535, -1.61842105263158, -1.486842105263153, -1.407894736842108, -1.4144736842105265, -1.4342105263157934, -1.8881578947368416, -2.881578947368424, -3.5592105263157925, -3.993421052631574, -4.657894736842105, -5.138157894736839, -5.532894736842109, -5.855263157894742, -6.355263157894742, -7.006578947368425, -7.493421052631577, -7.914473684210521, -8.328947368421058, -8.59210526315789, -8.98684210526316, -9.263157894736839, -9.519736842105264, -9.901315789473685, -10.072368421052635, -10.348684210526315, -10.26315789473684, -9.624999999999995, -9.348684210526315, -9.2171052631579, -8.980263157894742, -8.914473684210522, -8.750000000000002, -8.36842105263158, -8.032894736842099, -7.407894736842103, -6.98026315789474, -6.53289473684211, -5.993421052631575, -5.565789473684212, -4.967105263157889, -4.493421052631574, -3.9578947368421047, -3.2210526315789467, -2.4710526315789516, -1.6026315789473666, -0.7868421052631636, -0.14868421052631753, 0.45263157894737116, 1.1302631578947286, 1.8078947368421083, 2.485526315789466, 3.169736842105264, 3.6499999999999977, 4.057894736842105, 4.169736842105265, 4.525000000000001, 4.590789473684209, 4.459210526315793, 4.123684210526313, 3.6697368421052534, 3.314473684210517, 3.0289473684210533, 2.6144736842105276, 1.7921052631578949, 0.890789473684217, 0.05526315789472491, -0.6684210526315848, -1.375000000000004, -2.0526315789473726, -2.7697368421052637, -3.7236842105263124, -4.51973684210526, -5.322368421052637, -5.980263157894738, -6.5526315789473655, -7.2302631578947345, -7.769736842105268, -8.111842105263156, -8.48026315789474, -8.750000000000002, -9.138157894736842, -9.723684210526319, -10.144736842105262, -10.368421052631582, -10.55263157894737, -10.394736842105267, -10.375, -9.947368421052627, -9.552631578947368, -9.065789473684216, -8.348684210526313, -7.677631578947364, -7.177631578947363], "mode": "lines", "line": {"color": "#00c853", "width": 1.5}, "xaxis": "x", "yaxis": "y", "name": "MA20", "showlegend": false, "hoverinfo": "skip"}, {"type": "bar", "x": ["2026-02-09", "2026-02-10", "2026-02-11", "2026-02-12", "2026-02-13", "2026-02-19", "2026-02-20", "2026-02-23", "2026-02-24", "2026-02-25", "2026-02-26", "2026-02-27", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19", "2026-03-20", "2026-03-23", "2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-03", "2026-04-06", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-13", "2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17", "2026-04-20", "2026-04-21", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-04", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-06-01", "2026-06-02", "2026-06-04", "2026-06-05", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-12", "2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-19", "2026-06-22", "2026-06-23", "2026-06-24", "2026-06-25", "2026-06-26", "2026-06-29", "2026-06-30", "2026-07-01", "2026-07-02", "2026-07-03", "2026-07-06", "2026-07-07", "2026-07-08"], "y": [7933859.0, 4022083.0, 2897810.0, 3792553.0, 3803386.0, 4335848.0, 4886257.0, 4581202.0, 3669088.0, 4256982.0, 5853616.0, 3555445.0, 6924472.0, 7730894.0, 6084299.0, 3977869.0, 5738794.0, 3723063.0, 3695516.0, 2452719.0, 3650126.0, 1725526.0, 3020733.0, 2737047.0, 1802941.0, 4995096.0, 3600613.0, 2321254.0, 2557102.0, 2550590.0, 5161599.0, 2480294.0, 3594297.0, 1901365.0, 3368468.0, 1579766.0, 1980725.0, 3375930.0, 1859344.0, 5037493.0, 2186276.0, 3494476.0, 1764223.0, 2549290.0, 2556079.0, 5514444.0, 1960039.0, 2065767.0, 2549941.0, 4895425.0, 8330324.0, 3969664.0, 3345744.0, 4331387.0, 4354593.0, 3869912.0, 3904491.0, 3284627.0, 4847312.0, 5487861.0, 9715986.0, 4419205.0, 4338634.0, 3905696.0, 2504800.0, 1991246.0, 2288759.0, 3704335.0, 2274668.0, 2642950.0, 2384220.0, 2135909.0, 1865311.0, 3333045.0, 2711363.0, 3339006.0, 2996892.0, 1528642.0, 2200504.0, 1745149.0, 1924880.0, 2744288.0, 1972265.0, 2674467.0, 3607651.0, 2296506.0, 3064594.0, 1870878.0, 3310066.0, 1911730.0, 2878625.0, 2734919.0, 6657649.0, 5502528.0, 4733009.0, 10700109.0, 4904042.0, 4848034.0, 8248684.0, 3895824.0], "marker": {"color": ["#e84545", "#e84545", "#2979ff", "#2979ff", "#e84545", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#e84545", "#e84545", "#2979ff", "#e84545", "#e84545", "#2979ff", "#e84545", "#e84545", "#e84545", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#e84545", "#e84545", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#e84545", "#e84545", "#2979ff", "#e84545", "#e84545", "#e84545", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#e84545", "#e84545", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#e84545", "#2979ff", "#e84545", "#2979ff", "#e84545", "#e84545", "#2979ff", "#2979ff", "#e84545", "#2979ff"], "opacity": 0.7}, "xaxis": "x2", "yaxis": "y2", "name": "거래량", "showlegend": false, "hoverinfo": "x+y"}], "layout": {"paper_bgcolor": "white", "plot_bgcolor": "white", "margin": {"l": 8, "r": 50, "t": 4, "b": 26}, "font": {"size": 9, "color": "#333333"}, "showlegend": false, "dragmode": "pan", "yaxis": {"domain": [0.22, 1.0], "side": "right", "showgrid": true, "gridcolor": "#eeeeee", "gridwidth": 1, "tickfont": {"size": 9}, "ticksuffix": "%", "tickformat": ".1f", "zeroline": true, "zerolinecolor": "#bdbdbd", "zerolinewidth": 1, "automargin": true, "fixedrange": true}, "yaxis2": {"domain": [0.06, 0.2], "side": "right", "showgrid": false, "tickfont": {"size": 8}, "fixedrange": true}, "xaxis": {"type": "category", "rangeslider": {"visible": false}, "showgrid": false, "showticklabels": false, "ticks": "", "anchor": "y", "matches": "x2", "fixedrange": false, "autorange": false}, "xaxis2": {"type": "category", "rangeslider": {"visible": false}, "showgrid": false, "tickfont": {"size": 9}, "nticks": 6, "anchor": "y2", "fixedrange": false, "autorange": false, "range": [39.5, 99.5]}, "annotations": [{"text": "<b>228790</b><br><b>TIGER 화장품</b>", "xref": "paper", "yref": "paper", "x": 0.5, "y": 0.62, "showarrow": false, "align": "center", "font": {"size": 24, "color": "rgba(100,100,100,0.16)", "family": "Malgun Gothic, '맑은 고딕', sans-serif", "weight": 700}, "opacity": 1.0, "captureevents": false}], "autosize": true}}, "chart-0008T0": {"data": [{"type": "candlestick", "x": ["2026-02-09", "2026-02-10", "2026-02-11", "2026-02-12", "2026-02-13", "2026-02-19", "2026-02-20", "2026-02-23", "2026-02-24", "2026-02-25", "2026-02-26", "2026-02-27", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19", "2026-03-20", "2026-03-23", "2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-03", "2026-04-06", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-13", "2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17", "2026-04-20", "2026-04-21", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-04", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-06-01", "2026-06-02", "2026-06-04", "2026-06-05", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-12", "2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-19", "2026-06-22", "2026-06-23", "2026-06-24", "2026-06-25", "2026-06-26", "2026-06-29", "2026-06-30", "2026-07-01", "2026-07-02", "2026-07-03", "2026-07-06", "2026-07-07", "2026-07-08"], "open": [-3.5434412265758053, 0.0, 1.226575809199315, 0.17035775127767216, -0.7155025553662653, -0.37478705281089875, 0.5792163543441253, 0.4770017035775176, -1.1243611584327073, -0.8517887563884163, -0.6814310051107331, -1.0221465076660996, -3.236797274275982, -11.652470187393526, -11.243611584327084, -13.083475298126068, -13.560477001703575, -9.948892674616694, -9.165247018739354, -9.608177172061328, -10.936967632027262, -7.802385008517887, -9.335604770017037, -5.076660988074955, -6.235093696763205, -4.156729131175474, -4.258943781942081, -1.9761499148211237, -2.589437819420781, -3.5434412265758053, -8.381601362862012, -3.9863713798977907, -4.7018739352640555, -1.3969335604769983, -0.20442930153321548, -1.873935264054516, -4.735945485519588, -5.042589437819423, -3.475298126064741, -1.1925042589437829, 1.7035775127768327, 1.1925042589437718, 8.347529812606469, 6.4054514480408775, 8.85860306643953, 10.15332197614991, 12.0954003407155, 12.027257240204436, 11.8228279386712, 16.115843270868837, 17.649063032367973, 19.080068143100505, 16.490630323679724, 18.091993185689947, 15.400340715502558, 12.947189097103928, 11.209540034071551, 10.766609880749577, 11.073253833049401, 12.742759795570691, 12.538330494037474, 10.902896081771729, 7.223168654173762, 10.01703577512776, 3.2708688245315143, 2.419080068143109, 1.4310051107325306, -0.20442930153321548, 0.9880749574105563, 2.7938671209539967, -0.40885860306644206, -1.5672913117546816, -2.0783645655877314, -3.100511073253831, -1.601362862010225, -3.1686541737649065, -1.6695059625212894, -10.66439522998296, -9.710391822827935, -6.269165247018737, -5.996592844974447, -1.5332197614991494, -3.1345826235093743, -1.8057921635434404, -2.282793867120958, -3.475298126064741, -6.643952299829648, -7.904599659284495, -9.028960817717202, -11.073253833049401, -9.131175468483821, -10.255536626916529, -10.221465076660985, -4.974446337308347, -5.383304940374789, 1.601362862010225, 2.2146507666098714, 2.2487223168654147, 1.090289608177164, 6.712095400340723], "high": [0.7155025553662764, 1.4310051107325306, 1.601362862010225, 0.2725724020443021, 0.5110732538330387, 0.9880749574105563, 1.1925042589437718, 0.545144804088582, 0.13628620102215105, -0.7155025553662653, 2.4872231686541735, -0.03407155025553221, -2.6235093696763245, -9.301533219761504, -10.28960817717206, -8.688245315161836, -11.516183986371376, -9.26746166950596, -7.189097103918229, -9.063032367972745, -5.689948892674613, -7.257240204429305, -4.63373083475298, -3.611584327086881, -3.645655877342424, 0.7155025553662764, -2.1124361158432747, -1.6354344122657571, -1.5332197614991494, -3.4412265758091976, -1.9420783645655915, -3.2708688245315143, 0.10221465076660774, -0.5110732538330498, 2.521294718909717, -1.499148211243606, -2.8620102214650722, -1.226575809199315, -2.555366269165249, 2.82793867120954, 4.258943781942071, 8.143100511073254, 8.517887563884162, 8.756388415672923, 9.91482112436115, 12.504258943781931, 12.981260647359449, 12.231686541737652, 14.173764906303244, 16.524701873935264, 18.63713798977853, 19.080068143100505, 17.921635434412273, 18.943781942078374, 15.400340715502558, 13.935264054514484, 11.31175468483816, 11.277683134582617, 12.60647359454856, 16.115843270868837, 15.638841567291317, 11.175468483816008, 9.846678023850085, 10.255536626916516, 3.9863713798977907, 5.042589437819411, 2.010221465076656, 0.6814310051107331, 3.8160136286200963, 3.5775127768313375, 0.8177172061328841, -1.5332197614991494, -1.5672913117546816, 0.20442930153321548, -1.601362862010225, -1.328790459965934, -1.0562180579216318, -8.620102214650771, -4.63373083475298, -3.5298126064735924, -3.1686541737649065, -1.1925042589437829, -1.3969335604769983, 1.2947189097104017, -1.7717206132879082, -3.475298126064741, -5.4514480408858645, -6.780238500851787, -5.212947189097106, -8.040885860306645, -7.359454855195913, -9.608177172061328, -4.122657580919931, -3.1686541737649065, 1.1243611584327073, 7.632027257240215, 3.781942078364575, 5.417376490630321, 8.72231686541738, 7.870528109028951], "low": [-3.5434412265758053, -1.0562180579216318, -0.10221465076660774, -1.2606473594548584, -1.7376490630323649, -0.8517887563884163, -0.8517887563884163, -2.044293015332199, -1.328790459965934, -2.010221465076656, -1.8398637137989726, -2.0783645655877314, -8.040885860306645, -18.160136286201023, -13.151618398637133, -13.083475298126068, -15.400340715502558, -11.720613287904602, -10.255536626916529, -10.868824531516186, -11.413969335604769, -10.971039182282794, -9.335604770017037, -5.724020442930156, -6.269165247018737, -4.156729131175474, -5.4514480408858645, -5.587734241908004, -4.497444633730829, -7.257240204429305, -8.85860306643952, -5.14480408858603, -5.621805792163547, -2.8960817717206155, -3.5434412265758053, -4.838160136286196, -6.30323679727428, -7.120954003407154, -5.962521294718915, -1.6354344122657571, 1.6354344122657682, 1.1925042589437718, 6.03066439522999, 5.519591141396929, 7.529812606473585, 10.11925042589439, 11.107325383304945, 11.039182282793858, 11.8228279386712, 13.253833049403752, 16.1839863713799, 16.149914821124355, 15.1618398637138, 14.480408858603067, 10.323679727427603, 10.66439522998297, 7.529812606473585, 7.257240204429305, 8.381601362862012, 12.163543441226565, 10.051107325383303, 5.826235093696752, 6.882453151618395, 4.940374787052804, 0.10221465076660774, 0.6473594548551898, -3.0323679727427555, -1.6354344122657571, 0.545144804088582, -0.5792163543441253, -3.4412265758091976, -4.974446337308347, -5.758091993185688, -3.645655877342424, -5.621805792163547, -4.531516183986373, -7.052810902896079, -11.345826235093693, -10.119250425894377, -6.6098807495741045, -7.018739352640546, -5.281090289608182, -4.190800681431006, -4.872231686541739, -4.906303236797271, -7.427597955706988, -9.914821124361161, -9.914821124361161, -11.413969335604769, -12.742759795570702, -9.744463373083478, -13.185689948892676, -10.221465076660985, -6.30323679727428, -6.541737649063029, 0.8517887563884052, -1.2947189097103906, 0.37478705281090985, 1.090289608177164, 0.8517887563884052], "close": [0.0, 0.4770017035775176, 0.13628620102215105, -0.2385008517887588, -0.8858603066439485, 0.6132879045996686, -0.5792163543441253, -1.1243611584327073, -0.9880749574105674, -1.1925042589437829, -1.1243611584327073, -1.328790459965934, -8.040885860306645, -17.069846678023847, -11.82282793867121, -8.688245315161836, -13.321976149914816, -10.391822827938668, -9.403747870528111, -9.063032367972745, -7.3935264054514445, -10.187393526405453, -6.201022146507662, -4.804088586030664, -4.906303236797271, -1.226575809199315, -5.4514480408858645, -3.645655877342424, -3.5434412265758053, -7.189097103918229, -2.044293015332199, -4.667802385008512, -3.8500851788756396, -0.9540034071550241, -2.8620102214650722, -4.190800681431006, -5.792163543441231, -6.95059625212947, -4.599659284497449, 0.6814310051107331, 2.8620102214650833, 8.006814310051102, 6.064735945485511, 8.415672913117556, 9.50596252129472, 11.92504258943783, 11.345826235093703, 11.141396933560488, 13.526405451448031, 14.344122657580915, 18.432708688245313, 16.695059625212938, 16.129471890971047, 14.684838160136282, 10.868824531516186, 10.971039182282794, 9.233390119250418, 8.48381601362862, 11.8228279386712, 12.367972742759804, 12.0954003407155, 6.30323679727427, 9.233390119250418, 5.042589437819411, 2.964224872231691, 0.7495741056217975, -2.010221465076656, -0.7155025553662653, 1.8057921635434404, 0.34071550255536653, -3.1345826235093743, -3.9522998296422474, -3.6797274275979563, -1.601362862010225, -4.531516183986373, -2.6235093696763245, -6.030664395229978, -11.243611584327084, -5.042589437819423, -4.7700170357751315, -3.6797274275979563, -4.872231686541739, -2.9301533219761478, -4.7700170357751315, -3.5434412265758053, -6.643952299829648, -7.904599659284495, -8.926746166950593, -10.698466780238503, -8.551959114139695, -9.574105621805796, -11.243611584327084, -4.429301533219765, -6.132879045996598, 0.8517887563884052, 1.5332197614991383, 1.3287904599659228, 2.282793867120958, 6.643952299829636, 2.2146507666098714], "increasing": {"line": {"color": "#e84545"}, "fillcolor": "#e84545"}, "decreasing": {"line": {"color": "#2979ff"}, "fillcolor": "#2979ff"}, "xaxis": "x", "yaxis": "y", "name": "상승률", "showlegend": false, "hoverinfo": "x+y", "yhoverformat": ".2f"}, {"type": "scatter", "x": ["2026-02-09", "2026-02-10", "2026-02-11", "2026-02-12", "2026-02-13", "2026-02-19", "2026-02-20", "2026-02-23", "2026-02-24", "2026-02-25", "2026-02-26", "2026-02-27", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19", "2026-03-20", "2026-03-23", "2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-03", "2026-04-06", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-13", "2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17", "2026-04-20", "2026-04-21", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-04", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-06-01", "2026-06-02", "2026-06-04", "2026-06-05", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-12", "2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-19", "2026-06-22", "2026-06-23", "2026-06-24", "2026-06-25", "2026-06-26", "2026-06-29", "2026-06-30", "2026-07-01", "2026-07-02", "2026-07-03", "2026-07-06", "2026-07-07", "2026-07-08"], "y": [-5.691652470187392, -4.899488926746165, -4.235093696763204, -3.6013628620102267, -3.0187393526405426, -2.274275979557072, -1.7461669505962507, -1.3645655877342455, -1.2316865417376532, -1.122657580919928, -1.0783645655877305, -1.0153321976149932, -1.3492333901192533, -2.2759795570698516, -2.9148211243611555, -3.2947189097103924, -3.8347529812606473, -4.16354344122658, -4.511073253833054, -4.7018739352640555, -5.071550255536628, -5.604770017035776, -5.921635434412265, -6.149914821124359, -6.350936967632026, -6.44293015332198, -6.6865417376490655, -6.812606473594551, -6.940374787052805, -7.240204429301533, -7.2862010221465106, -7.453151618398635, -7.243611584327092, -6.437819420783642, -5.989778534923341, -5.764906303236794, -5.388415672913116, -5.216354344122653, -4.976149914821127, -4.488926746166955, -3.9761499148211255, -3.066439522998299, -2.4531516183986413, -1.7921635434412275, -1.071550255536624, -0.4139693356047691, 0.4258943781942026, 1.165247018739346, 2.0187393526405417, 3.095400340715493, 4.119250425894383, 5.187393526405448, 6.186371379897793, 6.968313458262343, 7.654855195911425, 8.412947189097109, 9.164224872231696, 9.935945485519593, 10.757069846678036, 11.341396933560489, 11.80306643952298, 11.717887563884144, 11.876320272572393, 11.70766609880749, 11.380579216354336, 10.821805792163541, 10.15400340715502, 9.561158432708684, 8.975127768313463, 8.27495741056219, 7.196592844974448, 6.164224872231694, 5.173764906303235, 4.35945485519591, 3.589437819420782, 2.9097103918228173, 2.146507666098807, 1.160136286201019, 0.31686541737649954, -0.540034071550255, -1.328790459965934, -1.8875638841567288, -2.4957410562180593, -2.98637137989779, -3.311754684838164, -3.6814310051107357, -3.9761499148211255, -4.386712095400336, -5.0119250425894375, -5.456558773424192, -5.7785349233390075, -6.143100511073252, -6.180579216354342, -6.407155025553668, -6.137989778534925, -5.93015332197615, -5.562180579216358, -4.885860306643952, -4.3015332197615, -3.9522998296422474], "mode": "lines", "line": {"color": "#00c853", "width": 1.5}, "xaxis": "x", "yaxis": "y", "name": "MA20", "showlegend": false, "hoverinfo": "skip"}, {"type": "bar", "x": ["2026-02-09", "2026-02-10", "2026-02-11", "2026-02-12", "2026-02-13", "2026-02-19", "2026-02-20", "2026-02-23", "2026-02-24", "2026-02-25", "2026-02-26", "2026-02-27", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19", "2026-03-20", "2026-03-23", "2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-03", "2026-04-06", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-13", "2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17", "2026-04-20", "2026-04-21", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-04", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-06-01", "2026-06-02", "2026-06-04", "2026-06-05", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-12", "2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-19", "2026-06-22", "2026-06-23", "2026-06-24", "2026-06-25", "2026-06-26", "2026-06-29", "2026-06-30", "2026-07-01", "2026-07-02", "2026-07-03", "2026-07-06", "2026-07-07", "2026-07-08"], "y": [981765.0, 573493.0, 343821.0, 568933.0, 475162.0, 355471.0, 423027.0, 431180.0, 422464.0, 631141.0, 877161.0, 456990.0, 536058.0, 634626.0, 424641.0, 240921.0, 366851.0, 213469.0, 153920.0, 99914.0, 381799.0, 119653.0, 464491.0, 211394.0, 114964.0, 783291.0, 620493.0, 247184.0, 182682.0, 114217.0, 570160.0, 219143.0, 555566.0, 331546.0, 365764.0, 167940.0, 117565.0, 274773.0, 186537.0, 1259878.0, 462004.0, 984970.0, 438952.0, 473132.0, 535254.0, 952722.0, 359852.0, 609899.0, 598691.0, 640102.0, 708050.0, 453959.0, 374154.0, 437915.0, 511418.0, 450990.0, 602910.0, 1014855.0, 877371.0, 1281271.0, 1662991.0, 601293.0, 721412.0, 444773.0, 442500.0, 221275.0, 346761.0, 550248.0, 397062.0, 463962.0, 328102.0, 359253.0, 547675.0, 484262.0, 484184.0, 255686.0, 202898.0, 197479.0, 193043.0, 245187.0, 111805.0, 426742.0, 286557.0, 471458.0, 415388.0, 276707.0, 311211.0, 205404.0, 565056.0, 200141.0, 329661.0, 363072.0, 428765.0, 234113.0, 481195.0, 2563239.0, 804035.0, 631762.0, 1361070.0, 639558.0], "marker": {"color": ["#e84545", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#e84545", "#2979ff", "#2979ff", "#e84545", "#e84545", "#2979ff", "#e84545", "#e84545", "#e84545", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#e84545", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#e84545", "#e84545", "#2979ff", "#e84545", "#e84545", "#e84545", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#e84545", "#e84545", "#e84545", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#e84545", "#e84545", "#2979ff"], "opacity": 0.7}, "xaxis": "x2", "yaxis": "y2", "name": "거래량", "showlegend": false, "hoverinfo": "x+y"}], "layout": {"paper_bgcolor": "white", "plot_bgcolor": "white", "margin": {"l": 8, "r": 50, "t": 4, "b": 26}, "font": {"size": 9, "color": "#333333"}, "showlegend": false, "dragmode": "pan", "yaxis": {"domain": [0.22, 1.0], "side": "right", "showgrid": true, "gridcolor": "#eeeeee", "gridwidth": 1, "tickfont": {"size": 9}, "ticksuffix": "%", "tickformat": ".1f", "zeroline": true, "zerolinecolor": "#bdbdbd", "zerolinewidth": 1, "automargin": true, "fixedrange": true}, "yaxis2": {"domain": [0.06, 0.2], "side": "right", "showgrid": false, "tickfont": {"size": 8}, "fixedrange": true}, "xaxis": {"type": "category", "rangeslider": {"visible": false}, "showgrid": false, "showticklabels": false, "ticks": "", "anchor": "y", "matches": "x2", "fixedrange": false, "autorange": false}, "xaxis2": {"type": "category", "rangeslider": {"visible": false}, "showgrid": false, "tickfont": {"size": 9}, "nticks": 6, "anchor": "y2", "fixedrange": false, "autorange": false, "range": [39.5, 99.5]}, "annotations": [{"text": "<b>0008T0</b><br><b>SOL 화장품TOP3플러스</b>", "xref": "paper", "yref": "paper", "x": 0.5, "y": 0.62, "showarrow": false, "align": "center", "font": {"size": 24, "color": "rgba(100,100,100,0.16)", "family": "Malgun Gothic, '맑은 고딕', sans-serif", "weight": 700}, "opacity": 1.0, "captureevents": false}], "autosize": true}}, "chart-479850": {"data": [{"type": "candlestick", "x": ["2026-02-09", "2026-02-10", "2026-02-11", "2026-02-12", "2026-02-13", "2026-02-19", "2026-02-20", "2026-02-23", "2026-02-24", "2026-02-25", "2026-02-26", "2026-02-27", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19", "2026-03-20", "2026-03-23", "2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-03", "2026-04-06", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-13", "2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17", "2026-04-20", "2026-04-21", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-04", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-06-01", "2026-06-02", "2026-06-04", "2026-06-05", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-12", "2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-19", "2026-06-22", "2026-06-23", "2026-06-24", "2026-06-25", "2026-06-26", "2026-06-29", "2026-06-30", "2026-07-01", "2026-07-02", "2026-07-03", "2026-07-06", "2026-07-07", "2026-07-08"], "open": [-3.967761934283942, 0.0, 1.456912585244896, 1.0539367637941721, 0.2789832610043508, 0.3409795412275374, 1.5809051456912693, 0.9299442033477989, 0.8059516429014257, 0.6509609423434704, 0.6819590824550525, 1.0539367637941721, -2.076875387476751, -10.198388096714195, -13.484190948543084, -10.570365778053315, -12.058276503409793, -8.245505269683818, -7.873527588344698, -8.152510849349037, -9.640421574705515, -6.1996280223186595, -7.625542467451951, -4.153750774953502, -5.021698698078114, -3.00681959082455, -4.0607563546187215, -2.417854928704277, -3.5027898326100426, -3.6887786732796024, -8.214507129572224, -11.65530068195908, -4.990700557966521, -1.9218846869187844, -1.363918164910105, -3.8127712337259756, -6.385616862988219, -6.354618722876626, -5.052696838189707, -3.564786112833229, -0.619962802231866, -0.8059516429014257, 2.9758214507129566, 2.0148791072535754, 4.246745195288293, 5.145691258524487, 6.726596404215757, 6.0136391816491, 5.486670799752025, 8.338499690018608, 9.609423434593921, 13.174209547427163, 13.143211407315558, 14.47613143211408, 11.066336019838818, 9.423434593924362, 8.617482951022936, 7.656540607563556, 7.811531308121511, 11.221326720396775, 9.237445753254804, 7.005579665220085, 4.3087414755114795, 9.733415995040296, 2.9758214507129566, 1.8598884066955979, 0.7439553626782391, -1.1159330440173587, 0.46497210167391057, 2.169869807811531, -1.5809051456912582, -2.386856788592684, -2.7898326100433968, -3.7197768133911957, -1.3949163050216984, -3.7817730936143823, -2.510849349039057, -10.787352758834468, -10.880347179169247, -6.385616862988219, -6.943583384996899, -2.0458772473651576, -3.750774953502789, -2.2628642281463107, -3.2858028518288895, -3.1928084314941096, -5.82765034097954, -7.005579665220085, -8.92746435213887, -11.624302541847486, -8.679479231246123, -8.028518288902664, -7.811531308121511, -1.983880967141971, -1.5809051456912582, 2.603843769373837, 4.711717296962181, 1.4259144451332917, 0.43397396156230617, 5.052696838189719], "high": [0.43397396156230617, 1.6119032858028515, 1.983880967141971, 1.2089274643521497, 0.8989460632362167, 1.766893986360829, 2.262864228146322, 1.4879107253564783, 1.673899566026038, 0.7749535027898435, 3.2548047117173073, 1.0663360198388094, -1.456912585244885, -8.27650340979541, -8.64848109113453, -7.346559206447612, -10.105393676379414, -7.966522008679478, -5.610663360198387, -7.687538747675138, -5.5486670799752, -6.1996280223186595, -3.9987600743955354, -2.3558586484810906, -2.7898326100433968, 0.5579665220086794, -3.037817730936143, -2.417854928704277, -2.200867947923124, -3.6887786732796024, -3.037817730936143, -3.843769373837569, -2.3248605083694973, -1.8908865468071911, 0.43397396156230617, -3.2858028518288895, -4.804711717296961, -3.843769373837569, -4.339739615623062, -0.18598884066955979, 0.8493490390576675, 2.72783632982021, 2.9758214507129566, 3.7817730936143823, 5.114693118412905, 6.66460012399257, 6.8195908245505255, 6.633601983880966, 7.532548047117182, 10.043397396156228, 12.771233725976439, 13.763174209547424, 14.47613143211408, 15.995040297582142, 11.066336019838818, 11.128332300062006, 8.617482951022936, 8.059516429014257, 10.012399256044645, 12.740235585864855, 9.57842529448234, 7.098574085554876, 8.307501549907004, 9.733415995040296, 3.5957842529448225, 3.440793552386867, 0.7749535027898435, -0.1549907005579665, 3.037817730936143, 2.72783632982021, -0.3409795412275263, -2.0458772473651576, -2.3558586484810906, -0.6509609423434592, -1.3949163050216984, -2.200867947923124, -2.0458772473651576, -9.330440173589583, -4.308741475511468, -3.1928084314941096, -2.9758214507129566, -1.8908865468071911, -1.8598884066955979, -0.18598884066955979, -1.983880967141971, -3.1928084314941096, -5.5486670799752, -6.354618722876626, -6.168629882207066, -7.935523868567884, -6.168629882207066, -8.028518288902664, -1.0539367637941721, -0.5579665220086794, 2.1078735275883442, 8.090514569125862, 4.711717296962181, 3.626782393056427, 6.633601983880966, 6.633601983880966], "low": [-3.9987600743955354, -0.49597024178549276, 0.6509609423434704, -0.37197768133911957, -0.9299442033477989, -0.2789832610043397, -0.12399256044637319, -0.09299442033477989, 0.37197768133911957, -0.43397396156230617, 0.49597024178549276, -0.6509609423434592, -7.005579665220085, -16.243025418474886, -13.484190948543084, -11.686298822070674, -13.174209547427152, -10.012399256044635, -8.617482951022936, -9.48543087414755, -9.640421574705515, -9.48543087414755, -7.625542467451951, -4.513329200247984, -5.021698698078114, -3.00681959082455, -6.261624302541846, -6.10663360198388, -4.866707997520148, -6.695598264104152, -8.46249225046497, -11.65530068195908, -6.168629882207066, -4.029758214507129, -5.45567265964042, -6.261624302541846, -7.439553626782391, -8.64848109113453, -7.067575945443272, -3.7197768133911957, -0.8059516429014257, -0.8059516429014257, 0.8059516429014257, 1.239925604463732, 3.2548047117173073, 5.052696838189719, 5.548667079975211, 4.463732176069435, 5.424674519528838, 7.098574085554876, 9.392436453812781, 11.624302541847499, 12.0272783632982, 10.756354618722884, 6.881587104773712, 8.307501549907004, 5.45567265964042, 4.711717296962181, 6.6026038437693835, 8.803471791692496, 4.680719156850599, 3.1618102913825163, 4.3087414755114795, 4.153750774953502, -0.7439553626782391, -0.49597024178549276, -3.9987600743955354, -1.8288902665840046, 0.2789832610043508, -1.146931184128952, -3.7817730936143823, -5.45567265964042, -5.920644761314319, -3.7197768133911957, -6.0136391816491, -4.6807191568505875, -7.625542467451951, -12.089274643521385, -10.880347179169247, -6.571605703657779, -7.2845629262244245, -5.5486670799752, -4.091754494730315, -4.804711717296961, -5.393676379417234, -6.8195908245505255, -9.919404835709855, -9.640421574705515, -10.570365778053315, -12.833230006199624, -8.679479231246123, -11.19032858028518, -7.811531308121511, -3.533787972721636, -3.4717916924984493, 1.983880967141971, -0.030998140111593298, -0.9919404835709855, 0.43397396156230617, 0.46497210167391057], "close": [0.0, 1.1779293242405453, 0.9919404835709855, 0.6819590824550525, -0.2789832610043397, 1.673899566026038, 0.309981401115933, 0.6509609423434704, 0.40297582145072397, 0.092994420334791, 1.363918164910105, -0.21698698078115308, -7.005579665220085, -16.243025418474886, -10.198388096714195, -7.439553626782391, -10.570365778053315, -8.92746435213887, -7.873527588344698, -7.935523868567884, -6.075635461872286, -9.113453192808429, -5.1146931184128945, -2.8518288902665834, -3.0688158710477365, -0.7439553626782391, -6.261624302541846, -4.866707997520148, -3.6887786732796024, -6.695598264104152, -3.037817730936143, -4.618722876627402, -5.083694978301301, -1.8908865468071911, -4.866707997520148, -5.82765034097954, -7.067575945443272, -8.64848109113453, -6.0136391816491, -2.200867947923124, 0.40297582145072397, 2.5418474891506504, 0.8059516429014257, 3.657780533168009, 4.990700557966532, 6.416615003099824, 5.82765034097954, 4.494730316181039, 6.974581525108503, 7.904525728456302, 12.647241165530065, 13.205207687538746, 12.709237445753253, 10.756354618722884, 7.129572225666458, 8.679479231246123, 6.974581525108503, 5.64166150030998, 9.981401115933043, 8.834469931804101, 6.230626162430264, 3.7197768133911957, 8.121512709237443, 4.153750774953502, 1.5809051456912693, -0.061996280223186595, -2.7588344699318035, -1.2089274643521386, 1.0539367637941721, -0.09299442033477989, -3.4097954122752627, -4.804711717296961, -4.246745195288282, -1.3949163050216984, -4.804711717296961, -3.8127712337259756, -6.0136391816491, -10.942343459392434, -5.331680099194047, -5.5796652200867936, -2.9758214507129566, -4.618722876627402, -2.417854928704277, -4.649721016738995, -3.1618102913825163, -6.540607563546185, -7.501549907005578, -8.92746435213887, -10.415375077495348, -7.935523868567884, -7.687538747675138, -9.671419714817109, -1.4879107253564783, -2.8828270303781767, 1.983880967141971, 3.037817730936143, 1.673899566026038, 0.5889646621202838, 4.835709857408554, 2.0148791072535754], "increasing": {"line": {"color": "#e84545"}, "fillcolor": "#e84545"}, "decreasing": {"line": {"color": "#2979ff"}, "fillcolor": "#2979ff"}, "xaxis": "x", "yaxis": "y", "name": "상승률", "showlegend": false, "hoverinfo": "x+y", "yhoverformat": ".2f"}, {"type": "scatter", "x": ["2026-02-09", "2026-02-10", "2026-02-11", "2026-02-12", "2026-02-13", "2026-02-19", "2026-02-20", "2026-02-23", "2026-02-24", "2026-02-25", "2026-02-26", "2026-02-27", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19", "2026-03-20", "2026-03-23", "2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-03", "2026-04-06", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-13", "2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17", "2026-04-20", "2026-04-21", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-04", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-06-01", "2026-06-02", "2026-06-04", "2026-06-05", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-12", "2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-19", "2026-06-22", "2026-06-23", "2026-06-24", "2026-06-25", "2026-06-26", "2026-06-29", "2026-06-30", "2026-07-01", "2026-07-02", "2026-07-03", "2026-07-06", "2026-07-07", "2026-07-08"], "y": [-4.581525108493489, -3.8902665840049644, -3.2966522008679444, -2.712337259764419, -2.1993180409175417, -1.5437073775573462, -1.0632362058276557, -0.6060136391816462, -0.4355238685678886, -0.33942963422194383, -0.27743335399875724, -0.2603843769373837, -0.6726596404215801, -1.639801611903291, -2.1838189708617506, -2.458152510849354, -2.9045257284562975, -3.2191568505889667, -3.4082455052696803, -3.467141971481713, -3.7709237445753274, -4.285492870427776, -4.590824550526973, -4.76751394916305, -4.907005579665224, -5.027898326100432, -5.356478611283322, -5.632362058276508, -5.836949783013024, -6.176379417234967, -6.396466212027274, -6.616553006819592, -6.520458772473647, -5.802851828890265, -5.536267823930563, -5.45567265964042, -5.2805331680099155, -5.266584004959707, -5.173589584624927, -4.886856788592686, -4.562926224426533, -3.9801611903285794, -3.684128952262866, -3.358648481091131, -2.955672659640418, -2.5976441413515183, -1.9931804091754546, -1.5251084934903902, -0.9919404835709855, -0.26193428394296614, 0.5223186608803498, 1.4135151890886544, 2.3031618102913765, 2.9355238685678797, 3.5353378797272184, 4.26069435833849, 4.9628022318660925, 5.67730936143831, 6.477061376317428, 7.028828270303777, 7.3202107873527655, 7.379107253564787, 7.744885306881577, 7.769683818970852, 7.599194048357094, 7.275263484190941, 6.8459392436453825, 6.560756354618724, 6.264724116553011, 5.864848109113452, 5.061996280223191, 4.161500309981392, 3.313701177929329, 2.7061376317421004, 2.1094234345939267, 1.4848109113453134, 0.8353998760074477, 0.006199628022329762, -0.7594544327340413, -1.4801611903285772, -1.9404835709857404, -2.357408555486673, -2.884376937383759, -3.324550526968384, -3.5616862988220754, -3.885616862988217, -4.122752634841909, -4.5086794792312475, -5.082145071295718, -5.474271543707376, -5.688158710477376, -5.931494110353375, -5.793552386856793, -5.867947923124617, -5.528518288902662, -5.185988840669564, -4.801611903285807, -4.2250464972101724, -3.716676999380042, -3.3369497830130213], "mode": "lines", "line": {"color": "#00c853", "width": 1.5}, "xaxis": "x", "yaxis": "y", "name": "MA20", "showlegend": false, "hoverinfo": "skip"}, {"type": "bar", "x": ["2026-02-09", "2026-02-10", "2026-02-11", "2026-02-12", "2026-02-13", "2026-02-19", "2026-02-20", "2026-02-23", "2026-02-24", "2026-02-25", "2026-02-26", "2026-02-27", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19", "2026-03-20", "2026-03-23", "2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-03", "2026-04-06", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-13", "2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17", "2026-04-20", "2026-04-21", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-04", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-06-01", "2026-06-02", "2026-06-04", "2026-06-05", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-12", "2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-19", "2026-06-22", "2026-06-23", "2026-06-24", "2026-06-25", "2026-06-26", "2026-06-29", "2026-06-30", "2026-07-01", "2026-07-02", "2026-07-03", "2026-07-06", "2026-07-07", "2026-07-08"], "y": [141562.0, 104309.0, 90411.0, 82917.0, 79908.0, 115659.0, 103861.0, 87793.0, 100443.0, 98392.0, 199949.0, 120240.0, 119771.0, 159484.0, 83135.0, 55087.0, 51424.0, 49530.0, 33448.0, 21061.0, 27925.0, 35074.0, 56384.0, 123519.0, 39942.0, 85594.0, 69130.0, 39265.0, 29897.0, 25217.0, 29626.0, 23339.0, 45888.0, 19941.0, 39789.0, 31585.0, 12755.0, 14680.0, 37734.0, 38874.0, 31164.0, 63072.0, 76824.0, 83559.0, 233282.0, 247128.0, 59018.0, 48020.0, 94614.0, 147116.0, 300645.0, 119668.0, 56202.0, 46449.0, 81535.0, 77476.0, 72180.0, 71094.0, 81239.0, 147190.0, 92814.0, 47517.0, 46607.0, 41889.0, 50104.0, 32869.0, 36387.0, 88611.0, 36950.0, 51679.0, 83485.0, 64014.0, 47189.0, 42374.0, 155777.0, 35179.0, 38289.0, 35061.0, 29557.0, 34463.0, 20287.0, 30779.0, 26441.0, 21526.0, 38995.0, 24934.0, 39713.0, 28174.0, 21999.0, 10888.0, 42836.0, 34916.0, 77751.0, 33341.0, 73357.0, 184029.0, 72136.0, 41566.0, 129044.0, 34183.0], "marker": {"color": ["#e84545", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#e84545", "#e84545", "#2979ff", "#e84545", "#e84545", "#e84545", "#2979ff", "#e84545", "#e84545", "#e84545", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#e84545", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#e84545", "#e84545", "#2979ff", "#e84545", "#e84545", "#e84545", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#e84545", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#e84545", "#e84545", "#2979ff", "#e84545", "#2979ff", "#e84545", "#2979ff", "#2979ff", "#2979ff", "#2979ff", "#e84545", "#e84545", "#2979ff", "#e84545", "#2979ff", "#e84545", "#e84545", "#2979ff", "#2979ff", "#e84545", "#2979ff"], "opacity": 0.7}, "xaxis": "x2", "yaxis": "y2", "name": "거래량", "showlegend": false, "hoverinfo": "x+y"}], "layout": {"paper_bgcolor": "white", "plot_bgcolor": "white", "margin": {"l": 8, "r": 50, "t": 4, "b": 26}, "font": {"size": 9, "color": "#333333"}, "showlegend": false, "dragmode": "pan", "yaxis": {"domain": [0.22, 1.0], "side": "right", "showgrid": true, "gridcolor": "#eeeeee", "gridwidth": 1, "tickfont": {"size": 9}, "ticksuffix": "%", "tickformat": ".1f", "zeroline": true, "zerolinecolor": "#bdbdbd", "zerolinewidth": 1, "automargin": true, "fixedrange": true}, "yaxis2": {"domain": [0.06, 0.2], "side": "right", "showgrid": false, "tickfont": {"size": 8}, "fixedrange": true}, "xaxis": {"type": "category", "rangeslider": {"visible": false}, "showgrid": false, "showticklabels": false, "ticks": "", "anchor": "y", "matches": "x2", "fixedrange": false, "autorange": false}, "xaxis2": {"type": "category", "rangeslider": {"visible": false}, "showgrid": false, "tickfont": {"size": 9}, "nticks": 6, "anchor": "y2", "fixedrange": false, "autorange": false, "range": [39.5, 99.5]}, "annotations": [{"text": "<b>479850</b><br><b>HANARO K-뷰티</b>", "xref": "paper", "yref": "paper", "x": 0.5, "y": 0.62, "showarrow": false, "align": "center", "font": {"size": 24, "color": "rgba(100,100,100,0.16)", "family": "Malgun Gothic, '맑은 고딕', sans-serif", "weight": 700}, "opacity": 1.0, "captureevents": false}], "autosize": true}}};
+  var HOLDINGS = {"479850": [{"rank": 1, "code": "278470", "name": "에이피알", "weight": 18.17, "change_pct": -7.68}, {"rank": 2, "code": "090430", "name": "아모레퍼시픽", "weight": 15.56, "change_pct": -0.95}, {"rank": 3, "code": "051900", "name": "LG생활건강", "weight": 9.95, "change_pct": -0.39}, {"rank": 4, "code": "214450", "name": "파마리서치", "weight": 9.37, "change_pct": -3.67}, {"rank": 5, "code": "483650", "name": "달바글로벌", "weight": 8.44, "change_pct": -3.91}, {"rank": 6, "code": "161890", "name": "한국콜마", "weight": 8.0, "change_pct": -3.91}, {"rank": 7, "code": "192820", "name": "코스맥스", "weight": 6.28, "change_pct": -2.73}, {"rank": 8, "code": "257720", "name": "실리콘투", "weight": 5.84, "change_pct": -5.58}, {"rank": 9, "code": "145020", "name": "휴젤", "weight": 5.39, "change_pct": -3.83}, {"rank": 10, "code": "002790", "name": "아모레퍼시픽홀딩스", "weight": 2.5, "change_pct": -1.2}, {"rank": 11, "code": "069620", "name": "대웅제약", "weight": 2.5, "change_pct": 0.67}, {"rank": 12, "code": "241710", "name": "코스메카코리아", "weight": 2.23, "change_pct": -4.15}, {"rank": 13, "code": "018290", "name": "브이티", "weight": 1.04, "change_pct": -1.97}, {"rank": 14, "code": "251970", "name": "펌텍코리아", "weight": 0.87, "change_pct": -2.58}, {"rank": 15, "code": "200670", "name": "휴메딕스", "weight": 0.76, "change_pct": 0.57}, {"rank": 16, "code": "092730", "name": "네오팜", "weight": 0.75, "change_pct": -0.81}, {"rank": 17, "code": "099430", "name": "바이오플러스", "weight": 0.71, "change_pct": -2.81}, {"rank": 18, "code": "123330", "name": "제닉", "weight": 0.57, "change_pct": 5.78}, {"rank": 19, "code": "439090", "name": "마녀공장", "weight": 0.47, "change_pct": 9.89}, {"rank": 20, "code": "KRD010010001", "name": "원화현금", "weight": 0.31, "change_pct": null}, {"rank": 21, "code": "352480", "name": "씨앤씨인터내셔널", "weight": 0.29, "change_pct": -1.9}], "228790": [{"rank": 1, "code": "161890", "name": "한국콜마", "weight": 13.48, "change_pct": -3.91}, {"rank": 2, "code": "483650", "name": "달바글로벌", "weight": 12.39, "change_pct": -3.91}, {"rank": 3, "code": "278470", "name": "에이피알", "weight": 10.87, "change_pct": -7.68}, {"rank": 4, "code": "214450", "name": "파마리서치", "weight": 10.48, "change_pct": -3.67}, {"rank": 5, "code": "051900", "name": "LG생활건강", "weight": 9.27, "change_pct": -0.39}, {"rank": 6, "code": "192820", "name": "코스맥스", "weight": 8.92, "change_pct": -2.73}, {"rank": 7, "code": "090430", "name": "아모레퍼시픽", "weight": 8.76, "change_pct": -0.95}, {"rank": 8, "code": "257720", "name": "실리콘투", "weight": 8.36, "change_pct": -5.58}, {"rank": 9, "code": "241710", "name": "코스메카코리아", "weight": 5.77, "change_pct": -4.15}, {"rank": 10, "code": "018290", "name": "브이티", "weight": 2.7, "change_pct": -1.97}, {"rank": 11, "code": "251970", "name": "펌텍코리아", "weight": 2.27, "change_pct": -2.58}, {"rank": 12, "code": "123330", "name": "제닉", "weight": 1.49, "change_pct": 5.78}, {"rank": 13, "code": "439090", "name": "마녀공장", "weight": 1.22, "change_pct": 9.89}, {"rank": 14, "code": "114840", "name": "아이패밀리에스씨", "weight": 0.83, "change_pct": 4.09}, {"rank": 15, "code": "237880", "name": "클리오", "weight": 0.78, "change_pct": 1.51}, {"rank": 16, "code": "352480", "name": "씨앤씨인터내셔널", "weight": 0.75, "change_pct": -1.9}, {"rank": 17, "code": "214420", "name": "토니모리", "weight": 0.66, "change_pct": 2.37}, {"rank": 18, "code": "226320", "name": "잇츠한불", "weight": 0.44, "change_pct": 7.53}, {"rank": 19, "code": "0015N0", "name": "아로마티카", "weight": 0.36, "change_pct": -7.28}, {"rank": 20, "code": "KRD010010001", "name": "원화현금", "weight": 0.19, "change_pct": null}], "0008T0": [{"rank": 1, "code": "278470", "name": "에이피알", "weight": 22.22, "change_pct": -7.68}, {"rank": 2, "code": "192820", "name": "코스맥스", "weight": 17.95, "change_pct": -2.73}, {"rank": 3, "code": "257720", "name": "실리콘투", "weight": 16.97, "change_pct": -5.58}, {"rank": 4, "code": "161890", "name": "한국콜마", "weight": 9.53, "change_pct": -3.91}, {"rank": 5, "code": "483650", "name": "달바글로벌", "weight": 8.8, "change_pct": -3.91}, {"rank": 6, "code": "241710", "name": "코스메카코리아", "weight": 7.13, "change_pct": -4.15}, {"rank": 7, "code": "051900", "name": "LG생활건강", "weight": 6.65, "change_pct": -0.39}, {"rank": 8, "code": "090430", "name": "아모레퍼시픽", "weight": 6.18, "change_pct": -0.95}, {"rank": 9, "code": "251970", "name": "펌텍코리아", "weight": 2.78, "change_pct": -2.58}, {"rank": 10, "code": "123330", "name": "제닉", "weight": 1.83, "change_pct": 5.78}, {"rank": 11, "code": "KRD010010001", "name": "원화현금", "weight": -0.04, "change_pct": null}]};
+  var HOLDINGS_REF_DATES = {"479850": "20260708", "228790": "20260708", "0008T0": "20260708"};
+  var HOLDINGS_CHANGE_REF_DATE = "2026-07-08 11:25 (\uc2e4\uc2dc\uac04)";
+  var _sorted_mode = 'streak';
+
+  // 카드 정렬
+  window.sortCards = function(mode) {
+    _sorted_mode = mode;
+    ['sustained', 'entry', 'exit'].forEach(function(group) {
+      var grid = document.getElementById('grid-' + group);
+      if (!grid) return;
+      var cards = Array.from(grid.querySelectorAll('.card'));
+      cards.sort(function(a, b) {
+        if (mode === 'streak') {
+          return parseInt(b.dataset.streak || 0) - parseInt(a.dataset.streak || 0);
+        } else {
+          return parseInt(a.dataset.sectorIdx || 999) - parseInt(b.dataset.sectorIdx || 999);
+        }
+      });
+      cards.forEach(function(card) { grid.appendChild(card); });
+    });
+    document.querySelectorAll('.sort-btn').forEach(function(btn) {
+      btn.classList.toggle('active', btn.dataset.sort === mode);
+    });
+  };
+
+  // IntersectionObserver로 뷰포트 진입 시 차트 렌더링 (성능 최적화)
+  var rendered = new Set();
+  function renderChart(divId) {
+    if (rendered.has(divId)) return;
+    var el = document.getElementById(divId);
+    if (!el) return;
+    var cd = CHART_DATA[divId];
+    if (!cd) return;
+    rendered.add(divId);
+    Plotly.newPlot(el, cd.data, cd.layout, {
+      responsive: true,
+      displayModeBar: 'hover',
+      displaylogo: false,
+      scrollZoom: true,
+      staticPlot: false,
+      doubleClick: 'reset',
+      modeBarButtonsToRemove: [
+        'lasso2d', 'select2d', 'autoScale2d',
+        'hoverClosestCartesian', 'hoverCompareCartesian',
+        'toggleSpikelines'
+      ]
+    });
+  }
+
+  function initCharts() {
+    if ('IntersectionObserver' in window) {
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            renderChart(entry.target.id);
+          }
+        });
+      }, { rootMargin: '200px' });
+      Object.keys(CHART_DATA).forEach(function(divId) {
+        var el = document.getElementById(divId);
+        if (el) observer.observe(el);
+      });
+    } else {
+      // fallback: 전체 렌더링
+      Object.keys(CHART_DATA).forEach(function(divId) {
+        renderChart(divId);
+      });
+    }
+  }
+
+  // ─── 구성종목 모달 ─────────────────────────────────────
+  var _currentHoldings = [];
+
+  function _fmtPct(v) {
+    if (v === null || v === undefined || isNaN(v)) return '-';
+    var sign = v >= 0 ? '+' : '';
+    return sign + Number(v).toFixed(2) + '%';
+  }
+
+  function _fmtWeight(v) {
+    if (v === null || v === undefined || isNaN(v)) return '-';
+    return Number(v).toFixed(2);
+  }
+
+  function _pctColor(v) {
+    if (v === null || v === undefined || isNaN(v) || v === 0) return '#9e9e9e';
+    return v > 0 ? '#e84545' : '#2979ff';
+  }
+
+  function _escapeHtml(s) {
+    if (s === null || s === undefined) return '';
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function _renderHoldingsRows(items) {
+    var tbody = document.getElementById('holdingsTableBody');
+    if (!items || items.length === 0) {
+      tbody.innerHTML = '';
+      document.getElementById('modalEmpty').style.display = 'block';
+      return;
+    }
+    document.getElementById('modalEmpty').style.display = 'none';
+    var html = '';
+    items.forEach(function(it) {
+      var pct = it.change_pct;
+      var pctStr = _fmtPct(pct);
+      var pctColor = _pctColor(pct);
+      html += '<tr>'
+        + '<td class="col-rank">' + (it.rank == null ? '-' : it.rank) + '</td>'
+        + '<td class="col-code">' + _escapeHtml(it.code) + '</td>'
+        + '<td class="col-name">' + _escapeHtml(it.name) + '</td>'
+        + '<td class="col-pct" style="color:' + pctColor + '">' + pctStr + '</td>'
+        + '<td class="col-weight">' + _fmtWeight(it.weight) + '</td>'
+        + '</tr>';
+    });
+    tbody.innerHTML = html;
+  }
+
+  var _hoverCloseTimer = null;
+  var _modalOpen = false;  // 클릭 모달이 열려있으면 hover popover 무시
+
+  function _cancelHoverCloseTimer() {
+    if (_hoverCloseTimer) {
+      clearTimeout(_hoverCloseTimer);
+      _hoverCloseTimer = null;
+    }
+  }
+
+  function _formatSubLine(items, refDate) {
+    var refFmt = refDate;
+    if (refDate && refDate.length === 8) {
+      refFmt = refDate.slice(0,4) + '-' + refDate.slice(4,6) + '-' + refDate.slice(6,8);
+    }
+    var parts = [];
+    if (items.length) parts.push('구성종목 (' + items.length + '개)');
+    if (refFmt) parts.push('보유 기준일: ' + refFmt);
+    if (HOLDINGS_CHANGE_REF_DATE) parts.push('등락률 기준: ' + HOLDINGS_CHANGE_REF_DATE);
+    return parts.join(' · ');
+  }
+
+  function _renderRowsTo(tbodyId, emptyId, items) {
+    var tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+    if (!items || items.length === 0) {
+      tbody.innerHTML = '';
+      var em = document.getElementById(emptyId);
+      if (em) em.style.display = 'block';
+      return;
+    }
+    var em = document.getElementById(emptyId);
+    if (em) em.style.display = 'none';
+    var html = '';
+    items.forEach(function(it) {
+      var pct = it.change_pct;
+      var pctStr = _fmtPct(pct);
+      var pctColor = _pctColor(pct);
+      html += '<tr>'
+        + '<td class="col-rank">' + (it.rank == null ? '-' : it.rank) + '</td>'
+        + '<td class="col-code">' + _escapeHtml(it.code) + '</td>'
+        + '<td class="col-name">' + _escapeHtml(it.name) + '</td>'
+        + '<td class="col-pct" style="color:' + pctColor + '">' + pctStr + '</td>'
+        + '<td class="col-weight">' + _fmtWeight(it.weight) + '</td>'
+        + '</tr>';
+    });
+    tbody.innerHTML = html;
+  }
+
+  // ─── 클릭: sticky 중앙 모달 ───────────────────────────────
+  window.openHoldingsModal = function(etfCode, etfName) {
+    var items = HOLDINGS[etfCode] || [];
+    _currentHoldings = items;
+    _modalOpen = true;
+    // hover popover 즉시 닫기
+    _hidePopover();
+
+    var refDate = HOLDINGS_REF_DATES[etfCode] || '';
+    document.getElementById('modalTitleMain').textContent = etfCode + ' ' + etfName;
+    document.getElementById('modalTitleSub').textContent = _formatSubLine(items, refDate);
+
+    document.getElementById('modalFooterLeft').textContent =
+      items.length ? '총 ' + items.length + '개 종목' : '';
+    var weightSum = items.reduce(function(a,it) {
+      return a + (it.weight || 0);
+    }, 0);
+    document.getElementById('modalFooterRight').textContent =
+      items.length ? '비중 합계: ' + weightSum.toFixed(2) + '%' : '';
+
+    document.getElementById('modalSearch').value = '';
+    _renderHoldingsRows(items);
+
+    var ov = document.getElementById('holdingsModal');
+    ov.classList.add('open');
+    ov.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('modal-open');
+  };
+
+  window.closeHoldingsModal = function() {
+    _modalOpen = false;
+    var ov = document.getElementById('holdingsModal');
+    ov.classList.remove('open');
+    ov.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('modal-open');
+  };
+
+  // ─── Hover: 버튼 옆 popover ───────────────────────────────
+  var _popoverAnchor = null;
+
+  function _positionPopover(btnEl) {
+    var pop = document.getElementById('holdingsPopover');
+    if (!pop || !btnEl) return;
+    // 일단 보이게 해서 크기 측정
+    pop.style.visibility = 'hidden';
+    pop.classList.add('open');
+    var btnRect = btnEl.getBoundingClientRect();
+    var popW = pop.offsetWidth || 420;
+    var popH = pop.offsetHeight || 300;
+    var viewportW = window.innerWidth;
+    var viewportH = window.innerHeight;
+
+    // 기본: 버튼 아래쪽 우측 정렬 (버튼 오른쪽 끝 기준으로 popover 우측 정렬)
+    var left = btnRect.right - popW;
+    var top = btnRect.bottom + 6;
+    // 우측이 화면 안에 들어오도록 보정
+    if (left < 8) left = 8;
+    if (left + popW > viewportW - 8) left = viewportW - popW - 8;
+    // 아래쪽 공간 부족하면 위쪽으로
+    if (top + popH > viewportH - 8) {
+      top = btnRect.top - popH - 6;
+      if (top < 8) top = 8;
+    }
+    pop.style.left = left + 'px';
+    pop.style.top = top + 'px';
+    pop.style.visibility = 'visible';
+  }
+
+  function _hidePopover() {
+    var pop = document.getElementById('holdingsPopover');
+    if (pop) pop.classList.remove('open');
+    _popoverAnchor = null;
+  }
+
+  window.hoverOpenHoldingsModal = function(etfCode, etfName, btnEl) {
+    if (_modalOpen) return;  // sticky 모달 열려있으면 hover 차단
+    _cancelHoverCloseTimer();
+
+    var items = HOLDINGS[etfCode] || [];
+    var refDate = HOLDINGS_REF_DATES[etfCode] || '';
+
+    document.getElementById('popoverTitleMain').textContent = etfCode + ' ' + etfName;
+    document.getElementById('popoverTitleSub').textContent = _formatSubLine(items, refDate);
+
+    _renderRowsTo('popoverTableBody', 'popoverEmpty', items);
+
+    var weightSum = items.reduce(function(a,it) { return a + (it.weight || 0); }, 0);
+    document.getElementById('popoverFooter').textContent =
+      items.length ? '총 ' + items.length + '개 · 비중 합계 ' + weightSum.toFixed(2) + '%' : '';
+
+    _popoverAnchor = btnEl || null;
+    _positionPopover(btnEl);
+  };
+
+  window.scheduleHoverClose = function() {
+    _cancelHoverCloseTimer();
+    _hoverCloseTimer = setTimeout(function() {
+      _hidePopover();
+    }, 250);
+  };
+
+  window.cancelHoverClose = function() {
+    _cancelHoverCloseTimer();
+  };
+
+  // 스크롤/리사이즈 시 popover 닫기 (위치가 어긋남)
+  window.addEventListener('scroll', function() { _hidePopover(); }, true);
+  window.addEventListener('resize', function() { _hidePopover(); });
+
+  window.filterHoldings = function() {
+    var q = (document.getElementById('modalSearch').value || '').trim().toLowerCase();
+    if (!q) {
+      _renderHoldingsRows(_currentHoldings);
+      return;
+    }
+    var filtered = _currentHoldings.filter(function(it) {
+      return (it.name || '').toLowerCase().indexOf(q) >= 0
+          || (it.code || '').toLowerCase().indexOf(q) >= 0;
+    });
+    _renderHoldingsRows(filtered);
+  };
+
+  // 모달 외부 클릭 / ESC 키 닫기
+  document.addEventListener('DOMContentLoaded', function() {
+    var ov = document.getElementById('holdingsModal');
+    if (ov) {
+      ov.addEventListener('click', function(e) {
+        if (e.target === ov) closeHoldingsModal();
+      });
+    }
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeHoldingsModal();
+  });
+
+  // 초기 정렬 적용 후 차트 초기화
+  document.addEventListener('DOMContentLoaded', function() {
+    sortCards(_sorted_mode);
+    initCharts();
+  });
+})();
+</script>
+</body>
+</html>
