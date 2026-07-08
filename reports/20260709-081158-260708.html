@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TNBFolio 뉴스 대시보드</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <style>
+        :root {
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            
+            /* 카테고리별 테마 컬러셋 */
+            --cls-industry-primary: #ef4444;
+            --cls-industry-bg: #fef2f2;
+            --cls-industry-border: #fee2e2;
+            
+            --cls-utility-primary: #f97316;
+            --cls-utility-bg: #fff7ed;
+            --cls-utility-border: #ffedd5;
+            
+            --cls-tech-primary: #3b82f6;
+            --cls-tech-bg: #eff6ff;
+            --cls-tech-border: #dbeafe;
+            
+            --cls-consumer-primary: #10b981;
+            --cls-consumer-bg: #ecfdf5;
+            --cls-consumer-border: #d1fae5;
+            
+            --cls-finance-primary: #6366f1;
+            --cls-finance-bg: #eef2ff;
+            --cls-finance-border: #e0e7ff;
+            
+            --cls-energy-primary: #f59e0b;
+            --cls-energy-bg: #fffbeb;
+            --cls-energy-border: #fef3c7;
+            
+            --cls-healthcare-primary: #ec4899;
+            --cls-healthcare-bg: #fdf2f8;
+            --cls-healthcare-border: #fce7f3;
+            
+            --cls-politics-primary: #dc2626;
+            --cls-politics-bg: #fef2f2;
+            --cls-politics-border: #fee2e2;
+            
+            --cls-macro-primary: #8b5cf6;
+            --cls-macro-bg: #f5f3ff;
+            --cls-macro-border: #ede9fe;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.5;
+            padding: 24px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* 헤더 스타일 */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            background: #ffffff;
+            padding: 20px 24px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .header-left .branding {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .header-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        /* 내비게이션 탭 */
+        .tabs-container {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .tab-btn {
+            padding: 10px 16px;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            background: #f1f5f9;
+            color: var(--text-main);
+        }
+
+        .tab-btn.active {
+            background: #1e293b;
+            color: #fff;
+            border-color: #1e293b;
+        }
+
+        /* 그리드 레이아웃 */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+            gap: 24px;
+        }
+
+        /* 카드 기본 스타일 */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-header {
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .icon-box {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .category-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .badge {
+            margin-left: auto;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 20px;
+            background: #f1f5f9;
+            color: var(--text-muted);
+        }
+
+        .card-body {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* 뉴스 아이템 스타일 */
+        .news-item {
+            position: relative;
+            padding-left: 16px;
+        }
+
+        .news-title-wrapper {
+            margin-bottom: 6px;
+        }
+
+        .news-link {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+            text-decoration: none;
+            line-height: 1.4;
+        }
+
+        .news-link:hover {
+            text-decoration: underline;
+        }
+
+        .news-summary {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            padding-left: 0;
+            list-style-type: none;
+        }
+
+        .news-summary li {
+            position: relative;
+            margin-bottom: 4px;
+            line-height: 1.4;
+        }
+
+        .news-url {
+            font-size: 11px;
+            color: #94a3b8;
+            word-break: break-all;
+            display: block;
+        }
+
+        /* 동적 컬러셋 바인딩용 클래스 */
+        .cat-industry { border-color: var(--cls-industry-border); }
+        .cat-industry .icon-box { background: var(--cls-industry-bg); color: var(--cls-industry-primary); }
+        .cat-industry .news-link:hover { color: var(--cls-industry-primary); }
+        .cat-industry .news-item::before { content: "•"; color: var(--cls-industry-primary); position: absolute; left: 0; font-size: 16px; top: -2px; }
+
+        .cat-utility { border-color: var(--cls-utility-border); }
+        .cat-utility .icon-box { background: var(--cls-utility-bg); color: var(--cls-utility-primary); }
+        .cat-utility .news-link:hover { color: var(--cls-utility-primary); }
+        .cat-utility .news-item::before { content: "•"; color: var(--cls-utility-primary); position: absolute; left: 0; font-size: 16px; top: -2px; }
+
+        .cat-tech { border-color: var(--cls-tech-border); }
+        .cat-tech .icon-box { background: var(--cls-tech-bg); color: var(--cls-tech-primary); }
+        .cat-tech .news-link:hover { color: var(--cls-tech-primary); }
+        .cat-tech .news-item::before { content: "•"; color: var(--cls-tech-primary); position: absolute; left: 0; font-size: 16px; top: -2px; }
+
+        .cat-consumer { border-color: var(--cls-consumer-border); }
+        .cat-consumer .icon-box { background: var(--cls-consumer-bg); color: var(--cls-consumer-primary); }
+        .cat-consumer .news-link:hover { color: var(--cls-consumer-primary); }
+        .cat-consumer .news-item::before { content: "•"; color: var(--cls-consumer-primary); position: absolute; left: 0; font-size: 16px; top: -2px; }
+
+        .cat-finance { border-color: var(--cls-finance-border); }
+        .cat-finance .icon-box { background: var(--cls-finance-bg); color: var(--cls-finance-primary); }
+        .cat-finance .news-link:hover { color: var(--cls-finance-primary); }
+        .cat-finance .news-item::before { content: "•"; color: var(--cls-finance-primary); position: absolute; left: 0; font-size: 16px; top: -2px; }
+
+        .cat-energy { border-color: var(--cls-energy-border); }
+        .cat-energy .icon-box { background: var(--cls-energy-bg); color: var(--cls-energy-primary); }
+        .cat-energy .news-link:hover { color: var(--cls-energy-primary); }
+        .cat-energy .news-item::before { content: "•"; color: var(--cls-energy-primary); position: absolute; left: 0; font-size: 16px; top: -2px; }
+
+        .cat-healthcare { border-color: var(--cls-healthcare-border); }
+        .cat-healthcare .icon-box { background: var(--cls-healthcare-bg); color: var(--cls-healthcare-primary); }
+        .cat-healthcare .news-link:hover { color: var(--cls-healthcare-primary); }
+        .cat-healthcare .news-item::before { content: "•"; color: var(--cls-healthcare-primary); position: absolute; left: 0; font-size: 16px; top: -2px; }
+
+        .cat-politics { border-color: var(--cls-politics-border); }
+        .cat-politics .icon-box { background: var(--cls-politics-bg); color: var(--cls-politics-primary); }
+        .cat-politics .news-link:hover { color: var(--cls-politics-primary); }
+        .cat-politics .news-item::before { content: "•"; color: var(--cls-politics-primary); position: absolute; left: 0; font-size: 16px; top: -2px; }
+
+        .cat-macro { border-color: var(--cls-macro-border); }
+        .cat-macro .icon-box { background: var(--cls-macro-bg); color: var(--cls-macro-primary); }
+        .cat-macro .news-link:hover { color: var(--cls-macro-primary); }
+        .cat-macro .news-item::before { content: "•"; color: var(--cls-macro-primary); position: absolute; left: 0; font-size: 16px; top: -2px; }
+
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            .header { flex-direction: column; align-items: flex-start; gap: 16px; }
+            .grid-container { grid-template-columns: 1fr; }
+        }
+    </style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <header class="header">
+        <div class="header-left">
+            <div class="branding">by TNBfolio</div>
+            <div class="header-title">7월 8일 해외 뉴스</div>
+        </div>
+        <button onclick="downloadHTML()" style="padding: 8px 14px; font-size: 13px; border-radius: 6px; border: none; background: #1a1a18; color: #fff; cursor: pointer; font-weight: 500; display: flex; align-items: center; gap: 6px;">
+            <i class="ti ti-download"></i> HTML 다운로드
+        </button>
+    </header>
+
+    <div class="tabs-container">
+        <button class="tab-btn active" onclick="filterCat('all')">전체보기</button>
+        <button class="tab-btn" onclick="filterCat('industry')">산업재</button>
+        <button class="tab-btn" onclick="filterCat('utility')">유틸리티</button>
+        <button class="tab-btn" onclick="filterCat('tech')">기술주</button>
+        <button class="tab-btn" onclick="filterCat('consumer')">경기소비재</button>
+        <button class="tab-btn" onclick="filterCat('finance')">금융</button>
+        <button class="tab-btn" onclick="filterCat('energy')">에너지</button>
+        <button class="tab-btn" onclick="filterCat('healthcare')">헬스케어</button>
+        <button class="tab-btn" onclick="filterCat('politics')">정치</button>
+        <button class="tab-btn" onclick="filterCat('macro')">매크로</button>
+    </div>
+
+    <div class="grid-container">
+
+        <div class="card cat-industry" data-cat="industry">
+            <div class="card-header">
+                <div class="icon-box"><i class="ti ti-settings"></i></div>
+                <div class="category-title">산업재</div>
+                <div class="badge">4개 뉴스</div>
+            </div>
+            <div class="card-body">
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.reuters.com/business/autos-transportation/factory-tech-frontier-china-becomes-legacy-automakers-innovation-engine-2026-07-07/" target="_blank" class="news-link">1. 공장에서 기술 프런티어로: 중국이 기존 자동차 제조사들의 혁신 엔진이 되다</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• GM, 폭스바겐 등 글로벌 전통 완성차 제조사들이 기술 우위를 활용하고자 중국 엔지니어들에게 전기차/소프트웨어 개발권을 대거 위임하고 있습니다.</li>
+                        <li>• 실제 독일에 본사를 둔 기업들의 전체 R&D 비중 중 중국이 차지하는 비율이 단 2년 만에 12%에서 33%로 급증했습니다.</li>
+                        <li>• 다만 브랜드 고유의 정체성 훼손, 공급망 약화, 그리고 민감 기술의 유출 우려와 같은 부작용에 직면해 있습니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.reuters.com/.../china-becomes-legacy-automakers-innovation-engine...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.wsj.com/business/autos/chinas-auto-market-remains-under-pressure-on-sluggish-domestic-demand-f3b820e7?mod=pls_whats_news_us_business_f" target="_blank" class="news-link">2. 국내 수요 부진으로 중국 자동차 시장 지속적인 압박 직면</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 중국의 6월 승용차 소매 판매가 전년 대비 23.2% 감소하였으며 상반기 전체 기준으로도 20.2% 급감하며 둔화세가 뚜렷합니다.</li>
+                        <li>• 내연기관 차량 수요가 매우 부진한 반면 신에너지차(EV/하이브리드)는 6월 기준 전체 자동차 판매 비중의 62.8%를 확보했습니다.</li>
+                        <li>• 중국 제조사들은 부진한 내수를 메우기 위해 6월 한 달간 87.7만 대의 대규모 수출을 단행하며 활로를 모색 중입니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.wsj.com/.../chinas-auto-market-remains-under-pressure...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.bloomberg.com/news/articles/2026-07-08/labor-crunch-tests-growth-limits-for-us-data-center-builders" target="_blank" class="news-link">3. 인력 부족으로 미국 데이터 센터 건설업체의 성장 한계 시험</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 미국 내 폭발적인 인프라 수요로 수주 잔고가 역대 최고치를 기록 중이나, 정작 데이터 센터를 지을 숙련공이 부족해 성장이 제한되고 있습니다.</li>
+                        <li>• 핵심 인력인 전기 기술자, 파이프공 등의 수급이 불안정해지면서 대형 건설업체들의 단기 매출 성장세가 완화될 것으로 관측됩니다.</li>
+                        <li>• 근로자의 고령화 및 까다로운 이민 단속이 겹치면서 핵심 기술진의 현장 임금은 최대 9.9%까지 급격하게 상승하고 있습니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.bloomberg.com/.../labor-crunch-tests-growth-limits-for-us-data-center-builders</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.axios.com/2026/07/08/space-nuclear-weapons-satellites-wargame" target="_blank" class="news-link">4. 워싱턴 국방 전문가들이 우주 핵무기 시뮬레이션에 고심한 이유</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 미국 국방 및 정보 전문가들이 우주 공간 내 핵무기 폭발로 인한 위성 네트워크 마비 상황을 가정한 가상 시뮬레이션을 수행했습니다.</li>
+                        <li>• 민간 융합 에너지 기업 'Fuse'의 주최로 열린 본 훈련에서는 인프라 보강 및 우주 방사선 경화 기술의 중요성이 집중 논의되었습니다.</li>
+                        <li>• Fuse 측은 우주 위성 인프라의 폭발적인 증식에 발맞추어 하드웨어 보호 기술 및 방사선 테스트 시설 시장 확장을 도모하고 있습니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.axios.com/space-nuclear-weapons-satellites-wargame</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card cat-utility" data-cat="utility">
+            <div class="card-header">
+                <div class="icon-box"><i class="ti ti-bolt"></i></div>
+                <div class="category-title">유틸리티</div>
+                <div class="badge">2개 뉴스</div>
+            </div>
+            <div class="card-body">
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.bloomberg.com/news/articles/2026-07-08/china-s-deadly-storms-turbocharged-by-convergence-of-factors" target="_blank" class="news-link">1. 전 세계 원자력 발전량 44% 증가 전망이며 중국이 미국을 추월할 것이라고 BNEF 발표</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 글로벌 원전 발전 용량은 급격한 전력 수요 증가와 중·인 양국의 공격적인 원자로 확충에 힘입어 10년간 약 44% 가량 성장할 것으로 예측됩니다.</li>
+                        <li>• 특히 중국은 2030년까지 총 102기가와트(GW)의 용량을 달성하여 미국을 밀어내고 세계 최대 원자력 발전국이 될 궤도에 올라섰습니다.</li>
+                        <li>• 전 세계적으로 탄소 중립 및 AI 데이터 센터 수요 대응을 위해 원전을 재수용하는 분위기이나 미국의 느린 규제는 걸림돌입니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.bloomberg.com/.../china-s-deadly-storms-turbocharged-by-convergence-of-factors</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.tomshardware.com/tech-industry/data-centers/power-company-hikes-data-center-bills-by-30-percent-cuts-residential-electricity-costs-by-1-3-percent-oregon-approves-change-through-power-act-pushes-developments-using-more-than-20-megawatts-of-power-to-pay-their-fair-share" target="_blank" class="news-link">2. 전력 회사, 데이터 센터 전기 요금 30% 인상 및 주택용 전력 비용 1.3% 인하</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 오레곤주 규제 당국이 대형 전력 유저인 데이터 센터 및 암호화폐 채굴 기지의 요금을 약 29.7% 인상하는 특별 요금제를 승인했습니다.</li>
+                        <li>• 새롭게 도입된 POWER 법에 근거하여 20메가와트(MW) 이상의 대규모 인프라 시설들이 유발하는 계통 업그레이드 비용을 직접 전가시켰습니다.</li>
+                        <li>• 이를 통해 일반 주거용 사용자의 전력 부담 비용은 오히려 1.3% 낮아져 인프라 확장에 따른 서민 요금 전가를 효과적으로 방어했습니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.tomshardware.com/.../power-company-hikes-data-center-bills-by-30-percent...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card cat-tech" data-cat="tech">
+            <div class="card-header">
+                <div class="icon-box"><i class="ti ti-cpu"></i></div>
+                <div class="category-title">기술주</div>
+                <div class="badge">19개 뉴스</div>
+            </div>
+            <div class="card-body">
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.trendforce.com/news/2026/07/07/news-chinese-firms-reportedly-raise-domestic-ai-chip-budget-share-from-30-to-46-amid-shift-from-nvidia/" target="_blank" class="news-link">1. 엔비디아로부터의 전환 속 중국 기업들 국내 AI 칩 예산 비중 30%에서 46%로 확대 보고</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 미국 수출 규제 여파로 중국 주요 기술 기업들이 자국산 가속기 칩 도입을 대폭 확장하면서 내수 전환 예산 비중을 46%까지 확대했습니다.</li>
+                        <li>• 시장 조사기관은 엔비디아의 중국 AI 칩 점유율이 종전 40%대에서 2026년 8% 선까지 대폭 축소될 것으로 관측하고 있습니다.</li>
+                        <li>• 이에 따라 화웨이의 점유율이 50%를 돌파할 것으로 예상되며 정부 주도의 2조 위안 규모 데이터 센터 국산화 수혜가 예상됩니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.trendforce.com/.../news-chinese-firms-reportedly-raise-domestic-ai-chip-budget-share...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://ca.finance.yahoo.com/news/samsung-begins-mass-production-pm1763-230000368.html" target="_blank" class="news-link">2. 삼성, 차세대 AI 인프라에 최적화된 PM1763 SSD 양산 시작</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 삼성전자가 차세대 PCIe 6.0 기반의 초고속 기업용 SSD인 'PM1763' 양산에 돌입하며 고성능 AI 서버 공급망을 선점합니다.</li>
+                        <li>• 자사 9세대 V-NAND와 첨단 4나노 컨트롤러를 탑재하여 연속 읽기 속도를 이전 세대 대비 2배 가량인 초당 28,400MB로 끌어올렸습니다.</li>
+                        <li>• 고성능 수랭식 서버 환경에 걸맞춘 D2C 냉각 연동 설계 및 차세대 포스트 양자 암호화 보안 규격을 온칩 형태로 완벽 지원합니다.</li>
+                    </ul>
+                    <span class="news-url">https://ca.finance.yahoo.com/news/samsung-begins-mass-production-pm1763...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.reuters.com/business/media-telecom/spacexai-plans-launch-new-model-with-cursor-soon-wednesday-information-reports-2026-07-07/" target="_blank" class="news-link">4. SpaceXAI, 이르면 수요일 Cursor와 함께 새 모델 출시 계획</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 일론 머스크의 SpaceXAI가 코딩 솔루션 Cursor와 합작 개발한 새로운 고성능 인공지능 모델을 공식 선보일 예정입니다.</li>
+                        <li>• 뛰어난 연산 효율성을 앞세워 앤트로픽의 Opus 4.8 및 오픈AI의 GPT 5.5 등 시장의 선두 기업 대형 모델들과 직접 경쟁 구도를 그립니다.</li>
+                        <li>• 한편 모회사 격인 SpaceX는 나스닥 규정 개정 혜택을 업고 상장 단 한 달 만에 나스닥-100 지수에 특례 편입되는 저력을 보였습니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.reuters.com/.../spacexai-plans-launch-new-model-with-cursor-soon...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.digitimes.com/news/a20260707PD233/foxsemicon-equipment-revenue-thailand-2026.html" target="_blank" class="news-link">5. 폭스세미콘 6월 및 상반기 매출, AI 주문에 힘입어 사상 최고치 경신</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 반도체 부품 장비사인 대만 폭스세미콘이 AI 인프라 장비 수요 급증에 힘입어 상반기 매출 118.5억 대만 달러로 반기 사상 최대치를 기록했습니다.</li>
+                        <li>• 밀려드는 인프라 주문 가시성이 기존 3달 규모에서 최대 9달까지 연장되자 생산 확대를 위해 태국 공장 대량 양산에 본격 착수했습니다.</li>
+                        <li>• 무역 통제 리스크 탓에 중국 본토에는 성숙 공정 장비를 배치하고, 고부가가치 하이엔드 장비 체인은 대만과 태국을 주축으로 재편 중입니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.digitimes.com/news/a20260707PD233/foxsemicon-equipment-revenue-thailand-2026.html</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://cryptobriefing.com/nvidia-partners-ai-chip-rivals-strategy/" target="_blank" class="news-link">6. NVIDIA, 젠슨 황의 'AI 팩토리' 전략에 따라 270억 달러 지출하며 AI 칩 경쟁사들과 파트너십 체결</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 엔비디아가 자사의 거대한 핵심 구상인 'AI 팩토리' 인프라 확장을 위해 동종 경쟁 진영의 결합 및 지분 인수에 270억 달러 이상을 투입했습니다.</li>
+                        <li>• 주요 내역으로 마벨 테크놀로지 지분 투자, 인텔과의 공동 설계 계약, 그리고 인공지능 추론 전문 팹리스인 'Groq' 인수가 꼽힙니다.</li>
+                        <li>• 강점을 보유한 초거대 학습 모델 분야를 넘어, 일상 서비스 유포 단계인 추론 영역 전반까지 시장 패권을 더욱 통합하겠다는 방침입니다.</li>
+                    </ul>
+                    <span class="news-url">https://cryptobriefing.com/nvidia-partners-ai-chip-rivals-strategy/</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.digitimes.com/news/a20260708PD214/china-ai-packaging-equipment-demand.html" target="_blank" class="news-link">7. 중국 장비 제조업체, AI 패키징 장비용 대형 PLP 노광기 첫 주문 수주</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 중국 반도체 장비 제조사 CFMEE가 독자 설계한 대형 패널 레벨 패키징(PLP) 노광 장비 'PLP 2000'의 첫 상업용 수주를 획득했습니다.</li>
+                        <li>• AI 반도체의 대형화 추세 및 발열 개선 수요로 기존 웨이퍼 단위 공정을 넘어서는 대면적 패널 기판 패키징 가공 수요가 폭증 중입니다.</li>
+                        <li>• 이번 성과를 통해 인텔, 삼성, TSMC 등이 앞다투어 선점 중인 첨단 패키징 글라스 및 패널 장비 시장 구도에 균열을 예고했습니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.digitimes.com/news/a20260708PD214/china-ai-packaging-equipment-demand.html</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.digitimes.com/news/a20260708PD215/ddr4-ssd-market-demand-dram" target="_blank" class="news-link">8. 기업용 SSD 부족으로 2026년 3분기 DDR4 8Gb 계약 가격 상승</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 글로벌 인공지능 데이터 센터 내 기업용 SSD 수요가 한계를 넘어서자 이를 캐싱 보조하는 주요 메모리 칩 수급 역시 극도로 제한되었습니다.</li>
+                        <li>• 대만계 제조사들은 주력 규격인 DDR4 8Gb 모듈의 3분기 신규 인도 계약 가격이 직전 분기 대비 최대 50%까지 상승할 수 있다고 고객사에 공지했습니다.</li>
+                        <li>• 선두 공급사인 삼성전자가 DDR4 설비를 선단 하이엔드로 축소 개편하는 과정이 겹쳐 구형 표준 DDR3 가격까지 동반 과열되고 있습니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.digitimes.com/news/a20260708PD215/ddr4-ssd-market-demand-dram</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.digitimes.com/news/a20260708PD228/robotaxi-market-cost-supply-chain-tesla.html?chid=10" target="_blank" class="news-link">9. 중국의 비용 절감으로 2040년까지 1조 달러 규모의 로보택시 시장 가시권 진입</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 모건스탠리는 중국의 탄탄한 자율주행 부품 공급체인의 가격 인하 효과에 힘입어 2040년 전 세계 로보택시 시장이 1조 달러에 이를 것으로 추산했습니다.</li>
+                        <li>• 핵심 차량 생산 원가가 2027년 무렵 대당 3.5만~4만 달러 대까지 급속히 하락하여 서비스 인프라 배포 장벽을 완전히 허물 예정입니다.</li>
+                        <li>• 규제 정비 조율 및 자율 인공지능 발전으로 2028년 무렵 손익분기점이 예상되며 테슬라와 웨이모가 리드하는 시장 생태계가 개편될 전망입니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.digitimes.com/news/.../robotaxi-market-cost-supply-chain-tesla.html</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.digitimes.com/news/a20260708VL215/meta-bytedance-market.html" target="_blank" class="news-link">10. Meta, AI 시각 미디어 경쟁 가세 및 ByteDance의 Seedance 총이익률 90% 달성 보고</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 메타가 인스타그램과 연동되는 첫 무료 맞춤형 이미지 생성 특화 대형 모델 'Muse Image'를 유저들에게 공식 유포하기 시작했습니다.</li>
+                        <li>• 반면 시각 미디어 가공 시장 강자인 바이트댄스의 비디오 인공지능 'Seedance'는 기술 지배력을 바탕으로 마진율 90% 이상을 거둔 것으로 보입니다.</li>
+                        <li>• 메타가 거대 플랫폼 유저 풀을 기반으로 무료 무기를 투발함에 따라 프리미엄 영상 가공 유료 시장의 가격 협상력 변화가 예상됩니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.digitimes.com/news/a20260708VL215/meta-bytedance-market.html</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.bloomberg.com/news/articles/2026-07-08/tencent-wechat-ai-agent-shows-promise-in-super-app-fight-review" target="_blank" class="news-link">11. 텐센트 위챗 AI 에이전트, 슈퍼앱 경쟁에서 가능성 제시: 리뷰</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 중국 텐센트가 유저 10억 명의 위챗 앱 생태계 안에서 일상 심부름과 데이터 요약을 수행할 인공지능 에이전트 'Xiaowei' 베타 테스트를 시작했습니다.</li>
+                        <li>• 위챗 대화 내용 실시간 요약과 모멘트 피드 핵심 추출 기능을 내장했으며 백엔드에는 독자 WeLM 및 DeepSeek 대형 모델이 믹스되었습니다.</li>
+                        <li>• 무단 대량 수집 리스크 및 스팸 생성을 원천 자동 차단하는 정교한 안전장치를 최우선 탑재하여 차세대 플랫폼 경쟁 우위를 입증했습니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.bloomberg.com/.../tencent-wechat-ai-agent-shows-promise-in-super-app-fight-review</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.bloomberg.com/news/articles/2026-07-08/korean-stocks-extend-drop-from-peak-to-20-as-ai-jitters-spread" target="_blank" class="news-link">12. AI 순환매로 한국 주식 폭락, 중국 주식 급등</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 반도체 제조 중심 하드웨어 밸류체인의 자본 지출 연속성에 의문이 일며 아시아 기술주 펀드 내에서 급격한 순환매 현상이 관측됩니다.</li>
+                        <li>• 이로 인해 삼성전자 및 SK하이닉스가 포진한 한국 코스피가 약세 영역에 진입한 반면 저평가 인공지능 테마가 부각된 홍콩 항셍지수는 반등했습니다.</li>
+                        <li>• 특히 미국의 전방위 규제에 맞서 DeepSeek 등이 토종 가속기 기반 생태계를 안착시키고 있다는 호재가 중국 본토 기술 증시의 촉매가 되었습니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.bloomberg.com/.../korean-stocks-extend-drop-from-peak-to-20-as-ai-jitters-spread</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.digitimes.com/news/a20260706PD247/tesla-austin-production-vehicle-texas.html" target="_blank" class="news-link">13. Tesla, Cybercab의 공공 도로 시험 주행 시작</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 테슬라가 오스틴 본사 인근 실제 공공 도로상에 운전대와 브레이크 패달이 완벽히 거세된 양산형 'Cybercab' 테스트 차량을 투입했습니다.</li>
+                        <li>• 본 차량은 마일당 165Wh 전력 효율 및 48kWh 용량 배터리를 적용하여 테슬라 라인업 중 가장 뛰어난 가성비를 달성한 상태입니다.</li>
+                        <li>• 정부 및 교통 당국의 페달 의무 규제 완화 기조와 맞물릴 경우 머스크가 예고한 대당 2.5만 달러 대 보급형 로보택시 전개가 가속화됩니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.digitimes.com/news/a20260706PD247/tesla-austin-production-vehicle-texas.html</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.digitimes.com/news/a20260707PD231/taiwan-foxconn-young-liu-demand-infrastructure.html" target="_blank" class="news-link">14. Foxconn 의장: 4대 AI 고객 그룹 중 2곳은 아직 본격적인 수요에 도달하지 않았다</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 글로벌 위탁 생산 1위 폭스콘의 영 류 의장은 글로벌 인공지능 인프라 수요가 구조적인 장기 사이클의 초입 단계에 머물러 있다고 선언했습니다.</li>
+                        <li>• 주력 고객 그룹 중 오픈AI 등 거대 모델사와 빅테크 클라우드 진영은 명확한 반면, 정부 기관 및 일반 기업들의 도입은 이제 막 태동 중입니다.</li>
+                        <li>• 공공 국방 부문 및 비즈니스 특화 모델 수요가 아직 본격화되지 않은 상태이므로 연산 하드웨어 생태계의 잔여 수명은 매우 길다는 판단입니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.digitimes.com/news/a20260707PD231/taiwan-foxconn-young-liu-demand-infrastructure.html</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.digitimes.com/news/a20260708VL216/samsung-hbm4-hbm-packaging-sk-hynix.html?chid=10" target="_blank" class="news-link">15. 삼성을 구원할 HBM4의 칩 레벨 이점</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 차세대 HBM4 규격부터 파운드리 가공 기술이 믹스되는 로직 베이스 다이 구조가 필수가 됨에 따라 삼성전자의 통합형 턴키 모델이 부각됩니다.</li>
+                        <li>• 삼성은 자사 하이엔드 4나노 공정과 파운드리 설비를 한곳에 융합하여 엔비디아 루빈 등에 탑재될 핵심 메모리 생태계를 동시 대응합니다.</li>
+                        <li>• 기존 선두 공급망 체인 균열을 틈타 아마존, 구글, 메타, 브로드컴 등 자체 맞춤형 가속기를 확장하려는 빅테크 다변화 수주를 조준하고 있습니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.digitimes.com/news/.../samsung-hbm4-hbm-packaging-sk-hynix.html</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://news.cgtn.com/news/2026-07-08/China-s-output-of-humanoid-robots-set-to-exceed-100-000-in-2026-1OBFKOQ9WUg/p.html" target="_blank" class="news-link">16. 중국의 휴머노이드 로봇 생산량 2026년에 10만 대 초과 예정</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 중국 공업정보화부(MIIT) 고위 관료는 자국 내 휴머노이드 고성능 로봇 생산 수량이 올해 기준 총 10만 대 라인을 무난히 돌파한다고 발표했습니다.</li>
+                        <li>• 대형 언어 모델 및 실제 물리 환경과 상호작용하는 체화된 인공지능(Embodied AI) 기술이 결합하며 산업 제조 현장 도입률이 30%를 돌파했습니다.</li>
+                        <li>• 정부 주도의 대규모 인공지능 펀드 수혜작인 고가치 로봇 혁신 기술들은 다가오는 상하이 세계인공지능대회(WAIC)에서 전면 공개됩니다.</li>
+                    </ul>
+                    <span class="news-url">https://news.cgtn.com/news/2026-07-08/China-s-output-of-humanoid-robots-set-to-exceed-100-000...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://uk.finance.yahoo.com/news/parasail-combine-nvidia-ai-infrastructure-070100582.html" target="_blank" class="news-link">17. Parasail, NVIDIA AI 인프라와 d-Matrix 가속기 결합하여 10배 빠른 토큰 생성 달성 예정</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 인프라 통합 플랫폼 Parasail이 엔비디아의 블랙웰/호퍼 생태계 아키텍처 환경과 d-Matrix사의 특수 추론용 칩 Corsair를 교차 믹스합니다.</li>
+                        <li>• 범용 인프라와 특수 목적 칩셋을 분산 결합하는 이종 데이터 프로세싱의 첫 상업 상용화로, 비용 효율을 최대 10배 이상 개선합니다.</li>
+                        <li>• 이를 통해 연산 데이터 센터 구축 리드 타임을 상쇄하고 기존 운영 중인 엔비디아 하드웨어 자산의 물리 수명을 크게 확장시키는 묘수가 됩니다.</li>
+                    </ul>
+                    <span class="news-url">https://uk.finance.yahoo.com/news/parasail-combine-nvidia-ai-infrastructure...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://finance.yahoo.com/technology/ai/articles/microsoft-cuts-ai-bill-replacing-065811487.html" target="_blank" class="news-link">18. Microsoft, 소프트웨어 제품에서 OpenAI 및 Anthropic 대체하여 AI 비용 절감</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 마이크로소프트가 폭증하는 서비스 운영용 클라우드 연산 비용을 통제하기 위해 엑셀 및 아웃룩 내 탑재 모델을 자체 MAI 시스템으로 선회 중입니다.</li>
+                        <li>• 자사 주력 소프트웨어 제품군 내 수만 개에 달하는 프롬프트 연산량을 자체 인하우스 가성비 모델로 이관하여 마진 방어에 나섰습니다.</li>
+                        <li>• 인공지능 부문 총괄 책임자는 타사 지급 비용을 궁극적으로 지우는 것이 핵심이라 언급했으며 전사 2.1% 감원과 비용 고삐를 죄고 있습니다.</li>
+                    </ul>
+                    <span class="news-url">https://finance.yahoo.com/.../microsoft-cuts-ai-bill-replacing...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://fund.eastmoney.com/a/202607083798373479.html" target="_blank" class="news-link">19. 세미어날리시스: TSMC의 진정한 호구는 제조 공정이 아니라 EDA/IP 생태계이다</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 반도체 시장 리서치사 SemiAnalysis는 TSMC의 가장 무서운 파자마 장벽은 미세 노드가 아닌 유기적으로 결합된 디자인 생태계라 규정했습니다.
+</li>
+                        <li>• 자사 오픈 이노베이션 플랫폼을 주축으로 시놉시스, 암(Arm) 등 글로벌 IP 사의 검증 실리콘 라이브러리 수를 15년간 31배 폭증시켰습니다.</li>
+                        <li>• 한 번의 설계 오류가 천문학적 파멸을 유발하는 선단 칩 업계 특성상 설계 위험을 전방위 상쇄해 주는 독점적 생태계 복제는 난제입니다.</li>
+                    </ul>
+                    <span class="news-url">https://fund.eastmoney.com/a/202607083798373479.html</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://finance.yahoo.com/technology/ai/articles/ai-chip-startup-sambanova-raises-064500229.html" target="_blank" class="news-link">20. AI 칩 스타트업 SambaNova, 110억 달러 가치로 자금 조달</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 추론 특화 반도체 팹리스인 SambaNova Systems가 110억 달러 기업 가치를 바탕으로 시리즈 F 라운드에서 11억 달러 실탄을 조달했습니다.</li>
+                        <li>• 조달 완료와 동시에 초대형 투자은행인 JP모건 체이스를 핵심 고객사로 유치하며 금융 특화 인하우스 연산 시스템 공급권을 확보했습니다.</li>
+                        <li>• 엔비디아의 고비용 GPU를 전면 교체하는 형태가 아닌, 특정 워크로드 환경에서 연동 배치되어 성능을 5~10배 개선하는 틈새 시장을 공략합니다.</li>
+                    </ul>
+                    <span class="news-url">https://finance.yahoo.com/.../ai-chip-startup-sambanova-raises...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://breakingthenews.net/Article/Apple's-dollar30B-deal-with-Broadcom-to-produce-15M-chips/66654812" target="_blank" class="news-link">21. 애플, Broadcom과 1,500만 개 칩 생산을 위한 300억 달러 규모 계약 체결</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 애플이 무선 연결 칩 강자인 브로드컴과 미국 내 제조 생산 기반을 활용하는 총액 300억 달러 규모의 초대형 다년 공급 공급을 체결했습니다.</li>
+                        <li>• 백악관 및 트럼프 행정부의 본토 제조 장려 정책에 부합하는 최대 투자로 콜로라도 생산 기지 고도화 자금으로 15억 달러 보조를 병행합니다.</li>
+                        <li>• 브로드컴은 본 인프라를 가동하여 향후 아이폰 등 애플 기기에 독점 탑재될 무선 주파수 컴포넌트 및 핵심 커스텀 통신 실리콘을 제조합니다.</li>
+                    </ul>
+                    <span class="news-url">https://breakingthenews.net/Article/Apple's-dollar30B-deal-with-Broadcom...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.digitimes.com/news/a20260708PD213/demand-wistron-chairman-market-adoption.html" target="_blank" class="news-link">22. 위스트론 의장: 소버린 AI가 글로벌 시장을 넓히면서 AI 수요는 여전히 강력하다</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 대만 위스트론의 사이먼 린 의장은 각국 정부 주도의 '소버린 AI' 인프라 국산화 열풍 덕분에 수요 엔진이 미 대륙을 넘어 다각화된다고 밝혔습니다.</li>
+                        <li>• 실제 엔드 유저들이 서비스 인프라에 현금 지출을 주저 없이 집행하고 있어 기술 거품론을 통과해 완연한 실적 안착기에 접어들었다는 평가입니다.</li>
+                        <li>• 엔비디아 신형 칩의 출시 지연 우려 노이즈에도 불구하고, 자사 내부 연간 매출 가이던스는 세 자릿수 폭발적 성장 궤도를 견고히 유지 중입니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.digitimes.com/news/a20260708PD213/demand-wistron-chairman-market-adoption.html</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.cnbc.com/2026/07/08/china-anthropic-ai-claude-code-backdoor-security-threat.html" target="_blank" class="news-link">23. 중국, Anthropic의 Claude Code와 관련된 AI 위험 경고</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 중국 공업정보화부가 미국 앤드로픽사의 개발 편의 도구인 'Claude Code' 내부에서 심각한 백도어 취약성 위협을 감지했다고 공식 경고했습니다.</li>
+                        <li>• 해당 자동 코딩 모듈이 유저 모르게 민감한 기기 정보와 원격 조작 루트를 전송할 수 있다 주장하며 본토 전역에 즉각적인 삭제를 권고했습니다.</li>
+                        <li>• 앤드로픽이 알리바바의 기술 추출을 맹비난한 지 한 달 만에 나온 조치로, 알리바바는 즉시 전사 임직원에게 7월 10일부로 사용 금지령을 하사했습니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.cnbc.com/2026/07/08/china-anthropic-ai-claude-code-backdoor-security-threat.html</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.digitimes.com/news/a20260708PD248/netherlands-asml-nexperia-dutch-beijing.html" target="_blank" class="news-link">24. 네덜란드, 넥스페리아 및 ASML 무역 마찰에 대해 중국과의 회담 압박</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 네덜란드 외교 및 무역 관료단이 베이징을 급거 방문하여 반도체 장비 규제 전방위 압박 국면 속 노이즈 해소를 위한 장관급 회담을 가졌습니다.</li>
+                        <li>• 미국의 강한 압박 속에서 네덜란드 국보급 기업인 ASML의 하이엔드 노광 장비 중국 반입 제한 수위 조절 문제가 집중 조율되었습니다.
+</li>
+                        <li>• 네덜란드 대표단은 자국 안보 관점의 불가피한 최소 통제임을 항변하는 한편, 글로벌 공급망의 인위적 붕괴는 제한해야 한다는 균형론을 제시했습니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.digitimes.com/news/a20260708PD248/netherlands-asml-nexperia-dutch-beijing.html</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.digitimes.com/news/a20260707PD228/delta-electronics-capex-data-center-design-2026-shipments.html" target="_blank" class="news-link">25. 델타가 AI 전력 시스템의 모멘텀을 주시함에 따라 2026년 하반기 고전압 직류 전력 증가 전망</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 초고전력 연산 랙 인프라 배포가 본격화되자 기존 교류(AC) 배전망 한계를 돌파하기 위한 '고전압 직류(HVDC)' 인프라 전환이 핵심 화두입니다.</li>
+                        <li>• 2026년 하반기 시점부터 데이터 센터용 고전압인 ±400V 배전 전력 모듈 출하가 개시되며 향후 최종 규격인 800V 체인으로 진화합니다.</li>
+                        <li>• 전력 컴포넌트 강자인 델타 일렉트로닉스가 맞춤형 가속기 서버 맞춤형 DC/DC 솔루션 양산 설계 공급 단계를 확정하며 강력한 랠리를 예고했습니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.digitimes.com/news/a20260707PD228/delta-electronics-capex-data-center-design...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.cnbc.com/2026/07/08/apple-commits-30-billion-to-broadcom-for-us-chipmaking-push.html" target="_blank" class="news-link">26. 애플, 미국 칩 제조 추진을 위해 Broadcom에 300억 달러 투자 약속</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 애플이 브로드컴의 미국 콜로라도 팹 라인 현대화를 전방위 지원하기 위해 총액 300억 달러 상당의 커스텀 반도체 장기 확약 공급망을 확정했습니다.</li>
+                        <li>• 본 계약을 통해 향후 수년 150억 개 상당의 고부가가치 무선 주파수 필터 및 실리콘 부품이 미국 내 본토 공장에서 직접 뽑아져 나옵니다.</li>
+                        <li>• 대선을 앞두고 자국 내 국내 제조업 일자리 및 공급 인프라 안착 공세를 증명해야 하는 트럼프 행정부 기조와 완벽히 보조를 맞춘 행보입니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.cnbc.com/2026/07/08/apple-commits-30-billion-to-broadcom...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.bloomberg.com/news/articles/2026-07-08/nvidia-s-1-trillion-slide-sends-valuation-to-pre-ai-boom-levels" target="_blank" class="news-link">27. NVIDIA의 1조 달러 하락으로 밸류에이션이 AI 붐 이전 수준으로 후퇴</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 엔비디아 시가총액이 단 두 달 만에 고점 대비 무려 1조 달러 상당 증발하며 멀티플 밸류에이션이 인공지능 붐 촉발 이전 수준으로 후퇴했습니다.</li>
+                        <li>• 월가 애널리스트들의 실적 추정치 상향 기조는 여전하나 주가 피로감 및 메모리 가격 폭등 수혜주(마이크론 등)로의 펀드 자금 유출이 주원인입니다.</li>
+                        <li>• 현재 선행 주가수익비율(PER) 기준 18배 수준까지 밀려나, 외려 20배가 넘는 S&P 500 평균 지수보다 저렴해진 가격 메리트 영역에 진입했습니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.bloomberg.com/.../nvidia-s-1-trillion-slide-sends-valuation-to-pre-ai-boom-levels</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.trendforce.com/news/2026/07/08/news-tsmc-pic-capacity-seen-surging-to-25k-wafersmonth-by-2028-nvidia-broadcom-eyed-as-early-coupe-customers/" target="_blank" class="news-link">28. TSMC PIC 생산 능력 2028년까지 월 25,000장에 도달 전망이며 NVIDIA, Broadcom이 초기 고객으로 주목</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• TSMC의 핵심 광학 반도체 기술인 실리콘 포토닉스(PIC) 전용 웨이퍼 캐파가 내년 말 월 1.5만 장을 거쳐 2028년 월 2.5만 장 라인으로 폭증합니다.</li>
+                        <li>• 한정된 초기 램프업 물량 특성상 자사 고유 COUPE 광학 플랫폼 생태계를 선점할 VIP 탑티어 고객은 엔비디아와 브로드컴이 독점할 공산이 큽니다.</li>
+                        <li>• 스위치 대역폭 한계 및 광학 엔진 고도화 수요에 대응하는 핵심 축이나 실제 CPO 완제품 검증 단계 안착까지는 시일이 필요합니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.trendforce.com/.../news-tsmc-pic-capacity-seen-surging-to-25k-wafersmonth...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://fund.eastmoney.com/a/202607083798484090.html" target="_blank" class="news-link">29. 트렌드포스집방자문: AI 고급 MLCC 하반기 품귀 위험 상승</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 하반기 빅테크 기업들의 자체 커스텀 ASIC 가속기 및 차세대 AI 서버 양산이 맞물리며 하이엔드 MLCC 컴포넌트의 품귀 리스크가 급속히 고조됩니다.</li>
+                        <li>• 무라타, 삼성전기 등 3대 선도 업체의 주문출하비율(B/B)이 1.30을 연이어 경신하며 역사적 최고 공급 병목 현상을 대변하고 있습니다.</li>
+                        <li>• 스마트폰 등 범용 소비재 수요는 극도로 정체된 반면 인공지능 인프라 전용 고용량/저전압 수동부품만 품귀 현상을 빚는 양극화 장세입니다.</li>
+                    </ul>
+                    <span class="news-url">https://fund.eastmoney.com/a/202607083798484090.html</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://wccftech.com/memory-shortages-drive-ddr4-prices-over-50-in-q3-2026-ddr3-also-impacted-by-higher-costs/" target="_blank" class="news-link">30. 메모리 부족으로 2026년 3분기 DDR4 가격 50% 이상 상승, DDR3도 높은 비용 영향 직면</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 대형 인공지능 데이터 센터 내 기업용 초고용량 SSD 탑재량 폭증으로 보조용 캐싱 표준 규격인 레거시 DDR4 쇼티지가 기형적으로 심화되었습니다.</li>
+                        <li>• 공급 가용량이 글로벌 폭증 수요를 전혀 쫓아가지 못하면서 남아있는 구형 레거시 생산 규격인 DDR3 단가 라인까지 덩달아 상승 압박을 받습니다.</li>
+                        <li>• 시장 반도체 서플라이 분석가들은 이러한 기형적인 캐싱 메모리 수급 쇼티지 병목 레이스가 향후 2028년 국면까지 장기 지속될 수 있다 경고합니다.</li>
+                    </ul>
+                    <span class="news-url">https://wccftech.com/memory-shortages-drive-ddr4-prices-over-50-in-q3-2026...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.trendforce.com/news/2026/07/08/news-memory-rally-extends-as-taiwan-module-maker-adata-reportedly-sees-q3-dram-prices-up-20-30-nand-up-35-40/" target="_blank" class="news-link">31. 메모리 랠리 연장으로 대만 모듈 제조사 에이데이터 보고에 따르면 3분기 DRAM 가격 20~30% 상승, NAND 35~40% 상승</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 대만 대형 모듈사인 ADATA는 3분기 제조사 확약 계약 단가 기준으로 DRAM은 최대 30%, NAND 플래시는 40% 대폭 인상 통보를 접수했습니다.</li>
+                        <li>• 삼성, 하이닉스, 마이크론 등 메모리 빅3가 전체 유효 캐파를 하이엔드 HBM 및 DDR5로 올인 전환함에 따라 범용 LPDDR4 등의 씨가 말랐습니다.
+</li>
+                        <li>• 낙수효과로 대만 남야테크놀로지 6월 매출이 621% 폭등하는 등 하위 레거시 메모리 스페이스 전반이 유례없는 어닝 서프라이즈를 누리는 중입니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.trendforce.com/.../news-memory-rally-extends-as-taiwan-module-maker-adata...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.bloomberg.com/news/articles/2026-07-08/mistral-ai-releases-robotics-model-to-support-physical-ai-push" target="_blank" class="news-link">32. 미스트랄 AI, 피지컬 AI 추진 지원을 위해 로보틱스 모델 출시</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 프랑스 대표 인공지능 스타트업인 미스트랄 AI가 유럽 산업 연합 전선을 등에 업고 물리 인공지능 시장용 자율 내비게이션 모델을 깜짝 발표했습니다.</li>
+                        <li>• 'Robostral Navigate'로 명명된 본 모델은 특수 장비 없이 기본 카메라 센서와 텍스트 지령만으로 복잡한 제조 공장 장애물을 단독 우회합니다.</li>
+                        <li>• 에어버스, BMW 등 유럽 제조업 맹주들과 파트너십을 체결했으며 유로존 주권을 사수하려는 정부 연합체 비호 아래 200억 달러 밸류 펀딩을 논의 중입니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.bloomberg.com/.../mistral-ai-releases-robotics-model-to-support-physical-ai-push</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.reuters.com/world/china/china-plans-let-top-ai-firms-buy-limited-amount-nvidia-h200-chips-information-2026-07-08/" target="_blank" class="news-link">33. 중국, 최고 AI 기업들에게 한정된 수량의 NVIDIA H200 칩 구매 허용 계획</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 중국 정부가 자국 내 최고 인공지능 리딩사들인 알리바바, 바이트댄스, 딥시크 등을 대상으로 엔비디아의 하이엔드 H200 가속기 수입을 허용할 방침입니다.</li>
+                        <li>• 미국 상무부의 수출 라이선스 발급에도 불구하고 토종 공급망 안착을 위해 구매 승인을 보류해 오던 베이징 당국이 마침내 백기를 든 격입니다.</li>
+                        <li>• 다만 총 물량 라인을 20만 대 미만의 엄격한 쿼터제로 묶어 통제할 계획이며 신형 모델 고도화를 향한 본토 내 연산 쇼티지 압박이 극에 달했음을 보여줍니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.reuters.com/.../china-plans-let-top-ai-firms-buy-limited-amount-nvidia-h200-chips...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.tomshardware.com/pc-components/dram/jedec-releases-new-sphbm4-standard-to-slash-ai-memory-costs-narrow-512-bit-interface-enables-dropping-expensive-interposers-for-organic-substrates" target="_blank" class="news-link">34. JEDEC, AI 메모리 비용을 절감하기 위해 유기 기판용 새로운 SPHBM4 표준 출시</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 국제반도체표준협의회(JEDEC)가 값비싼 실리콘 인터포저 첨단 공정 없이 저렴한 유기 기판 위에 바로 실장 가능한 'SPHBM4' 규격을 전격 공표했습니다.</li>
+                        <li>• 인터페이스 폭을 512비트로 좁히는 대신 핀당 속도를 최대 46.0Gbps로 폭증시켜 하이엔드 인공지능 메모리의 극단적인 제조 단가 인하를 유도합니다.</li>
+                        <li>• 첨단 미세 패키징 인프라가 극도로 열악한 중국 제조 생태계 현실과 완벽히 부합하여 향후 글로벌 인프라 격차를 좁힐 대안 무기가 될 공산이 큽니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.tomshardware.com/.../jedec-releases-new-sphbm4-standard-to-slash-ai-memory-costs...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://finance.yahoo.com/technology/ai/articles/bank-america-affirms-why-nvidia-153541031.html" target="_blank" class="news-link">35. NVIDIA, 로보틱스 개발자를 위한 새로운 문을 열다</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 엔비디아가 자사 핵심 로봇 파운데이션 모델인 Isaac GR00T 1.7을 허깅페이스의 오픈소스 생태계에 전격 이식 통합하는 확장을 단행했습니다.</li>
+                        <li>• 아울러 월가 일각에서 제기된 차세대 'Kyber' 초고집적 AI 랙 아키텍처의 2028년 출시 지연 보고서 노이즈를 향해 공식 부인을 선언했습니다.</li>
+                        <li>• 144개 블랙웰 기반 다이를 수직 통합 융합하는 Kyber 시스템은 당초 약속된 마일스톤인 2027년 베라 루빈 울트라 플랫폼과 함께 정상 출격합니다.</li>
+                    </ul>
+                    <span class="news-url">https://finance.yahoo.com/.../bank-america-affirms-why-nvidia...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.aol.com/articles/nvidias-valuation-just-hit-multiyear-155948000.html" target="_blank" class="news-link">36. 엔비디아 밸류에이션, 매출이 기록을 세우는 중에도 수년 만에 최저치 기록</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 엔비디아의 선행 주가수익비율(PER) 멀티플 지표가 연간 가이던스 폭발 기조 속에서도 기형적인 매도세 탓에 수년래 최저치인 22.22배 수준으로 하락했습니다.</li>
+                        <li>• 이는 동종 경쟁사인 AMD의 73.53배 대비 심각한 저평가 영역으로, 시장 참가자들의 연산 인프라 피로감에 따른 기계적 수급 왜곡 현상입니다.</li>
+                        <li>• 자본 이동이 가성비 위주 스토리지 진영(샌디스크 등)으로 일시 쏠린 탓이나 월가의 분기 이익 전망 추정치는 오히려 상향 조정 중입니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.aol.com/articles/nvidias-valuation-just-hit-multiyear...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.bloomberg.com/news/articles/2026-07-08/china-to-let-ai-firms-buy-nvidia-h200-chips-information-says" target="_blank" class="news-link">37. 중국, AI 기업들에게 엔비디아 H200 구매 허용할 예정이라고 디 인포메이션 보도</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 중국 베이징 최고 국무 관료국이 미국 엔비디아산 하이엔드 인공지능 가속기 수입의 족쇄를 풀고 자국 빅테크사 구매 신청 접수를 확정했습니다.</li>
+                        <li>• 트럼프 행정부의 판매 승인 조치 이후에도 토종 화웨이 반도체 생태계 강제 이식을 위해 버티던 입장을 전격 선회한 조치입니다.
+</li>
+                        <li>• 단, 수입 신청 시 정확한 최종 구동 목적 및 데이터 랙 유기 배치 계획안을 제출해야 하며 총 승인 규모는 20만 대 미만으로 슬라이스 차단됩니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.bloomberg.com/.../china-to-let-ai-firms-buy-nvidia-h200-chips-information-says</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.bloomberg.com/news/articles/2026-07-08/blue-owl-unveils-infrastructure-venture-catering-to-data-centers" target="_blank" class="news-link">38. 블루 아울, 데이터 센터를 겨냥한 인프라 벤처 공개</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 초대형 자산운용사인 Blue Owl Capital이 데이터 센터 인프라 폭증의 핵심인 광섬유 백본망 개발을 전담할 인하우스 그룹 '커크우드'를 출범했습니다.</li>
+                        <li>• 커크우드 인프라 그룹은 작년 인수한 통신망 인프라 자산을 결합하여 동남부 40개 주요 허브 데이터 센터 간의 독점 광대역 네트워크를 리드합니다.</li>
+                        <li>• 수조 달러 규모의 자금 전쟁이 치열한 인공지능 물리 부하 통신 스페이스를 선점하려는 월스트리트 대형 자본의 인프라 직접 통제 기조를 대변합니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.bloomberg.com/.../blue-owl-unveils-infrastructure-venture-catering-to-data-centers</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.cnbc.com/2026/07/08/meta-is-building-its-first-big-data-center-in-canada-amid-ai-push.html" target="_blank" class="news-link">39. 메타, AI 확장이 국경을 넘어서면서 캐나다에 첫 대형 데이터 센터 건설</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 메타가 캐나다 앨버타주에 총액 90억 달러의 거액을 투입하여 자사 글로벌 체인 최초의 1기가와트(GW)급 하이엔드 인공지능 데이터 센터를 건설합니다.</li>
+                        <li>• 앨버타주 정부의 파격적인 규제 철폐 및 가용 전력망 지원 확약에 근거한 결정으로, 완공 후 남는 전력 용량의 제3자 클라우드 도매 사업도 병행합니다.</li>
+                        <li>• 연간 최대 1,450억 달러에 달하는 막대한 자본 지출 집행에 따른 주주들의 마진 우려 리스크를 상쇄하기 위한 친환경 다년 수요 계획을 수립했습니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.cnbc.com/2026/07/08/meta-is-building-its-first-big-data-center-in-canada...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://finance.yahoo.com/technology/ai/articles/samsung-kose-a005930-launches-pm1763-091314266.html" target="_blank" class="news-link">40. 엔비디아 공급업체 삼성, 베라 루빈 전진 배치</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 삼성전자가 차세대 엔비디아 플랫폼 '베라 루빈(Vera Rubin)' 서버 랙 구조에 탑재될 PCIe 6.0 일체형 솔루션 PM1763 SSD 양산 라인을 가동했습니다.</li>
+                        <li>• 핵심 9세대 V-NAND 적층 기술을 기반으로 16TB 대용량 모델 기준 초당 28,400MB에 달하는 무지막지한 고성능 연산 데이터 읽기를 지원합니다.</li>
+                        <li>• 차세대 데이터 인프라의 아킬레스건인 열 제어 문제를 완전 차단하기 위해 고효율 수랭식 인프라 랙 환경에 완벽 결합되도록 스펙을 튜닝했습니다.</li>
+                    </ul>
+                    <span class="news-url">https://finance.yahoo.com/.../samsung-kose-a005930-launches-pm1763...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://finance.yahoo.com/markets/stocks/articles/marvell-mrvl-down-22-6-171116041.html" target="_blank" class="news-link">41. 마벨, 엔비디아의 20억 달러 AI 투자 및 지수 제외 이후 22.6% 하락</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 마벨 테크놀로지가 엔비디아로부터의 20억 달러 규모 전략적 지분 파트너십 결합 발표에도 불구하고 주가는 고점 대비 22.6% 가량 조정을 겪었습니다.</li>
+                        <li>• 데이터 센터 부문 매출 비중이 전사 76% 선까지 폭증하며 기존 러셀 가치 지수에서 기계적 제외 조치된 점이 단기 수급 왜곡을 불렀습니다.</li>
+                        <li>• 엔비디아 NVLink 생태계 백엔드에 자사 맞춤형 실리콘 및 하이엔드 광학 커넥팅 솔루션이 독점 통합되는 구조이므로 장기 성장 기초체력은 굳건합니다.</li>
+                    </ul>
+                    <span class="news-url">https://finance.yahoo.com/markets/stocks/articles/marvell-mrvl-down-22-6...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://finance.yahoo.com/markets/stocks/articles/every-memory-stock-now-bear-185509124.html" target="_blank" class="news-link">42. 모든 메모리 주식이 약세장에 진입</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 마이크론(-22%), 어플라이드 머티리얼즈(-23%), 웨스턴 디지털(-28%) 등 글로벌 주력 메모리 및 장비 체인 전반이 고점 대비 급락하며 기술적 약세장에 직면했습니다.</li>
+                        <li>• 월가 펀드의 과열 해소용 차익 실현 기조이나, 마이크론의 경우 3분기 매출액이 전년 대비 346% 폭증한 414.6억 달러를 찍으며 굳건한 기초체력을 입증했습니다.</li>
+                        <li>• 선행 PER 멀티플이 6배 수준까지 주저앉은 마이크론의 가격 메리트가 가장 돋보이며, 사이클 변동이 적은 배당형은 AMAT가 대안으로 꼽힙니다.</li>
+                    </ul>
+                    <span class="news-url">https://finance.yahoo.com/markets/stocks/articles/every-memory-stock-now-bear...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card cat-consumer" data-cat="consumer">
+            <div class="card-header">
+                <div class="icon-box"><i class="ti ti-shirt"></i></div>
+                <div class="category-title">경기소비재</div>
+                <div class="badge">2개 뉴스</div>
+            </div>
+            <div class="card-body">
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.wsj.com/business/retail/levi-strauss-raises-guidance-again-65ab5c81?mod=pls_whats_news_us_business_f" target="_blank" class="news-link">1. 리바이 스트라우스, 확장된 제품군과 DTC 전환 성과로 회계연도 가이던스 재차 상향</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 글로벌 데님 강자 리바이 스트라우스가 2분기 깜짝 호실적에 근거해 연간 전사 매출액 성장 가이던스 목표치를 최고 7.5% 선으로 재상향했습니다.</li>
+                        <li>• 미셸 가스 CEO 주도하에 단행된 상의 및 여가용 드레스 카테고리 대폭 확장 구상과 중간 유통 마진을 걷어내는 DTC 직접 유통 채널 안착이 주효했습니다.</li>
+                        <li>• 탄탄한 현금 흐름 창출력을 과시하듯 이번 분기 주주 환원용 배당 단가 역시 전년 기조 대비 무려 14% 깜짝 인상을 단행했습니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.wsj.com/business/retail/levi-strauss-raises-guidance-again...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.techtimes.com/articles/319909/20260708/china-ev-sales-slide-13-h1-2026-only-3-brands-profitable-export-push-soars.htm" target="_blank" class="news-link">2. 2026년 상반기 중국 전기차 판매 13% 감소: 수출 추진이 치솟는 가운데 오직 3개 브랜드만 수익성 확보</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 중국 상반기 신에너지차 본토 소매 유통량이 보조금 축소 직격탄을 맞아 전년 동기 대비 13% 가량 후퇴하는 구조조정 빙하기에 진입했습니다.
+</li>
+                        <li>• 가혹한 내수 단가 치킨게임 여파로 본토 30여 개 EV 제조 진영 중 오직 BYD, 샤오미, 립모터 단 3개 브랜드만 흑자 기조를 간신히 수호했습니다.</li>
+                        <li>• 마진 붕괴에 직면한 제조사들은 저렴한 LFP 팩 비용 무기를 앞세워 유럽 등 해외 수출로 선회 중이며 연간 수출 1,000만 대 공세를 예고했습니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.techtimes.com/.../china-ev-sales-slide-13-h1-2026-only-3-brands-profitable...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card cat-finance" data-cat="finance">
+            <div class="card-header">
+                <div class="icon-box"><i class="ti ti-building-bank"></i></div>
+                <div class="category-title">금융</div>
+                <div class="badge">6개 뉴스</div>
+            </div>
+            <div class="card-body">
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.bloomberg.com/news/articles/2026-07-08/private-placements-surge-in-the-middle-east-on-iran-war-swings" target="_blank" class="news-link">1. 이란 전쟁 변동성으로 중동 내 사모 채권 발행 급증</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 중동 리스크 및 이란 국면 전쟁 노이즈 심화로 공모 자금 조달 길이 막히자, 중동 대형 기업들이 사모 방식 채권 시장으로 긴급 우회 중입니다.</li>
+                        <li>• JP모건 채권 분석팀은 신흥국(CEEMEA) 전체 채권 조달 활동액 중 중동계 사모 발행 비중이 무려 3분의 2 선을 독식하고 있다고 보고했습니다.</li>
+                        <li>• 카타르에너지가 35억 달러 규모 자금을 확보한 것을 필두로 사우디 아람코 등이 대형 노출 없이 신속히 조달하기 위해 본 조치에 가세했습니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.bloomberg.com/.../private-placements-surge-in-the-middle-east-on-iran-war-swings</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.bloomberg.com/news/articles/2026-07-08/uae-wealth-funds-abu-dhabi-s-300-billion-l-imad-taps-bcg-for-sweeping-overhaul" target="_blank" class="news-link">2. 아부다비, 거래 촉진 추진 위해 3,000억 달러 규모의 새로운 국부 펀드 개편</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 아부다비 정부의 신생 3,000억 달러 규모 매머드 국부펀드인 'L'imad Holding'이 글로벌 탑티어 도약을 위해 전면적인 조직 개편을 발동했습니다.</li>
+                        <li>• 보스턴컨설팅그룹(BCG)과 전격 손잡고 내부 중복 자산 제거 및 보고 체계 일원화 효율화 작업을 단행하며 핵심 경영진 물갈이에 착수했습니다.</li>
+                        <li>• 미 대륙 인프라 시장 및 글로벌 거대 기술 투자 장악력 확대를 목표로 월스트리트 헤드헌팅을 통한 글로벌 인재 영입 공세를 강화 중입니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.bloomberg.com/.../uae-wealth-funds-abu-dhabi-s-300-billion-l-imad-taps-bcg...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.bloomberg.com/news/articles/2026-07-08/china-to-let-ai-firms-buy-nvidia-h200-chips-information-says" target="_blank" class="news-link">3. 알리안츠 자회사, AI 도입 추진의 일환으로 최대 1,800명 감원 계획</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 글로벌 금융보험 거두 알리안츠 그룹 산하의 여행 특화 부문인 'Allianz Partners'가 인공지능 기반 완전 무인화 프로세싱 도입 여파로 감원을 추진합니다.</li>
+                        <li>• 유럽 본토 사업장 전반을 통틀어 총 1,500명에서 최대 1,800명 선에 달하는 대규모 인력 감축안을 노조 측에 제시하고 협상을 최종 타결했습니다.</li>
+                        <li>• 일선 정형화된 상담 및 보험금 사후 정산 프로세스가 고도화된 인공지능 알고리즘으로 완벽 대체됨에 따른 예고된 인력 구조조정 흐름입니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.bloomberg.com/.../allianz-partners-ai-layoff-action-plan</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.bloomberg.com/news/articles/2026-07-08/japan-payment-processor-collapse-hits-banks-and-restaurants" target="_blank" class="news-link">4. 일본 결제 대행업체 파산으로 은행, 레스토랑 타격</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 오사카에 연고를 둔 중견 신용카드 정산 대행사 'Zentoshin'이 총부채 1,152억 엔을 남기고 재판소에 전격 파산 신청을 제기해 파장이 큽니다.</li>
+                        <li>• 올해 일 대륙 내 최대 규모 파산 건으로 토와은행 등 5개 지방 은행 여신 라인의 즉각적인 연쇄 상각 손실 처리가 불가피해진 국면입니다.</li>
+                        <li>• 특히 본 대행망에 가맹된 중소 음식점 약 20만 점포의 카드 정산 대금 환급 줄이 묶이면서 현금 흐름 약화에 따른 소상공인 연쇄 도산 위기가 고조됩니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.bloomberg.com/.../japan-payment-processor-collapse-hits-banks-and-restaurants</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://uk.finance.yahoo.com/news/dollar-selling-linked-sk-hynix-071730341.html" target="_blank" class="news-link">5. SK Hynix 지분 매각과 관련된 달러 매도로 원화 가치 한 달 만에 최고치 기록</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• SK하이닉스가 미국 자본시장 내 대규모 ADR 자금 조달(약 43조 원 규모)에 대흥행하며 대규모 투자자 달성 수급을 확보했습니다.</li>
+                        <li>• 확보된 초대형 달러화 실탄 중 상당액이 국내 선단 설비 증설 자금 집행을 위해 환전되는 수급이 선물 시장에 선반영되며 원화 강세를 연출했습니다.</li>
+                        <li>• 환율이 장중 한때 1% 이상 전격 밀리며 1,500원 마지노선 심리 장벽을 깨고 한 달래 최저치인 1,498.1원 선으로 안착 마감했습니다.</li>
+                    </ul>
+                    <span class="news-url">https://uk.finance.yahoo.com/news/dollar-selling-linked-sk-hynix...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.cnbc.com/2026/07/08/rebellions-ipo-south-korea-ai-chips.html" target="_blank" class="news-link">6. 삼성 지원 AI 칩 기업 Rebellions, 내년 한국 증시 IPO 목표라고 CEO가 CNBC에 밝혀</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 토종 인공지능 가속기 설계 강자인 Rebellions의 박성현 대표가 CNBC 단독 인터뷰를 통해 내년 상반기 내 코스피(KOSPI) 상장 추진을 못 박았습니다.</li>
+                        <li>• 주관사단으로 JP모건 및 삼성증권을 공동 확정 완료했으며, 한국 정부 주도의 메가 인프라 쿼터 수주력을 앞세워 실제 가시적 매출을 확보 중입니다.</li>
+                        <li>• 삼성전자 선단 파운드리 및 차세대 메모리 통합 생태계 동맹 백배킹을 무기 삼아 엔비디아 아성에 정면 도전하겠다는 포부를 피력했습니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.cnbc.com/2026/07/08/rebellions-ipo-south-korea-ai-chips.html</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card cat-energy" data-cat="energy">
+            <div class="card-header">
+                <div class="icon-box"><i class="ti ti-flame"></i></div>
+                <div class="category-title">에너지</div>
+                <div class="badge">3개 뉴스</div>
+            </div>
+            <div class="card-body">
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://finance.yahoo.com/energy/articles/bill-ackman-backs-exiled-russian-023104258.html" target="_blank" class="news-link">1. 빌 에크먼, 망명한 러시아 올리가르히의 연료 위기 경고 지지: 러시아 정부가 우크라이나 드론보다 더 큰 피해를 입혔다</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 유코스 전 회장이 폭로한 '러시아 내부 연료 물류 정제망 마비에 따른 극단적 스태그플레이션 위기 징후' 보고서를 빌 에크먼이 격하게 지지했습니다.</li>
+                        <li>• 정유 설비 타격보다 크렘린궁의 반시장적 강제 배급 가격 통제 및 환경 규격 가공 하향 조치가 토종 정제 물류 마비를 더 가속화시켰다는 분석입니다.</li>
+                        <li>• 트럼프가 분쟁 중재를 위해 푸틴과 90분 긴급 통화를 나눈 배경 역시 이러한 내부 정유 공급 사슬 붕괴와 무관하지 않다는 지적입니다.</li>
+                    </ul>
+                    <span class="news-url">https://finance.yahoo.com/energy/articles/bill-ackman-backs-exiled-russian...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.reuters.com/business/energy/china-further-eases-fuel-export-curbs-july-sources-say-2026-07-08/" target="_blank" class="news-link">2. 중국 7월 연료 수출 규제 완화, 소식통 인용</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 중국 정부가 7월 잔여 기간 동안 민간 독립 정유 진영의 석유 정제 제품 수출 족쇄를 전격 해제하고 선적 재개를 긴급 승인했습니다.</li>
+                        <li>• 미·이란 간의 전격적인 임시 평화 협정 타결 무드와 보조를 맞춘 조치로, 아시아 권역 전반의 가솔린 및 디젤 가격 안정에 기여할 전망입니다.</li>
+                        <li>• 롱솅 석유화학 등 대형 민간 정유사들의 가동률이 정상화되면서 이달 약 300만 톤 상당의 본토 정제 연료가 글로벌 마켓으로 출하됩니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.reuters.com/.../china-further-eases-fuel-export-curbs-july-sources-say...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.bloomberg.com/news/articles/2026-07-08/russia-bans-diesel-exports-after-ukraine-s-refinery-attacks" target="_blank" class="news-link">3. 러시아, 우크라이나의 정유소 공격 이후 디젤 수출 금지</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 러시아가 우크라이나의 자살 드론 타격으로 훼손된 본토 디젤 가용 재고 확보를 위해 향후 3주간의 디젤 해외 수출 전면 금지령을 발동했습니다.</li>
+                        <li>• 글로벌 디젤 유통량의 11%를 통제하는 세계 2위 수출국의 빗장 걸어 잠그기 여파로 국제 경유 유통 단가는 수년래 최고치로 수직 급등했습니다.</li>
+                        <li>• 노바크 부총리는 물가 폭등 제어를 위해 불가피한 국내 우선 공급 조치라 해명하며 사상 첫 해외 석유 제품 역수입 방안까지 검토 중입니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.bloomberg.com/.../russia-bans-diesel-exports-after-ukraine-s-refinery-attacks</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card cat-healthcare" data-cat="healthcare">
+            <div class="card-header">
+                <div class="icon-box"><i class="ti ti-heart-handshake"></i></div>
+                <div class="category-title">헬스케어</div>
+                <div class="badge">5개 뉴스</div>
+            </div>
+            <div class="card-body">
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.marketwatch.com/story/yomiuri-japanese-startup-begins-preparations-for-ips-cell-mass-production-factory-0ec4cd0f?mod=asia-markets" target="_blank" class="news-link">1. 요미우리: 일본 스타트업, iPS 세포 대량 생산 공장 준비 시작</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 오사카대 의학부 분사인 일본 Cuorips가 꿈의 재생의학 카드가 될 인간 유도만능줄기세포(iPS)의 획기적 로봇 대량 양산 팹 구축에 착수했습니다.</li>
+                        <li>• 자사 심근 세포 패치 제품인 'RiHEART'가 정부 조건부 허가를 확보함에 따라 기존 수작업 공정을 100% 무인 로봇 자동화로 개편합니다.</li>
+                        <li>• 국내 핵심 제약 공정사 15곳과 초대형 연합 컨소시엄을 타결 완료하였으며 오는 2030년 대량 상용 출하 체제 확립을 정조준했습니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.marketwatch.com/.../yomiuri-japanese-startup-begins-preparations...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.reuters.com/legal/litigation/sino-biopharmaceutical-gsk-expand-alliance-with-china-rights-respiratory-drugs-2026-07-08/" target="_blank" class="news-link">2. 시노 바이오파마슈티컬, GSK와 호흡기 치료제 중국 내 권리 확대로 동맹 강화</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 홍콩 상장 대형사인 시노 바이오파마슈티컬이 영국 제약 거두 GSK로부터 글로벌 메가 셀러 호흡기 질환 치료제 2종의 본토 전역 독점 상업화 권리를 확보했습니다.</li>
+                        <li>• 천식 및 만성폐쇄성폐질환(COPD) 리딩 치료제인 아노로/트레리지 엘립타 복합 흡입기의 본토 유통 및 수입 전판권을 자회사로 이관했습니다.</li>
+                        <li>• 지난 5월 B형 간염 대형 신약 파트너십 결합에 연이은 후속 행보로, 양사 동맹 전선을 간 질환에서 거대 호흡기 시장 전반으로 전격 격상했습니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.reuters.com/.../sino-biopharmaceutical-gsk-expand-alliance...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.bloomberg.com/news/articles/2026-07-08/the-indian-gangster-accused-by-us-of-plotting-killings-from-jail" target="_blank" class="news-link">3. 인도 비만 치료제 판매, 제네릭 출시로 인한 초기 급증 이후 둔화</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 세마글루티드 원액 특허가 풀리며 복제약 대홍수를 겪었던 인도 GLP-1 계열 비만 치료제 월간 성장 엔진이 단 몇 달 만에 2.3% 대로 급속 제동되었습니다.</li>
+                        <li>• 특허 만료 직후 대도시 위주로 몰려들었던 초기 대기 환자 수급층의 1차 락인 진입 절차가 종결됨에 따른 기저효과 및 정체기 도래 분석입니다.
+</li>
+                        <li>• 현재 Torrent 등 현지 카피약 리딩 컴퍼니들이 뉴델리, 벵갈루루 등 7대 대도시 유통 물량의 40% 이상을 독식 통제 중인 구도입니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.bloomberg.com/.../india-glp1-generic-market-slowdown-report</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.biospace.com/press-releases/roslinct-and-bluerock-therapeutics-partner-to-expand-access-to-clinical-grade-pluripotent-cell-lines-for-cell-therapy-developers" target="_blank" class="news-link">4. 로슬린CT와 블루록 테라퓨틱스, 세포 치료제 개발자를 위한 임상 등급 다능성 세포주 접근성 확대를 위해 파트너십 체결</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 글로벌 세포 치료제 전문 위탁개발생산(CDMO) 대형사인 RoslinCT가 줄기세포 테크 선도사인 바이엘 자회사 BlueRock과 전략적 동맹을 체결했습니다.</li>
+                        <li>• 이번 결합으로 바이오 벤처 고객들은 BlueRock이 보유한 고부가가치 임상 검증 필 유도만능줄기세포(iPSC) 라인 접근권을 통째로 얻게 됩니다.</li>
+                        <li>• 초기 리서치용 샘플 유포에서부터 글로벌 상업 대량 완제 생산 단계까지의 소요 리드 타임을 획기적으로 압축하는 계기가 마련되었습니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.biospace.com/.../roslinct-and-bluerock-therapeutics-partner...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://medicalxpress.com/news/2026-07-surgeons-teleoperated-humanoid-robots-surgery.html#google_vignette" target="_blank" class="news-link">5. 외과의사들, 원격 제어 휴머노이드 로봇을 이용해 생체 수술 집도하며 세계 최초 기록</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• UC샌디에고 의대 외과 수술팀이 범용 원격 제어 휴머노이드 로봇 2대를 실전 투입하여 대형 영장류 대상 생체 외과 수술 집도에 최초 성공했습니다.</li>
+                        <li>• 고정형 거대 수술 로봇과 달리 컴팩트한 인간형 외형을 갖추어 전용 어댑터만 쥐어주면 레거시 수술실 도구를 그대로 정밀 컨트롤합니다.</li>
+                        <li>• 현장 기동성이 워낙 탁월하여 향후 오지 의료 사각지대는 물론 극한 전장 및 우주 정거장 원격 집도 환경을 혁신할 아이콘으로 꼽힙니다.</li>
+                    </ul>
+                    <span class="news-url">https://medicalxpress.com/news/2026-07-surgeons-teleoperated-humanoid-robots-surgery.html</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card cat-politics" data-cat="politics">
+            <div class="card-header">
+                <div class="icon-box"><i class="ti ti-gavel"></i></div>
+                <div class="category-title">정치</div>
+                <div class="badge">4개 뉴스</div>
+            </div>
+            <div class="card-body">
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.reuters.com/world/trump-says-he-ordered-cutting-off-all-trade-with-spain-2026-07-08/" target="_blank" class="news-link">1. 트럼프 대통령, NATO 지출 및 이란 문제로 스페인과의 미국 무역 중단 명령</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 트럼프 미 대통령이 NATO 분담금 증액 거부 및 미군의 이란 폭격 작전 협조 거부를 빌미로 동맹국 스페인 대상 전면 무역 단절을 지시했습니다.</li>
+                        <li>• 앙카라 정상회의 현장에서 스페인을 '끔찍한 무임승차 파트너'로 규정하며 국가 GDP의 무려 5% 선에 달하는 무리한 방위비 확충을 겁박했습니다.</li>
+                        <li>• EU 집행위는 특정 단일 회원국 타깃 보복은 브뤼셀 블록 무역 조약 위반이라 항변 중이나 시장 금융 자본은 무역 전쟁 재개 리스크 추이를 주시 중입니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.reuters.com/world/trump-says-he-ordered-cutting-off-all-trade-with-spain...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://breakingthenews.net/Article/Zelensky:-Ukraine-hit-refineries-deep-inside-Russia/66654342" target="_blank" class="news-link">2. 젤렌스키: 우크라이나, 러시아 내부 깊숙한 곳의 정유소 타격</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 젤렌스키 대통령이 우크라이나 특수 정보국의 장거리 자율 드론 편대를 가동하여 전선에서 1,500km 이격된 바시코르토스탄 핵심 정유소를 폭격했습니다.</li>
+                        <li>• 모스크바 군사 경제의 숨통이자 군수 연료 거점을 마비시키기 위한 정당한 대칭 보복이며 작전 정밀도를 성공적으로 증명했다고 선언했습니다.</li>
+                        <li>• 침략국 러시아 본토 전역의 국민들 역시 자신들이 전쟁 유발 당사자국임을 골수 깊이 체감해야 한다는 강경 기조를 덧붙였습니다.</li>
+                    </ul>
+                    <span class="news-url">https://breakingthenews.net/Article/Zelensky:-Ukraine-hit-refineries-deep-inside-Russia...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://breakingthenews.net/Article/US-said-to-have-briefed-Israel-on-new-Iran-strikes/66661129" target="_blank" class="news-link">4. 미국, 이란에 대한 새로운 공습 계획을 이스라엘에 브리핑한 것으로 알려져</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 미 중부사령부가 호르무즈 해협 해상 공급망 수호를 명분 삼아 이란 본토 군사 거점을 향한 2차 대규모 재공습 작전을 개시하고 이스라엘 측에 통보했습니다.</li>
+                        <li>• 폭격 전개 시점과 맞물려 이란 남부 요충지인 차바하르 자유무역항 구역 전반이 미사일 타격 여파로 전면 블랙아웃(대정전) 상태에 빠진 것으로 보고됐습니다.</li>
+                        <li>• 호르무즈 통제권을 강제 회수하려는 펜타곤의 강경 군사 기조 확정으로 중동 지정학 화약고 위기 수위가 최고조로 격상 중입니다.</li>
+                    </ul>
+                    <span class="news-url">https://breakingthenews.net/Article/US-said-to-have-briefed-Israel-on-new-Iran-strikes...</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.independent.co.uk/news/world/europe/russia-fuel-shortages-ukraine-drone-attacks-energy-b3010966.html" target="_blank" class="news-link">5. 우크라이나의 파괴적인 드론 공격이 러시아의 연료 부족 위기를 촉발한 과정</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 우크라이나 군의 주간 단위 초정밀 자살 드론 타격이 시베리아 심장부의 최대 정제 시설인 옴스크 팹 라인까지 통째로 삼키며 화재를 유발했습니다.</li>
+                        <li>• 러시아 2대 정유 거점인 루코일 소유 노르시 정유소의 1차 원유 정제 파트 붕괴 처리가 겹치며 연산 처리 캐파의 핵심 라인이 정지 상태에 몰렸습니다.</li>
+                        <li>• 정제유 사슬 전반의 연쇄 붕괴로 인해 모스크바 및 본토 시내 주유소에 수 킬로미터의 대기 줄이 늘어서는 등 극심한 민생 연료 쇼크가 현실화됐습니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.independent.co.uk/news/world/europe/russia-fuel-shortages-ukraine-drone-attacks...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card cat-macro" data-cat="macro">
+            <div class="card-header">
+                <div class="icon-box"><i class="ti ti-chart-line"></i></div>
+                <div class="category-title">매크로</div>
+                <div class="badge">3개 뉴스</div>
+            </div>
+            <div class="card-body">
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.ft.com/content/851aa883-073f-4423-a43e-9b09fdbe7c86" target="_blank" class="news-link">1. 일본 차입 비용, 부채 우려로 30년 만에 최고치로 치솟아</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 일본 10년물 국채 금리가 엔화 약세 및 트럼프 2기 정책발 인프라 부채 자극 우려가 겹치며 1996년래 최고치인 2.87% 선으로 폭등했습니다.</li>
+                        <li>• GDP의 200%를 돌파한 고질적 부채 국면 속에서 초장기물인 30년 국채 금리마저 4% 대 장벽을 돌파하며 최악의 재정 압박 징후를 보이고 있습니다.</li>
+                        <li>• 골드만삭스는 세수 확보액보다 국채 이자 지급액 증폭 속도가 추월하는 파멸적 재정 악순환 및 글로벌 채권 연쇄 매도 유발 리스크를 경고했습니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.ft.com/content/851aa883-073f-4423-a43e-9b09fdbe7c86</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.bloomberg.com/news/articles/2026-07-08/china-s-10-year-bond-sale-sees-demand-gauge-at-record-high" target="_blank" class="news-link">2. 중국 10년 만기 국채 입찰서 수요 지표 사상 최고치 기록</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 중국 인민은행 주도 10년물 국채 경쟁 입찰에서 기관 응찰률 지표가 역사상 청약 흥행 최고 수치인 7.23 포인트를 기록하며 대흥행했습니다.</li>
+                        <li>• 최종 낙찰 평균 수익률 1.7249% 안팎으로 안착되었으며, 최근 감사 당국이 국채 구매 유인용 백마진(리베이트) 관행을 전면 척결한 뒤 거둔 성과입니다.</li>
+                        <li>• 시중 신용 수요가 메마르자 시중 은행들이 가격 투명성이 극대화된 국채 발행 시장에 직접 입찰 방식을 뚫고 자금을 올인 배정하는 구도입니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.bloomberg.com/.../china-s-10-year-bond-sale-sees-demand-gauge-at-record-high</span>
+                </div>
+                <div class="news-item">
+                    <div class="news-title-wrapper">
+                        <a href="https://www.reuters.com/business/environment/catastrophic-storms-test-chinas-resilience-2026-scientists-warn-2026-07-08/" target="_blank" class="news-link">3. 파멸적인 폭풍이 2026년 중국의 탄력성을 시험할 것이라고 과학자들 경고</a>
+                    </div>
+                    <ul class="news-summary">
+                        <li>• 중국 남부 대홍수 사태가 전역으로 번지는 가운데 엘니뇨 이상 기후 여파로 태풍 6개가 동시 발달, 하반기 경제 맷집을 한계치까지 시험할 전망입니다.</li>
+                        <li>• 이미 초대형 태풍 마이삭의 상륙 여파로 광시 등지의 대형 방류 댐이 연쇄 붕괴를 맞아 수십만 명의 이재민과 인명 피해를 양산했습니다.</li>
+                        <li>• 기후 대재앙에 따른 농작물 작황 전면 붕괴 및 주요 산업 물류 공급망 인프라의 마비 리스크가 상시화 단계에 진입했다고 과학계가 경고했습니다.</li>
+                    </ul>
+                    <span class="news-url">https://www.reuters.com/.../catastrophic-storms-test-chinas-resilience-2026...</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // 탭 카테고리 필터링 제어 함수
+    function filterCat(category) {
+        // 버튼 활성화 클래스 스위칭
+        const buttons = document.querySelectorAll('.tab-btn');
+        buttons.forEach(btn => btn.classList.remove('active'));
+        
+        // 클릭한 버튼 활성화
+        const activeBtn = window.event.target;
+        activeBtn.classList.add('active');
+
+        // 카드 필터링 처리
+        const cards = document.querySelectorAll('.card');
+        cards.forEach(card => {
+            if (category === 'all') {
+                card.style.display = 'flex';
+            } else {
+                if (card.getAttribute('data-cat') === category) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            }
+        });
+    }
+
+    // 소스코드 로컬 파일 다운로드 기능 함수
+    function downloadHTML() {
+        const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+        const blob = new Blob([htmlContent], { type: "text/html" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        
+        const titleText = document.querySelector('.header-title').innerText;
+        const dateMatch = titleText.match(/(\d+월\s*\d+일)/);
+        const fileName = dateMatch ? `news_digest_${dateMatch[1].replace(/\s+/g, '')}.html` : 'news_digest.html';
+        
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+</script>
+
+</body>
+</html>
