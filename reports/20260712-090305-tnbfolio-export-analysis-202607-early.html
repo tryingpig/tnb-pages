@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<title>TNBfolio 수출데이터 분석 | 2026년 7월 (조기신호)</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --green:#1e8e5a; --green-bg:#e9f7f0;
+    --blue:#1f6fd1; --blue-bg:#eaf2fd;
+    --yellow:#c98a05; --yellow-bg:#fdf5e2;
+    --orange:#d9631e; --orange-bg:#fdece0;
+    --red:#c62828; --red-bg:#fbe9e9;
+    --gray:#6b7280; --gray-bg:#f2f3f5;
+    --ink:#1a1d23; --sub:#5a6270; --line:#e6e8ec; --bg:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',sans-serif;line-height:1.55;}
+  .wrap{max-width:1200px;margin:0 auto;padding:32px 24px 80px;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+
+  header.top{border-bottom:3px solid var(--ink);padding-bottom:20px;margin-bottom:20px;}
+  header.top .eyebrow{font-size:13px;letter-spacing:.12em;color:var(--sub);font-weight:700;text-transform:uppercase;}
+  header.top h1{font-size:30px;margin:6px 0 4px;font-weight:900;}
+  header.top .meta{font-size:14px;color:var(--sub);}
+  .badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;}
+  .badge{font-size:13px;font-weight:700;padding:6px 12px;border-radius:20px;}
+  .b-green{background:var(--green-bg);color:var(--green);}
+  .b-blue{background:var(--blue-bg);color:var(--blue);}
+  .b-yellow{background:var(--yellow-bg);color:var(--yellow);}
+  .b-red{background:var(--red-bg);color:var(--red);}
+  .b-gray{background:var(--gray-bg);color:var(--gray);}
+
+  .methodbar{background:var(--gray-bg);border-radius:10px;padding:14px 18px;font-size:13.5px;color:var(--sub);margin-bottom:28px;}
+  .methodbar b{color:var(--ink);}
+
+  h2.section-title{font-size:19px;font-weight:900;margin:40px 0 14px;display:flex;align-items:center;gap:8px;}
+  .count-tag{font-size:12px;background:var(--gray-bg);color:var(--sub);padding:2px 8px;border-radius:10px;font-weight:700;}
+
+  .insight-box{border:1.5px solid var(--line);border-radius:12px;padding:20px 22px;margin-bottom:8px;}
+  .insight-box ul{margin:6px 0 0;padding-left:20px;}
+  .insight-box li{margin-bottom:8px;font-size:14.5px;}
+  .insight-box li b{background:linear-gradient(transparent 60%, var(--yellow-bg) 60%);}
+
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:8px;}
+  @media(max-width:900px){.grid{grid-template-columns:1fr;}}
+
+  .card{border:1px solid var(--line);border-radius:10px;padding:16px 18px;border-left:6px solid var(--gray);background:#fff;}
+  .card.green{border-left-color:var(--green);}
+  .card.blue{border-left-color:var(--blue);}
+  .card.yellow{border-left-color:var(--yellow);}
+  .card.red{border-left-color:var(--red);}
+  .card h3{font-size:15.5px;margin:0 0 6px;font-weight:900;}
+  .card .comp{font-size:12.5px;color:var(--sub);margin-bottom:10px;}
+  .kv{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;border-top:1px dashed var(--line);}
+  .kv:first-of-type{border-top:none;}
+  .kv .v{font-family:'JetBrains Mono',monospace;font-weight:700;}
+  .pos{color:var(--green);} .neg{color:var(--red);}
+  .card .note{margin-top:10px;font-size:12.5px;color:var(--sub);background:var(--gray-bg);border-radius:6px;padding:8px 10px;}
+
+  table.ranking{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:6px;}
+  table.ranking th{text-align:left;font-size:12px;color:var(--sub);border-bottom:2px solid var(--ink);padding:8px 10px;}
+  table.ranking td{padding:8px 10px;border-bottom:1px solid var(--line);}
+  table.ranking tr:hover{background:var(--gray-bg);}
+  .tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap;}
+
+  .surprise-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:8px 0 8px;}
+  @media(max-width:900px){.surprise-grid{grid-template-columns:1fr;}}
+  .surprise{border-radius:10px;padding:16px 18px;font-size:13.5px;}
+  .surprise.good{background:var(--green-bg);}
+  .surprise.warn{background:var(--red-bg);}
+  .surprise h4{margin:0 0 8px;font-size:14.5px;}
+
+  footer{margin-top:56px;border-top:1px solid var(--line);padding-top:18px;font-size:12px;color:var(--sub);}
+  footer .brand{font-weight:900;color:var(--ink);}
+</style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="eyebrow">TNBfolio · Export Signal Report</div>
+  <h1>2026년 7월 수출 조기신호 분석 (섹터 단위)</h1>
+  <div class="meta">분석 기준일: 2026-07-11 반영분 (7월 1~10일 잠정치) · 작성: TNBfolio</div>
+  <div class="badges">
+    <span class="badge b-green">이중우상향 5개 섹터</span>
+    <span class="badge b-blue">특별관찰(메모리) 1개 섹터</span>
+    <span class="badge b-yellow">관찰필요 2개 섹터</span>
+    <span class="badge b-red">이중약세 1개 섹터</span>
+    <span class="badge b-gray">특이사항없음 3개 섹터</span>
+  </div>
+</header>
+
+<div class="methodbar">
+  <b>방법론 (조기 신호 전용, 확정등급 아님):</b> 7월 데이터는 1~10일 잠정치만 반영되어 있어 단순 ×3 비교는 노이즈가 큽니다.
+  이번 리포트는 <b>① 10일 달성률</b>(7/1~10일 합계 ÷ 6월 확정치, 정상 32~35% / 가속 40%+ / 강세 50%+ / 둔화 &lt;20%)과
+  <b>② 최근 3개월(3월→6월) 확정치 월평균 성장률</b>을 <b>교차 검증</b>하여, 두 지표가 같은 방향을 가리키는 경우만 신뢰도 높은 신호로 분류했습니다.
+  선박·SSD·D램모듈·MCP 등 월말납기 집중 품목은 10일 달성률이 낮게 나오는 게 정상이므로 별도 주석을 달았습니다.
+</div>
+
+<h2 class="section-title">📌 핵심 인사이트</h2>
+<div class="insight-box">
+  <ul>
+    <li><b>반도체 메모리가 가장 강한 섹터입니다</b> — 10일 달성률만 보면 23.1%(다소둔화)로 보이지만, 이는 SSD·D램모듈·MCP의 월말납기 집중 특성 때문. 3개월 확정 모멘텀은 <b>월평균 +13.0%로 전 섹터 1위</b>이며 6월까지 사실상 최고치 경신 흐름 유지.</li>
+    <li><b>2차전지 장비(피엔티)·바이오헬스·소재화학</b>은 달성률·모멘텀이 모두 정상~양호해 가장 신뢰도 높은 우상향 그룹으로 분류.</li>
+    <li><b>조선/해운은 달성률 57.2%로 급가속</b>했지만 3개월 모멘텀은 완만(+1.9%/월) — 셔틀탱커(한화오션·삼성중공업) 단일 건 통관 집중 가능성이 있어 20일 데이터 확인 전까지는 "관찰" 단계.</li>
+    <li><b>전력기기(변압기·분로리액터)는 유일하게 이중 약세</b> 신호(달성률 18.1%, 3개월 모멘텀 -4.0%/월) — 효성중공업·현대일렉트릭·제룡전기 관련주 주의 필요. 다만 대형 수주 단위 특성상 월별 변동성이 원래 큰 품목군.</li>
+  </ul>
+</div>
+
+<h2 class="section-title">🟢 이중확인 우상향 <span class="count-tag">5개 섹터</span></h2>
+<div class="grid">
+  <div class="card green">
+    <h3>2차전지 장비</h3>
+    <div class="comp">피엔티(코터·슬리터·프레스)</div>
+    <div class="kv"><span>10일 달성률</span><span class="v pos">35.2% (정상)</span></div>
+    <div class="kv"><span>3개월 모멘텀</span><span class="v pos">+12.8%/월</span></div>
+    <div class="note">가장 강한 이중확인 신호. 코터·슬리터 중심 회복세 지속.</div>
+  </div>
+  <div class="card green">
+    <h3>바이오헬스</h3>
+    <div class="comp">삼성바이오로직스·셀트리온, 휴젤·메디톡스, 바텍</div>
+    <div class="kv"><span>10일 달성률</span><span class="v pos">36.2% (정상)</span></div>
+    <div class="kv"><span>3개월 모멘텀</span><span class="v pos">+9.1%/월</span></div>
+    <div class="note">바이오의약품·보톡스·치과영상기기 전반 고른 개선.</div>
+  </div>
+  <div class="card green">
+    <h3>소재화학</h3>
+    <div class="comp">LG화학·롯데케미칼·금호석유 (ABS/SBR/BR/자일렌 등)</div>
+    <div class="kv"><span>10일 달성률</span><span class="v pos">33.7% (정상)</span></div>
+    <div class="kv"><span>3개월 모멘텀</span><span class="v pos">+9.6%/월</span></div>
+    <div class="note">범용 화학 수출 단가·물량 동반 회복 흐름.</div>
+  </div>
+  <div class="card green">
+    <h3>반도체 소재/부품</h3>
+    <div class="comp">동진쎄미켐, 티씨케이, 해성디에스</div>
+    <div class="kv"><span>10일 달성률</span><span class="v pos">34.5% (정상)</span></div>
+    <div class="kv"><span>3개월 모멘텀</span><span class="v pos">+6.6%/월</span></div>
+    <div class="note">메모리 업사이클의 후공정 수혜 확산 신호.</div>
+  </div>
+  <div class="card green">
+    <h3>K뷰티</h3>
+    <div class="comp">아모레퍼시픽·LG생활건강, 케어젠, 휴젤</div>
+    <div class="kv"><span>10일 달성률</span><span class="v pos">33.0% (정상)</span></div>
+    <div class="kv"><span>3개월 모멘텀</span><span class="v pos">+6.2%/월</span></div>
+    <div class="note">기초화장품·필러·펩타이드 전 라인 견조.</div>
+  </div>
+</div>
+
+<h2 class="section-title">🔵 특별관찰 — 반도체 메모리 <span class="count-tag">노이즈 보정 최우선 섹터</span></h2>
+<div class="grid">
+  <div class="card blue" style="grid-column:span 3;">
+    <h3>반도체 메모리 (D램·낸드·SSD·D램모듈·MCP·HBM·이미지센서)</h3>
+    <div class="comp">삼성전자·SK하이닉스</div>
+    <div class="kv"><span>10일 달성률 (단순수치)</span><span class="v neg">23.1% (다소둔화로 보임)</span></div>
+    <div class="kv"><span>3개월 확정 모멘텀</span><span class="v pos">+13.0%/월 — 전 섹터 1위</span></div>
+    <div class="note">SSD·D램모듈·MCP는 월말 납기 집중 품목이라 10일 시점 달성률이 구조적으로 낮게 나옵니다. 3~6월 확정치는 4개월 연속 상승·최고치 경신 중이므로, 10일 수치만으로 둔화 판단은 금물. 20일 데이터로 재확인 권고.</div>
+  </div>
+</div>
+
+<h2 class="section-title">🟡 관찰 필요 (신호 엇갈림) <span class="count-tag">2개 섹터</span></h2>
+<table class="ranking">
+<tr><th>섹터</th><th>대표 기업</th><th>10일 달성률</th><th>3개월 모멘텀</th><th>코멘트</th></tr>
+<tr>
+  <td><b>조선/해운</b></td><td>한화오션·삼성중공업</td>
+  <td><span class="tag" style="background:var(--green-bg);color:var(--green)">57.2% 강한가속</span></td>
+  <td class="mono">+1.9%/월</td>
+  <td>셔틀탱커 단일 건 통관 집중 가능성 — 서프라이즈 후보이나 확정 아님</td>
+</tr>
+<tr>
+  <td><b>반도체 테스트/장비</b></td><td>테크윙·케이씨텍·티에스이</td>
+  <td><span class="tag" style="background:var(--yellow-bg);color:var(--yellow)">31.3% 다소둔화</span></td>
+  <td class="mono pos">+12.3%/월</td>
+  <td>개별 수주 타이밍 영향 큰 업종 — 3개월 추세가 더 신뢰도 높음</td>
+</tr>
+</table>
+
+<h2 class="section-title">🔴 이중 약세 <span class="count-tag">1개 섹터</span></h2>
+<div class="grid">
+  <div class="card red" style="grid-column:span 3;">
+    <h3>전력기기</h3>
+    <div class="comp">대형/소형변압기, 분로리액터, 직류차단기, 해저케이블 — 효성중공업·현대일렉트릭·제룡전기·LSELECTRIC</div>
+    <div class="kv"><span>10일 달성률</span><span class="v neg">18.1% (둔화, 기준선 20% 미만)</span></div>
+    <div class="kv"><span>3개월 모멘텀</span><span class="v neg">-4.0%/월</span></div>
+    <div class="note">유일하게 두 지표 모두 약세. 다만 변압기류는 개별 수주 단위가 커서 원래 월별 변동성이 매우 큰 품목군(과거 MoM ±100%+ 흔함) — 확정 매도 신호보다는 관찰 등급 권고.</div>
+  </div>
+</div>
+
+<h2 class="section-title">⚪ 특이사항 없음 (Hold) <span class="count-tag">3개 섹터</span></h2>
+<table class="ranking">
+<tr><th>섹터</th><th>10일 달성률</th><th>3개월 모멘텀</th></tr>
+<tr><td>자동차</td><td class="mono">29.7% 다소둔화</td><td class="mono">+2.6%/월</td></tr>
+<tr><td>건설기계</td><td class="mono">32.3% 정상</td><td class="mono">-0.6%/월</td></tr>
+<tr><td>K푸드</td><td class="mono">31.7% 다소둔화</td><td class="mono">+2.3%/월</td></tr>
+</table>
+
+<div class="surprise-grid">
+  <div class="surprise good">
+    <h4>✅ 이달의 서프라이즈 후보</h4>
+    셔틀탱커(한화오션·삼성중공업) 10일 달성률 57%대 — 6월 저점 대비 큰 폭 반등. 단일 건 집중 여부만 확인되면 조선 섹터 재평가 트리거 가능.
+  </div>
+  <div class="surprise warn">
+    <h4>⚠️ 주의 필요</h4>
+    전력기기(변압기) 섹터가 달성률·모멘텀 이중 약세로 유일하게 확인됨. 다음 20일 데이터에서 반등 여부 재확인 필요.
+  </div>
+</div>
+
+<h2 class="section-title">전체 섹터 순위 (3개월 모멘텀 기준)</h2>
+<table class="ranking">
+<tr><th>#</th><th>섹터</th><th>10일 달성률</th><th>판정</th><th>3개월 평균 성장률</th></tr>
+<tr><td>1</td><td>반도체메모리</td><td class="mono">23.1%</td><td><span class="tag" style="background:var(--yellow-bg);color:var(--yellow)">다소둔화(노이즈)</span></td><td class="mono pos">+13.0%/월</td></tr>
+<tr><td>2</td><td>반도체테스트장비</td><td class="mono">31.3%</td><td><span class="tag" style="background:var(--yellow-bg);color:var(--yellow)">다소둔화</span></td><td class="mono pos">+12.3%/월</td></tr>
+<tr><td>3</td><td>2차전지장비</td><td class="mono">35.2%</td><td><span class="tag" style="background:var(--green-bg);color:var(--green)">정상</span></td><td class="mono pos">+12.8%/월</td></tr>
+<tr><td>4</td><td>소재화학</td><td class="mono">33.7%</td><td><span class="tag" style="background:var(--green-bg);color:var(--green)">정상</span></td><td class="mono pos">+9.6%/월</td></tr>
+<tr><td>5</td><td>바이오헬스</td><td class="mono">36.2%</td><td><span class="tag" style="background:var(--green-bg);color:var(--green)">정상</span></td><td class="mono pos">+9.1%/월</td></tr>
+<tr><td>6</td><td>반도체소재부품</td><td class="mono">34.5%</td><td><span class="tag" style="background:var(--green-bg);color:var(--green)">정상</span></td><td class="mono pos">+6.6%/월</td></tr>
+<tr><td>7</td><td>K뷰티</td><td class="mono">33.0%</td><td><span class="tag" style="background:var(--green-bg);color:var(--green)">정상</span></td><td class="mono pos">+6.2%/월</td></tr>
+<tr><td>8</td><td>자동차</td><td class="mono">29.7%</td><td><span class="tag" style="background:var(--yellow-bg);color:var(--yellow)">다소둔화</span></td><td class="mono pos">+2.6%/월</td></tr>
+<tr><td>9</td><td>K푸드</td><td class="mono">31.7%</td><td><span class="tag" style="background:var(--yellow-bg);color:var(--yellow)">다소둔화</span></td><td class="mono pos">+2.3%/월</td></tr>
+<tr><td>10</td><td>조선해운</td><td class="mono">57.2%</td><td><span class="tag" style="background:var(--green-bg);color:var(--green)">강한가속</span></td><td class="mono pos">+1.9%/월</td></tr>
+<tr><td>11</td><td>건설기계</td><td class="mono">32.3%</td><td><span class="tag" style="background:var(--green-bg);color:var(--green)">정상</span></td><td class="mono neg">-0.6%/월</td></tr>
+<tr><td>12</td><td>산업용로봇</td><td class="mono">35.2%</td><td><span class="tag" style="background:var(--green-bg);color:var(--green)">정상</span></td><td class="mono neg">-8.6%/월</td></tr>
+<tr><td>13</td><td>전력기기</td><td class="mono">18.1%</td><td><span class="tag" style="background:var(--red-bg);color:var(--red)">둔화</span></td><td class="mono neg">-4.0%/월</td></tr>
+</table>
+
+<footer>
+  <div class="brand">TNBfolio</div>
+  본 리포트는 관세청 수출 잠정치(7월 1~10일)를 기반으로 한 조기 신호 분석이며, 10일치 데이터는 표본이 작아 오차 가능성이 있습니다.
+  개별 기업 등급(Strong Buy/Buy 등)은 20일 또는 월말 확정치 확보 후 별도 산정 권장합니다.
+  투자 참고용 자료이며 투자 권유가 아닙니다.
+</footer>
+
+</div>
+</body>
+</html>
