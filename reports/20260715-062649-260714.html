@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <title>뉴욕증시 주도섹터 분석 - 2026년 07월 14일</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* 기본 스타일 리셋 및 공통 설정 */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: #ffffff;
+            color: #2b2b2b;
+            font-family: 'Noto Sans KR', sans-serif;
+            line-height: 1.6;
+            padding: 40px 0;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 60px;
+        }
+        h1, h2, h3, h4 {
+            font-family: 'Noto Serif KR', serif;
+            color: #1a1814;
+        }
+        .mono {
+            font-family: 'DM Mono', monospace;
+        }
+        
+        /* 등락률 색상 가이드 */
+        .up-color { color: #1d8a4e !important; }
+        .down-color { color: #d13b2e !important; }
+        .neutral-color { color: #b8860b !important; }
+        .sp-color { color: #d4840a !important; }
+
+        hr {
+            border: 0;
+            height: 1px;
+            background: #e0dcd4;
+            margin: 40px 0;
+        }
+
+        /* ① 헤더 섹션 */
+        header {
+            margin-bottom: 35px;
+        }
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: 2px solid #1a1814;
+            padding-bottom: 15px;
+        }
+        .header-title-area h1 {
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+        .header-date {
+            font-size: 16px;
+            font-weight: 500;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .header-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 700;
+            background-color: #f0eeeb;
+            color: #4a453f;
+            border: 1px solid #dcd9d4;
+        }
+        .badge.up {
+            background-color: #eaf6ee;
+            color: #1d8a4e;
+            border-color: #bfe5cc;
+        }
+        .badge.down {
+            background-color: #fdf1f0;
+            color: #d13b2e;
+            border-color: #f7cfcb;
+        }
+        .badge.sp {
+            background-color: #fdf7ee;
+            color: #d4840a;
+            border-color: #f5e2c4;
+        }
+        .badge.neutral {
+            background-color: #fffdf0;
+            color: #b8860b;
+            border-color: #f2e7b1;
+        }
+
+        /* ② Macro Summary (다크 카드) */
+        .macro-card {
+            background-color: #1a1814;
+            color: #ffffff;
+            padding: 35px 40px;
+            border-radius: 6px;
+            margin-bottom: 40px;
+            border-left: 5px solid #d4840a;
+        }
+        .macro-card h3 {
+            color: #ffffff;
+            font-size: 22px;
+            margin-bottom: 15px;
+            line-height: 1.4;
+            font-weight: 700;
+        }
+        .macro-card p {
+            color: #dcd9d4;
+            font-size: 14px;
+            line-height: 1.7;
+            margin-bottom: 25px;
+        }
+        .macro-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            border-top: 1px solid #3a352d;
+            padding-top: 25px;
+        }
+        .macro-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .macro-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #a8a297;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+        .macro-val {
+            font-size: 20px;
+            font-weight: 700;
+        }
+        .macro-val.up { color: #6ed99a; }
+        .macro-val.down { color: #f08070; }
+
+        /* ③ 섹터별 등락률 차트 */
+        .chart-section {
+            background-color: #f8f7f5;
+            border: 1px solid #e0dcd4;
+            border-radius: 6px;
+            padding: 30px;
+            margin-bottom: 45px;
+        }
+        .chart-section h3 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .chart-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+        }
+        .chart-row {
+            display: flex;
+            align-items: center;
+            height: 28px;
+        }
+        .chart-label {
+            width: 180px;
+            font-size: 13px;
+            font-weight: 500;
+            text-align: right;
+            padding-right: 15px;
+        }
+        .chart-bar-area {
+            flex-grow: 1;
+            height: 100%;
+            position: relative;
+            background-color: #ecebe8;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .chart-bar {
+            height: 100%;
+            position: absolute;
+            top: 0;
+            border-radius: 2px;
+        }
+        .chart-bar.positive {
+            background-color: #1d8a4e;
+            left: 50%;
+        }
+        .chart-bar.negative {
+            background-color: #d13b2e;
+            right: 50%;
+        }
+        .chart-bar.sp500 {
+            background-color: #d4840a;
+        }
+        .chart-value {
+            width: 80px;
+            padding-left: 15px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        /* ④ 주도 섹터 심층 분석 카드 (2열 그리드) */
+        .sector-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            margin-bottom: 45px;
+        }
+        .sector-card {
+            background-color: #ffffff;
+            border: 1px solid #e0dcd4;
+            border-radius: 6px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .sector-card.up-card { border-top: 3px solid #1d8a4e; }
+        .sector-card.down-card { border-top: 3px solid #d13b2e; }
+        
+        .sector-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .sector-card-title {
+            font-size: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .sector-card-pct {
+            font-size: 18px;
+            font-weight: 700;
+        }
+        .sector-desc {
+            font-size: 13.5px;
+            color: #4a453f;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        .sector-desc strong {
+            font-weight: 700;
+            color: #1a1814;
+            background-color: #fff9e6;
+            padding: 0 2px;
+        }
+        .stock-box {
+            background-color: #fcfcfb;
+            border: 1px dashed #dcd9d4;
+            border-radius: 4px;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+        }
+        .stock-box h5 {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #8c857b;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+        .stock-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12.5px;
+            padding: 4px 0;
+            border-bottom: 1px solid #f2f0ed;
+        }
+        .stock-item:last-child {
+            border-bottom: none;
+        }
+        .stock-ticker {
+            font-weight: 700;
+            color: #1a1814;
+        }
+        .stock-cap {
+            font-size: 11px;
+            color: #8c857b;
+        }
+        
+        /* 리스크 박스 */
+        .risk-box {
+            border-left: 3px solid #d13b2e;
+            background-color: #fff5f5;
+            padding: 12px 15px;
+            border-radius: 0 4px 4px 0;
+            font-size: 12.5px;
+            color: #5c2521;
+        }
+        .risk-label {
+            font-weight: 700;
+            color: #d13b2e;
+            font-size: 11px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        /* ⑤ 지정학적 리스크 섹션 */
+        .geo-alert-section {
+            background-color: #fdf6e3;
+            border: 1px solid #e8d89a;
+            border-radius: 6px;
+            padding: 30px;
+            margin-bottom: 45px;
+        }
+        .geo-badge {
+            display: inline-block;
+            background-color: #b8860b;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 3px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+        .geo-alert-section h3 {
+            font-size: 20px;
+            margin-bottom: 12px;
+            color: #856404;
+        }
+        .geo-alert-section p {
+            font-size: 14px;
+            line-height: 1.7;
+            color: #66512c;
+        }
+
+        /* ⑥ 주요 자산군 성과 */
+        .asset-section {
+            margin-bottom: 45px;
+        }
+        .asset-section h3 {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        .asset-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        .asset-card {
+            background-color: #f0eeeb;
+            border-radius: 4px;
+            padding: 20px;
+            border: 1px solid #e0dcd4;
+        }
+        .asset-name {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #706a60;
+            margin-bottom: 10px;
+        }
+        .asset-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: #1a1814;
+        }
+        .asset-desc {
+            font-size: 12px;
+            color: #666159;
+            line-height: 1.5;
+        }
+
+        /* ⑦ 인사이트 요약 섹션 */
+        .insight-section {
+            background-color: #eaf6ee;
+            border: 1px solid #bfe5cc;
+            border-radius: 6px;
+            padding: 30px;
+            margin-bottom: 45px;
+        }
+        .insight-section h3 {
+            font-size: 18px;
+            color: #1d8a4e;
+            margin-bottom: 12px;
+        }
+        .insight-section p {
+            font-size: 14px;
+            line-height: 1.7;
+            color: #1e4d31;
+        }
+
+        /* ⑧ 푸터 */
+        footer {
+            border-top: 1px solid #e0dcd4;
+            padding-top: 25px;
+            text-align: center;
+            color: #8c857b;
+            font-size: 12px;
+        }
+        footer p {
+            margin-bottom: 5px;
+        }
+        
+        /* 프린트 최적화 */
+        @media print {
+            body {
+                padding: 0;
+                background-color: #ffffff;
+            }
+            .container {
+                padding: 0;
+                max-width: 100%;
+            }
+            .macro-card, .chart-section, .sector-card, .geo-alert-section, .asset-card, .insight-section {
+                page-break-inside: avoid;
+            }
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+    </style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <header>
+        <div class="header-top">
+            <div class="header-title-area">
+                <p class="header-date mono">REPORT GENERATED ON 2026년 07월 14일</p>
+                <h1>뉴욕증시 주도섹터 분석</h1>
+            </div>
+            <div class="mono" style="font-size: 14px; color: #666;">by TNBFolio</div>
+        </div>
+        <div class="header-badges">
+            <span class="badge up">S&P 500 +0.43%</span>
+            <span class="badge up">NASDAQ 100 +1.1%</span>
+            <span class="badge down">WTI 유가 $79.34 (+1.54%)</span>
+            <span class="badge neutral">10Y 국채금리 (하락세)</span>
+            <span class="badge down">US June CPI -0.4% m/m</span>
+            <span class="badge sp">Fear & Greed: 44 (Fear)</span>
+            <span class="badge down">Crypto Fear & Greed: 22 (Extreme Fear)</span>
+        </div>
+    </header>
+
+    <section class="macro-card">
+        <h3>"기록적인 6월 CPI 급락과 중동 전면전 에스컬레이션의 격돌"</h3>
+        <p>
+            금일 뉴욕증시는 <strong>미국의 6월 헤드라인 CPI가 전월 대비 -0.4% 급락</strong>하며 인플레이션 안도감이 유입되었습니다. 이에 따라 나스닥 국채금리가 내리고 유동성 랠리를 보였으나, 장 후반 <strong>미국과 이란 간의 해상 전면 봉쇄령 및 중동 군사 기지 미사일 폭격 격돌</strong> 소식이 뉴욕증시의 장중 상승분을 대거 반납시켰습니다. 케빈 워시 연준 의장은 하청 청문회에서 CPI 호조에도 불구하고 강력한 물가 목표 준수를 공언한 가운데, 공급망 위기가 가중되며 유가가 배럴당 $79.34까지 고조되어 리스크가 대립하고 있습니다.
+        </p>
+        <div class="macro-grid">
+            <div class="macro-item">
+                <span class="macro-label">S&P 500 Index</span>
+                <span class="macro-val up mono">+0.43%</span>
+            </div>
+            <div class="macro-item">
+                <span class="macro-label">NASDAQ 100</span>
+                <span class="macro-val up mono">+1.1%</span>
+            </div>
+            <div class="macro-item">
+                <span class="macro-label">10Y Treasury Yield</span>
+                <span class="macro-val down mono">급락 (Benign CPI)</span>
+            </div>
+            <div class="macro-item">
+                <span class="macro-label">WTI Crude Oil</span>
+                <span class="macro-val up mono">$79.34 (+1.54%)</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="chart-section">
+        <h3>📊 USA Sector Performance (Day's Change %)</h3>
+        <div class="chart-container">
+            <div class="chart-row">
+                <div class="chart-label">Technology</div>
+                <div class="chart-bar-area">
+                    <div class="chart-bar positive" style="width: 34.5%;"></div>
+                </div>
+                <div class="chart-value up-color mono">+1.38%</div>
+            </div>
+            <div class="chart-row">
+                <div class="chart-label sp-color" style="font-weight: 700;">S&P 500 (Base)</div>
+                <div class="chart-bar-area">
+                    <div class="chart-bar positive sp500" style="width: 10.75%;"></div>
+                </div>
+                <div class="chart-value sp-color mono" style="font-weight: 700;">+0.43%</div>
+            </div>
+            <div class="chart-row">
+                <div class="chart-label">Energy</div>
+                <div class="chart-bar-area">
+                    <div class="chart-bar positive" style="width: 7.75%;"></div>
+                </div>
+                <div class="chart-value up-color mono">+0.31%</div>
+            </div>
+            <div class="chart-row">
+                <div class="chart-label">Financial</div>
+                <div class="chart-bar-area">
+                    <div class="chart-bar positive" style="width: 6.5%;"></div>
+                </div>
+                <div class="chart-value up-color mono">+0.26%</div>
+            </div>
+            <div class="chart-row">
+                <div class="chart-label">Basic Materials</div>
+                <div class="chart-bar-area">
+                    <div class="chart-bar positive" style="width: 3.75%;"></div>
+                </div>
+                <div class="chart-value up-color mono">+0.15%</div>
+            </div>
+            <div class="chart-row">
+                <div class="chart-label">Industrials</div>
+                <div class="chart-bar-area">
+                    <div class="chart-bar positive" style="width: 2.0%;"></div>
+                </div>
+                <div class="chart-value up-color mono">+0.08%</div>
+            </div>
+            <div class="chart-row">
+                <div class="chart-label">Utilities</div>
+                <div class="chart-bar-area">
+                    <div class="chart-bar negative" style="width: 2.0%; left: auto; right: 50%;"></div>
+                </div>
+                <div class="chart-value down-color mono">-0.08%</div>
+            </div>
+            <div class="chart-row">
+                <div class="chart-label">Consumer Cyclical</div>
+                <div class="chart-bar-area">
+                    <div class="chart-bar negative" style="width: 2.0%; left: auto; right: 50%;"></div>
+                </div>
+                <div class="chart-value down-color mono">-0.08%</div>
+            </div>
+            <div class="chart-row">
+                <div class="chart-label">Communication Services</div>
+                <div class="chart-bar-area">
+                    <div class="chart-bar negative" style="width: 3.5%; left: auto; right: 50%;"></div>
+                </div>
+                <div class="chart-value down-color mono">-0.14%</div>
+            </div>
+            <div class="chart-row">
+                <div class="chart-label">Real Estate</div>
+                <div class="chart-bar-area">
+                    <div class="chart-bar negative" style="width: 7.75%; left: auto; right: 50%;"></div>
+                </div>
+                <div class="chart-value down-color mono">-0.31%</div>
+            </div>
+            <div class="chart-row">
+                <div class="chart-label">Consumer Defensive</div>
+                <div class="chart-bar-area">
+                    <div class="chart-bar negative" style="width: 33.25%; left: auto; right: 50%;"></div>
+                </div>
+                <div class="chart-value down-color mono">-1.33%</div>
+            </div>
+            <div class="chart-row">
+                <div class="chart-label">Healthcare</div>
+                <div class="chart-bar-area">
+                    <div class="chart-bar negative" style="width: 48.75%; left: auto; right: 50%;"></div>
+                </div>
+                <div class="chart-value down-color mono">-1.95%</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="sector-grid">
+        <div class="sector-card up-card">
+            <div>
+                <div class="sector-card-header">
+                    <div class="sector-card-title">💻 Technology</div>
+                    <div class="sector-card-pct up-color mono">+1.38%</div>
+                </div>
+                <p class="sector-desc">
+                    지정학적 리스크 대두 속에서도 <strong>사이버보안 인프라 테마(CIBR, BUG)</strong>가 최고의 리스크 방어처로 급부상했습니다. 특히 <strong>CrowdStrike(CRWD +11.5%)</strong>와 <strong>Okta(OKTA +10.3%)</strong>가 폭발적인 랠리를 주도했습니다. 엔비디아의 소량 칩 중국 우회 유통 소식 및 대안적 AI 유동성 확보를 위한 DeepSeek의 글로벌 IPO설이 섹터 투심을 끌어올렸습니다.
+                </p>
+                <div class="stock-box">
+                    <h5>Leading Components</h5>
+                    <div class="stock-item">
+                        <span><strong class="stock-ticker">CRWD</strong> (CrowdStrike)</span>
+                        <span class="mono up-color">+11.5% <span class="stock-cap">($191.3B)</span></span>
+                    </div>
+                    <div class="stock-item">
+                        <span><strong class="stock-ticker">OKTA</strong> (Okta Inc.)</span>
+                        <span class="mono up-color">+10.3% <span class="stock-cap">($24.3B)</span></span>
+                    </div>
+                    <div class="stock-item">
+                        <span><strong class="stock-ticker">QLYS</strong> (Qualys Inc.)</span>
+                        <span class="mono up-color">+6.8% <span class="stock-cap">($5.3B)</span></span>
+                    </div>
+                </div>
+            </div>
+            <div class="risk-box">
+                <span class="risk-label">Risk Factor</span>
+                뉴욕주 등 AI 인프라 급증에 따른 전력 공급망 규제 도입이 장기적 헤드라인 리스크로 작용.
+            </div>
+        </div>
+
+        <div class="sector-card down-card">
+            <div>
+                <div class="sector-card-header">
+                    <div class="sector-card-title">📞 Communication Services</div>
+                    <div class="sector-card-pct down-color mono">-0.14%</div>
+                </div>
+                <p class="sector-desc">
+                    섹터 자체는 장 막판 지정학적 공포로 -0.14% 약보합 마감했으나, 다우존스 인터넷 지수 인프라군인 <strong>FDN 구성 종목</strong>들은 강력한 방어력을 노출했습니다. <strong>Okta(+10.3%)</strong>의 단독 랠리와 더불어 클라우드 서비스 안전망인 <strong>Cloudflare(NET +3.4%)</strong>, 데이터 통합 솔루션 <strong>Snowflake(SNOW +2.7%)</strong> 등 차세대 클라우드 보안/인터넷 관리 종목에 기관 매수세가 가중되며 차별화된 흐름을 보였습니다.
+                </p>
+                <div class="stock-box">
+                    <h5>Key Components (FDN)</h5>
+                    <div class="stock-item">
+                        <span><strong class="stock-ticker">NET</strong> (Cloudflare, Inc.)</span>
+                        <span class="mono up-color">+3.4% <span class="stock-cap">($95.7B)</span></span>
+                    </div>
+                    <div class="stock-item">
+                        <span><strong class="stock-ticker">SNOW</strong> (Snowflake Inc.)</span>
+                        <span class="mono up-color">+2.7% <span class="stock-cap">($93.1B)</span></span>
+                    </div>
+                    <div class="stock-item">
+                        <span><strong class="stock-ticker">ANET</strong> (Arista Networks)</span>
+                        <span class="mono up-color">+1.0% <span class="stock-cap">($228.1B)</span></span>
+                    </div>
+                </div>
+            </div>
+            <div class="risk-box">
+                <span class="risk-label">Risk Factor</span>
+                우버의 딜리버리 히어로 프리미엄 오버비딩 인수 협상설로 우버 주가가 2.5% 급락하며 플랫폼 플랫폼 인터넷 투심을 일부 교란함.
+            </div>
+        </div>
+
+        <div class="sector-card up-card">
+            <div>
+                <div class="sector-card-header">
+                    <div class="sector-card-title">🏦 Financial</div>
+                    <div class="sector-card-pct up-color mono">+0.26%</div>
+                </div>
+                <p class="sector-desc">
+                    대형 금융주 실적 시즌 돌입 가운데 <strong>Wells Fargo(WFC) CFO</strong>가 순이자마진(NIM) 둔화 압박이 3분기에 완만해진 뒤 4분기에 전면 안정화될 것이라 예고해 불안감을 진정시켰습니다. 연준 워시 의장은 위기 시 가상자산을 포함해 <strong>어떠한 정치적 구제금융(Bailout)도 없을 것</strong>이라는 확고한 Price Stability의 철칙을 고수했습니다.
+                </p>
+                <div class="stock-box">
+                    <h5>Key Components</h5>
+                    <div class="stock-item">
+                        <span><strong class="stock-ticker">RDN</strong> (Radian Group)</span>
+                        <span class="mono up-color">+3.7% <span class="stock-cap">($5.1B)</span></span>
+                    </div>
+                    <div class="stock-item">
+                        <span><strong class="stock-ticker">SQ</strong> (Block, Inc.)</span>
+                        <span class="mono up-color">+1.7% <span class="stock-cap">($46.9B)</span></span>
+                    </div>
+                </div>
+            </div>
+            <div class="risk-box" style="border-left-color: #b8860b; background-color: #fffef0; color: #66512c;">
+                <span class="risk-label" style="color: #b8860b;">NIM Watch</span>
+                어닝콜 도중 씨티그룹(C)의 주가가 실적 변동성 우려로 -5.5%까지 하락 폭을 확대하며 은행권 내 차별화 진행.
+            </div>
+        </div>
+    </section>
+
+    <section class="geo-alert-section">
+        <span class="geo-badge">Geopolitical Alert</span>
+        <h3>중동 화약고 폭발: 미국-이란 전면전적 공습 격돌 및 호르무즈 해협 봉쇄</h3>
+        <p>
+            트럼프 미국 대통령이 트루스 소셜을 통해 <strong>"이란 선박 및 이란 화물 취급 전면 봉쇄(Full Blockade)"</strong>를 전격 선언했습니다. 직후 이란 혁명수비대(IRGC)는 쿠웨이트, 바레인, 오역 인근의 미국 제5함대 자산에 무차별 미사일 폭격을 가했습니다. 미 중부사령부(CENTCOM)가 이란 본토 타격 공습 조치로 맞대응에 돌입하며 브렌트유가 배럴당 $84.73로 폭등하는 등 위기가 고조되고 있습니다.
+        </p>
+    </section>
+
+    <section class="asset-section">
+        <h3>🪙 Major Assets Performance & Indicators</h3>
+        <div class="asset-grid">
+            <div class="asset-card">
+                <div class="asset-name mono">WTI Crude (Aug)</div>
+                <div class="asset-value up-color mono">$79.34</div>
+                <div class="asset-desc">군사적 충돌 우려로 장중 격렬하게 요동쳤으나 최종 전일 대비 +1.54% 급등 마감.</div>
+            </div>
+            <div class="asset-card">
+                <div class="asset-name mono">Brent Crude</div>
+                <div class="asset-value up-color mono">$84.73</div>
+                <div class="asset-desc">배럴당 1.72% 급등. 영국 재무부는 중동 전면 격화 시 유가 $150 돌파 시나리오 경고.</div>
+            </div>
+            <div class="asset-card">
+                <div class="asset-name mono">US Dollar Index</div>
+                <div class="asset-value down-color mono">하락세</div>
+                <div class="asset-desc">미국의 June CPI(-0.4%)의 기습적인 하락 안도감에 연준 금리인하 기대 확산으로 낙폭 심화.</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="insight-section">
+        <h3>💡 시장 인사이트: "인플레이션 종결 신호 대 지정학적 유가 재발화의 시소게임"</h3>
+        <p>
+            금일 뉴욕증시는 기록적인 CPI 하락 호재와 중동 전쟁 발발이라는 메가톤급 두 이슈가 상충하며 하방 압력을 견뎌냈습니다. <strong>Technology 섹터와 Communication 인터넷 인프라군(FDN)</strong>이 하락장에서 강력한 기관 방어벽을 구축한 모습이 인상적입니다. 단기적으로 공급망 우려에 따른 유가 변동성이 시장을 압박할 수 있으므로, 사이버보안 및 망 인프라 중심의 압축 방어 전략이 효과적일 것입니다.
+        </p>
+    </section>
+
+    <footer>
+        <p>NYSE Sector Analysis · 2026.07.14 · by TNBFolio</p>
+        <p>본 자료는 오직 투자 참고 목적으로만 제공되며, 어떠한 경우에도 투자 권유나 법적 책임의 근거가 되지 않습니다.</p>
+    </footer>
+
+</div>
+
+</body>
+</html>
