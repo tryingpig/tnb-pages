@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>US Treasury Yields &amp; 10Y-2Y Spread | TNBFolio</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #ffffff;
+      color: #131722;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+    }
+    #app {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    #header {
+      padding: 14px 16px 8px;
+      background: #ffffff;
+      border-bottom: 1px solid #e0e3eb;
+      flex-shrink: 0;
+    }
+    #header h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #131722;
+      letter-spacing: -0.02em;
+    }
+    #toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 12px;
+      background: #f8f9fb;
+      border-bottom: 1px solid #e0e3eb;
+      flex-shrink: 0;
+      z-index: 20;
+    }
+    .btn-group { display: flex; gap: 4px; flex-wrap: wrap; }
+    .btn {
+      background: #ffffff;
+      color: #131722;
+      border: 1px solid #d1d4dc;
+      border-radius: 4px;
+      padding: 4px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .btn:hover { background: #f0f3fa; }
+    .btn.active {
+      background: #2962ff;
+      border-color: #2962ff;
+      color: #fff;
+    }
+    .btn.hidden-series { opacity: 0.45; }
+    #hover-tooltip {
+      display: none;
+      position: fixed;
+      background: rgba(255, 255, 255, 0.97);
+      border: 1px solid #d1d4dc;
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 12px;
+      line-height: 1.6;
+      z-index: 200;
+      pointer-events: none;
+      min-width: 210px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+    }
+    #hover-tooltip .tip-date {
+      font-weight: 600;
+      font-size: 13px;
+      margin-bottom: 6px;
+      color: #131722;
+      border-bottom: 1px solid #e0e3eb;
+      padding-bottom: 4px;
+    }
+    #hover-tooltip .tip-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    #charts-wrap {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+    }
+    #main-chart {
+      width: 100%;
+      height: 100%;
+    }
+    #watermark {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 72px;
+      font-weight: 700;
+      color: #63666e;
+      opacity: 0.24;
+      pointer-events: none;
+      z-index: 10;
+      user-select: none;
+    }
+  </style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+  <div id="app">
+    <div id="header">
+      <h1>US Treasury Yields &amp; 10Y-2Y Spread</h1>
+    </div>
+    <div id="toolbar">
+      <div class="btn-group" id="series-btns"></div>
+      <div class="btn-group" id="timeframe-btns"></div>
+    </div>
+    <div id="hover-tooltip"></div>
+    <div id="charts-wrap">
+      <div id="watermark">TNBFolio</div>
+      <div id="main-chart"></div>
+    </div>
+  </div>
+  <script>
+    const RAW_DATA = [{"time": "2025-07-28", "spread": 0.51, "us2y": 3.91, "us3m": 4.4, "us10y": 4.42, "gold": 3309.1001}, {"time": "2025-07-29", "spread": 0.48, "us2y": 3.86, "us3m": 4.4, "us10y": 4.34, "gold": 3323.3999}, {"time": "2025-07-30", "spread": 0.44, "us2y": 3.94, "us3m": 4.41, "us10y": 4.38, "gold": 3295.8}, {"time": "2025-07-31", "spread": 0.43, "us2y": 3.94, "us3m": 4.41, "us10y": 4.37, "gold": 3293.2}, {"time": "2025-08-01", "spread": 0.54, "us2y": 3.69, "us3m": 4.35, "us10y": 4.23, "gold": 3347.7}, {"time": "2025-08-04", "spread": 0.53, "us2y": 3.69, "us3m": 4.35, "us10y": 4.22, "gold": 3374.3999}, {"time": "2025-08-05", "spread": 0.5, "us2y": 3.72, "us3m": 4.34, "us10y": 4.22, "gold": 3381.8999}, {"time": "2025-08-06", "spread": 0.53, "us2y": 3.69, "us3m": 4.32, "us10y": 4.22, "gold": 3380.0}, {"time": "2025-08-07", "spread": 0.51, "us2y": 3.72, "us3m": 4.32, "us10y": 4.23, "gold": 3400.3}, {"time": "2025-08-08", "spread": 0.51, "us2y": 3.76, "us3m": 4.32, "us10y": 4.27, "gold": 3439.1001}, {"time": "2025-08-11", "spread": 0.51, "us2y": 3.76, "us3m": 4.34, "us10y": 4.27, "gold": 3353.1001}, {"time": "2025-08-12", "spread": 0.57, "us2y": 3.72, "us3m": 4.33, "us10y": 4.29, "gold": 3348.8999}, {"time": "2025-08-13", "spread": 0.57, "us2y": 3.67, "us3m": 4.29, "us10y": 4.24, "gold": 3358.7}, {"time": "2025-08-14", "spread": 0.55, "us2y": 3.74, "us3m": 4.3, "us10y": 4.29, "gold": 3335.2}, {"time": "2025-08-15", "spread": 0.58, "us2y": 3.75, "us3m": 4.3, "us10y": 4.33, "gold": 3336.0}, {"time": "2025-08-18", "spread": 0.57, "us2y": 3.77, "us3m": 4.33, "us10y": 4.34, "gold": 3331.7}, {"time": "2025-08-19", "spread": 0.55, "us2y": 3.75, "us3m": 4.3, "us10y": 4.3, "gold": 3313.3999}, {"time": "2025-08-20", "spread": 0.55, "us2y": 3.74, "us3m": 4.3, "us10y": 4.29, "gold": 3343.3999}, {"time": "2025-08-21", "spread": 0.54, "us2y": 3.79, "us3m": 4.32, "us10y": 4.33, "gold": 3336.8999}, {"time": "2025-08-22", "spread": 0.58, "us2y": 3.68, "us3m": 4.27, "us10y": 4.26, "gold": 3374.3999}, {"time": "2025-08-25", "spread": 0.55, "us2y": 3.73, "us3m": 4.29, "us10y": 4.28, "gold": 3373.8}, {"time": "2025-08-26", "spread": 0.65, "us2y": 3.61, "us3m": 4.28, "us10y": 4.26, "gold": 3388.6001}, {"time": "2025-08-27", "spread": 0.65, "us2y": 3.59, "us3m": 4.26, "us10y": 4.24, "gold": 3404.6001}, {"time": "2025-08-28", "spread": 0.6, "us2y": 3.62, "us3m": 4.26, "us10y": 4.22, "gold": 3431.8}, {"time": "2025-08-29", "spread": 0.64, "us2y": 3.59, "us3m": 4.23, "us10y": 4.23, "gold": 3473.7}, {"time": "2025-09-02", "spread": 0.62, "us2y": 3.66, "us3m": 4.2, "us10y": 4.28, "gold": 3549.3999}, {"time": "2025-09-03", "spread": 0.61, "us2y": 3.61, "us3m": 4.18, "us10y": 4.22, "gold": 3593.2}, {"time": "2025-09-04", "spread": 0.58, "us2y": 3.59, "us3m": 4.16, "us10y": 4.17, "gold": 3565.8}, {"time": "2025-09-05", "spread": 0.59, "us2y": 3.51, "us3m": 4.07, "us10y": 4.1, "gold": 3613.2}, {"time": "2025-09-08", "spread": 0.56, "us2y": 3.49, "us3m": 4.1, "us10y": 4.05, "gold": 3638.1001}, {"time": "2025-09-09", "spread": 0.54, "us2y": 3.54, "us3m": 4.1, "us10y": 4.08, "gold": 3643.3}, {"time": "2025-09-10", "spread": 0.5, "us2y": 3.54, "us3m": 4.09, "us10y": 4.04, "gold": 3643.6001}, {"time": "2025-09-11", "spread": 0.49, "us2y": 3.52, "us3m": 4.08, "us10y": 4.01, "gold": 3636.8999}, {"time": "2025-09-12", "spread": 0.5, "us2y": 3.56, "us3m": 4.08, "us10y": 4.06, "gold": 3649.3999}, {"time": "2025-09-15", "spread": 0.51, "us2y": 3.54, "us3m": 4.06, "us10y": 4.05, "gold": 3682.2}, {"time": "2025-09-16", "spread": 0.53, "us2y": 3.51, "us3m": 4.04, "us10y": 4.04, "gold": 3688.8999}, {"time": "2025-09-17", "spread": 0.54, "us2y": 3.52, "us3m": 4.02, "us10y": 4.06, "gold": 3681.8}, {"time": "2025-09-18", "spread": 0.54, "us2y": 3.57, "us3m": 4.03, "us10y": 4.11, "gold": 3643.7}, {"time": "2025-09-19", "spread": 0.57, "us2y": 3.57, "us3m": 4.03, "us10y": 4.14, "gold": 3671.5}, {"time": "2025-09-22", "spread": 0.54, "us2y": 3.61, "us3m": 4.0, "us10y": 4.15, "gold": 3740.7}, {"time": "2025-09-23", "spread": 0.59, "us2y": 3.53, "us3m": 4.0, "us10y": 4.12, "gold": 3780.6001}, {"time": "2025-09-24", "spread": 0.59, "us2y": 3.57, "us3m": 4.02, "us10y": 4.16, "gold": 3732.1001}, {"time": "2025-09-25", "spread": 0.54, "us2y": 3.64, "us3m": 4.04, "us10y": 4.18, "gold": 3736.8999}, {"time": "2025-09-26", "spread": 0.57, "us2y": 3.63, "us3m": 4.02, "us10y": 4.2, "gold": 3775.3}, {"time": "2025-09-29", "spread": 0.52, "us2y": 3.63, "us3m": 4.04, "us10y": 4.15, "gold": 3820.8999}, {"time": "2025-09-30", "spread": 0.56, "us2y": 3.6, "us3m": 4.02, "us10y": 4.16, "gold": 3840.8}, {"time": "2025-10-01", "spread": 0.57, "us2y": 3.55, "us3m": 4.01, "us10y": 4.12, "gold": 3867.5}, {"time": "2025-10-02", "spread": 0.55, "us2y": 3.55, "us3m": 4.02, "us10y": 4.1, "gold": 3839.7}, {"time": "2025-10-03", "spread": 0.55, "us2y": 3.58, "us3m": 4.03, "us10y": 4.13, "gold": 3880.8}, {"time": "2025-10-06", "spread": 0.58, "us2y": 3.6, "us3m": 4.02, "us10y": 4.18, "gold": 3948.5}, {"time": "2025-10-07", "spread": 0.57, "us2y": 3.57, "us3m": 4.01, "us10y": 4.14, "gold": 3976.6001}, {"time": "2025-10-08", "spread": 0.55, "us2y": 3.58, "us3m": 4.01, "us10y": 4.13, "gold": 4043.3}, {"time": "2025-10-09", "spread": 0.54, "us2y": 3.6, "us3m": 4.03, "us10y": 4.14, "gold": 3946.3}, {"time": "2025-10-10", "spread": 0.53, "us2y": 3.52, "us3m": 4.02, "us10y": 4.05, "gold": 3975.8999}, {"time": "2025-10-14", "spread": 0.55, "us2y": 3.48, "us3m": 4.02, "us10y": 4.03, "gold": 4138.7002}, {"time": "2025-10-15", "spread": 0.55, "us2y": 3.5, "us3m": 4.03, "us10y": 4.05, "gold": 4176.8999}, {"time": "2025-10-16", "spread": 0.58, "us2y": 3.41, "us3m": 4.02, "us10y": 3.99, "gold": 4280.2002}, {"time": "2025-10-17", "spread": 0.56, "us2y": 3.46, "us3m": 4.0, "us10y": 4.02, "gold": 4189.8999}, {"time": "2025-10-20", "spread": 0.54, "us2y": 3.46, "us3m": 3.97, "us10y": 4.0, "gold": 4336.3999}, {"time": "2025-10-21", "spread": 0.53, "us2y": 3.45, "us3m": 3.96, "us10y": 3.98, "gold": 4087.7}, {"time": "2025-10-22", "spread": 0.52, "us2y": 3.45, "us3m": 3.96, "us10y": 3.97, "gold": 4044.3999}, {"time": "2025-10-23", "spread": 0.53, "us2y": 3.48, "us3m": 3.95, "us10y": 4.01, "gold": 4125.5}, {"time": "2025-10-24", "spread": 0.54, "us2y": 3.48, "us3m": 3.93, "us10y": 4.02, "gold": 4118.3999}, {"time": "2025-10-27", "spread": 0.53, "us2y": 3.48, "us3m": 3.89, "us10y": 4.01, "gold": 4001.8999}, {"time": "2025-10-28", "spread": 0.52, "us2y": 3.47, "us3m": 3.89, "us10y": 3.99, "gold": 3966.2}, {"time": "2025-10-29", "spread": 0.49, "us2y": 3.59, "us3m": 3.93, "us10y": 4.08, "gold": 3983.7}, {"time": "2025-10-30", "spread": 0.5, "us2y": 3.61, "us3m": 3.92, "us10y": 4.11, "gold": 4001.3}, {"time": "2025-10-31", "spread": 0.51, "us2y": 3.6, "us3m": 3.89, "us10y": 4.11, "gold": 3982.2}, {"time": "2025-11-03", "spread": 0.53, "us2y": 3.6, "us3m": 3.98, "us10y": 4.13, "gold": 4000.3}, {"time": "2025-11-04", "spread": 0.52, "us2y": 3.58, "us3m": 3.96, "us10y": 4.1, "gold": 3947.7}, {"time": "2025-11-05", "spread": 0.54, "us2y": 3.63, "us3m": 3.96, "us10y": 4.17, "gold": 3980.3}, {"time": "2025-11-06", "spread": 0.54, "us2y": 3.57, "us3m": 3.93, "us10y": 4.11, "gold": 3979.8999}, {"time": "2025-11-07", "spread": 0.56, "us2y": 3.55, "us3m": 3.92, "us10y": 4.11, "gold": 3999.3999}, {"time": "2025-11-10", "spread": 0.55, "us2y": 3.58, "us3m": 3.95, "us10y": 4.13, "gold": 4111.7998}, {"time": "2025-11-12", "spread": 0.52, "us2y": 3.56, "us3m": 3.95, "us10y": 4.08, "gold": 4204.3999}, {"time": "2025-11-13", "spread": 0.53, "us2y": 3.58, "us3m": 3.96, "us10y": 4.11, "gold": 4186.8999}, {"time": "2025-11-14", "spread": 0.52, "us2y": 3.62, "us3m": 3.95, "us10y": 4.14, "gold": 4087.6001}, {"time": "2025-11-17", "spread": 0.53, "us2y": 3.6, "us3m": 3.97, "us10y": 4.13, "gold": 4068.3}, {"time": "2025-11-18", "spread": 0.54, "us2y": 3.58, "us3m": 3.94, "us10y": 4.12, "gold": 4061.3}, {"time": "2025-11-19", "spread": 0.55, "us2y": 3.58, "us3m": 3.95, "us10y": 4.13, "gold": 4077.7}, {"time": "2025-11-20", "spread": 0.55, "us2y": 3.55, "us3m": 3.94, "us10y": 4.1, "gold": 4056.5}, {"time": "2025-11-21", "spread": 0.55, "us2y": 3.51, "us3m": 3.9, "us10y": 4.06, "gold": 4076.7}, {"time": "2025-11-24", "spread": 0.58, "us2y": 3.46, "us3m": 3.91, "us10y": 4.04, "gold": 4091.8999}, {"time": "2025-11-25", "spread": 0.58, "us2y": 3.43, "us3m": 3.9, "us10y": 4.01, "gold": 4139.2002}, {"time": "2025-11-26", "spread": 0.55, "us2y": 3.45, "us3m": 3.92, "us10y": 4.0, "gold": 4165.2002}, {"time": "2025-11-28", "spread": 0.55, "us2y": 3.47, "us3m": 3.88, "us10y": 4.02, "gold": 4218.2998}, {"time": "2025-12-01", "spread": 0.55, "us2y": 3.54, "us3m": 3.81, "us10y": 4.09, "gold": 4239.2998}, {"time": "2025-12-02", "spread": 0.58, "us2y": 3.51, "us3m": 3.77, "us10y": 4.09, "gold": 4186.6001}, {"time": "2025-12-03", "spread": 0.57, "us2y": 3.49, "us3m": 3.72, "us10y": 4.06, "gold": 4199.2998}, {"time": "2025-12-04", "spread": 0.59, "us2y": 3.52, "us3m": 3.71, "us10y": 4.11, "gold": 4211.7998}, {"time": "2025-12-05", "spread": 0.58, "us2y": 3.56, "us3m": 3.71, "us10y": 4.14, "gold": 4212.8999}, {"time": "2025-12-08", "spread": 0.6, "us2y": 3.57, "us3m": 3.73, "us10y": 4.17, "gold": 4187.2002}, {"time": "2025-12-09", "spread": 0.57, "us2y": 3.61, "us3m": 3.73, "us10y": 4.18, "gold": 4206.7002}, {"time": "2025-12-10", "spread": 0.59, "us2y": 3.54, "us3m": 3.69, "us10y": 4.13, "gold": 4196.3999}, {"time": "2025-12-11", "spread": 0.62, "us2y": 3.52, "us3m": 3.66, "us10y": 4.14, "gold": 4285.5}, {"time": "2025-12-12", "spread": 0.67, "us2y": 3.52, "us3m": 3.63, "us10y": 4.19, "gold": 4300.1001}, {"time": "2025-12-15", "spread": 0.67, "us2y": 3.51, "us3m": 3.65, "us10y": 4.18, "gold": 4306.7002}, {"time": "2025-12-16", "spread": 0.67, "us2y": 3.48, "us3m": 3.64, "us10y": 4.15, "gold": 4304.5}, {"time": "2025-12-17", "spread": 0.67, "us2y": 3.49, "us3m": 3.64, "us10y": 4.16, "gold": 4347.5}, {"time": "2025-12-18", "spread": 0.66, "us2y": 3.46, "us3m": 3.62, "us10y": 4.12, "gold": 4339.5}, {"time": "2025-12-19", "spread": 0.68, "us2y": 3.48, "us3m": 3.62, "us10y": 4.16, "gold": 4361.3999}, {"time": "2025-12-22", "spread": 0.73, "us2y": 3.44, "us3m": 3.64, "us10y": 4.17, "gold": 4444.6001}, {"time": "2025-12-23", "spread": 0.7, "us2y": 3.48, "us3m": 3.65, "us10y": 4.18, "gold": 4482.7998}, {"time": "2025-12-24", "spread": 0.68, "us2y": 3.47, "us3m": 3.69, "us10y": 4.15, "gold": 4480.6001}, {"time": "2025-12-26", "spread": 0.68, "us2y": 3.46, "us3m": 3.64, "us10y": 4.14, "gold": 4529.1001}, {"time": "2025-12-29", "spread": 0.67, "us2y": 3.45, "us3m": 3.68, "us10y": 4.12, "gold": 4325.1001}, {"time": "2025-12-30", "spread": 0.69, "us2y": 3.45, "us3m": 3.65, "us10y": 4.14, "gold": 4370.1001}, {"time": "2025-12-31", "spread": 0.71, "us2y": 3.47, "us3m": 3.67, "us10y": 4.18, "gold": 4325.6001}, {"time": "2026-01-02", "spread": 0.72, "us2y": 3.47, "us3m": 3.65, "us10y": 4.19, "gold": 4314.3999}, {"time": "2026-01-05", "spread": 0.71, "us2y": 3.46, "us3m": 3.64, "us10y": 4.17, "gold": 4436.8999}, {"time": "2026-01-06", "spread": 0.71, "us2y": 3.47, "us3m": 3.63, "us10y": 4.18, "gold": 4482.2002}, {"time": "2026-01-07", "spread": 0.68, "us2y": 3.47, "us3m": 3.62, "us10y": 4.15, "gold": 4449.2998}, {"time": "2026-01-08", "spread": 0.7, "us2y": 3.49, "us3m": 3.62, "us10y": 4.19, "gold": 4449.7002}, {"time": "2026-01-09", "spread": 0.64, "us2y": 3.54, "us3m": 3.62, "us10y": 4.18, "gold": 4490.2998}, {"time": "2026-01-12", "spread": 0.65, "us2y": 3.54, "us3m": 3.67, "us10y": 4.19, "gold": 4604.2998}, {"time": "2026-01-13", "spread": 0.65, "us2y": 3.53, "us3m": 3.67, "us10y": 4.18, "gold": 4589.2002}, {"time": "2026-01-14", "spread": 0.64, "us2y": 3.51, "us3m": 3.67, "us10y": 4.15, "gold": 4626.2998}, {"time": "2026-01-15", "spread": 0.61, "us2y": 3.56, "us3m": 3.68, "us10y": 4.17, "gold": 4616.2998}, {"time": "2026-01-16", "spread": 0.65, "us2y": 3.59, "us3m": 3.67, "us10y": 4.24, "gold": 4588.3999}, {"time": "2026-01-20", "spread": 0.7, "us2y": 3.6, "us3m": 3.7, "us10y": 4.3, "gold": 4759.6001}, {"time": "2026-01-21", "spread": 0.66, "us2y": 3.6, "us3m": 3.7, "us10y": 4.26, "gold": 4831.7998}, {"time": "2026-01-22", "spread": 0.65, "us2y": 3.61, "us3m": 3.71, "us10y": 4.26, "gold": 4908.7998}, {"time": "2026-01-23", "spread": 0.64, "us2y": 3.6, "us3m": 3.7, "us10y": 4.24, "gold": 4976.2002}, {"time": "2026-01-26", "spread": 0.66, "us2y": 3.56, "us3m": 3.67, "us10y": 4.22, "gold": 5079.7002}, {"time": "2026-01-27", "spread": 0.71, "us2y": 3.53, "us3m": 3.67, "us10y": 4.24, "gold": 5079.8999}, {"time": "2026-01-28", "spread": 0.7, "us2y": 3.56, "us3m": 3.68, "us10y": 4.26, "gold": 5301.6001}, {"time": "2026-01-29", "spread": 0.71, "us2y": 3.53, "us3m": 3.67, "us10y": 4.24, "gold": 5318.3999}, {"time": "2026-01-30", "spread": 0.74, "us2y": 3.52, "us3m": 3.67, "us10y": 4.26, "gold": 4713.8999}, {"time": "2026-02-02", "spread": 0.72, "us2y": 3.57, "us3m": 3.69, "us10y": 4.29, "gold": 4622.5}, {"time": "2026-02-03", "spread": 0.71, "us2y": 3.57, "us3m": 3.69, "us10y": 4.28, "gold": 4903.7002}, {"time": "2026-02-04", "spread": 0.72, "us2y": 3.57, "us3m": 3.69, "us10y": 4.29, "gold": 4920.3999}, {"time": "2026-02-05", "spread": 0.74, "us2y": 3.47, "us3m": 3.67, "us10y": 4.21, "gold": 4861.3999}, {"time": "2026-02-06", "spread": 0.72, "us2y": 3.5, "us3m": 3.68, "us10y": 4.22, "gold": 4951.2002}, {"time": "2026-02-09", "spread": 0.74, "us2y": 3.48, "us3m": 3.69, "us10y": 4.22, "gold": 5050.8999}, {"time": "2026-02-10", "spread": 0.71, "us2y": 3.45, "us3m": 3.69, "us10y": 4.16, "gold": 5003.7998}, {"time": "2026-02-11", "spread": 0.66, "us2y": 3.52, "us3m": 3.7, "us10y": 4.18, "gold": 5071.6001}, {"time": "2026-02-12", "spread": 0.62, "us2y": 3.47, "us3m": 3.7, "us10y": 4.09, "gold": 4923.7002}, {"time": "2026-02-13", "spread": 0.64, "us2y": 3.4, "us3m": 3.68, "us10y": 4.04, "gold": 5022.0}, {"time": "2026-02-17", "spread": 0.62, "us2y": 3.43, "us3m": 3.69, "us10y": 4.05, "gold": 4882.8999}, {"time": "2026-02-18", "spread": 0.62, "us2y": 3.47, "us3m": 3.7, "us10y": 4.09, "gold": 4986.5}, {"time": "2026-02-19", "spread": 0.61, "us2y": 3.47, "us3m": 3.69, "us10y": 4.08, "gold": 4975.8999}, {"time": "2026-02-20", "spread": 0.6, "us2y": 3.48, "us3m": 3.69, "us10y": 4.08, "gold": 5059.2998}, {"time": "2026-02-23", "spread": 0.6, "us2y": 3.43, "us3m": 3.69, "us10y": 4.03, "gold": 5204.7002}, {"time": "2026-02-24", "spread": 0.61, "us2y": 3.43, "us3m": 3.69, "us10y": 4.04, "gold": 5155.7998}, {"time": "2026-02-25", "spread": 0.6, "us2y": 3.45, "us3m": 3.69, "us10y": 4.05, "gold": 5206.3999}, {"time": "2026-02-26", "spread": 0.6, "us2y": 3.42, "us3m": 3.68, "us10y": 4.02, "gold": 5176.5}, {"time": "2026-02-27", "spread": 0.59, "us2y": 3.38, "us3m": 3.67, "us10y": 3.97, "gold": 5230.5}, {"time": "2026-03-02", "spread": 0.58, "us2y": 3.47, "us3m": 3.72, "us10y": 4.05, "gold": 5294.3999}, {"time": "2026-03-03", "spread": 0.55, "us2y": 3.51, "us3m": 3.71, "us10y": 4.06, "gold": 5107.3999}, {"time": "2026-03-04", "spread": 0.55, "us2y": 3.54, "us3m": 3.71, "us10y": 4.09, "gold": 5120.2002}, {"time": "2026-03-05", "spread": 0.56, "us2y": 3.57, "us3m": 3.7, "us10y": 4.13, "gold": 5065.2998}, {"time": "2026-03-06", "spread": 0.59, "us2y": 3.56, "us3m": 3.69, "us10y": 4.15, "gold": 5146.1001}, {"time": "2026-03-09", "spread": 0.56, "us2y": 3.56, "us3m": 3.71, "us10y": 4.12, "gold": 5091.5}, {"time": "2026-03-10", "spread": 0.58, "us2y": 3.57, "us3m": 3.71, "us10y": 4.15, "gold": 5229.7002}, {"time": "2026-03-11", "spread": 0.57, "us2y": 3.64, "us3m": 3.71, "us10y": 4.21, "gold": 5167.3999}, {"time": "2026-03-12", "spread": 0.51, "us2y": 3.76, "us3m": 3.72, "us10y": 4.27, "gold": 5115.7998}, {"time": "2026-03-13", "spread": 0.55, "us2y": 3.73, "us3m": 3.72, "us10y": 4.28, "gold": 5052.5}, {"time": "2026-03-16", "spread": 0.55, "us2y": 3.68, "us3m": 3.72, "us10y": 4.23, "gold": 4994.0}, {"time": "2026-03-17", "spread": 0.52, "us2y": 3.68, "us3m": 3.72, "us10y": 4.2, "gold": 5001.0}, {"time": "2026-03-18", "spread": 0.5, "us2y": 3.76, "us3m": 3.73, "us10y": 4.26, "gold": 4889.8999}, {"time": "2026-03-19", "spread": 0.46, "us2y": 3.79, "us3m": 3.73, "us10y": 4.25, "gold": 4600.7002}, {"time": "2026-03-20", "spread": 0.51, "us2y": 3.88, "us3m": 3.74, "us10y": 4.39, "gold": 4570.3999}, {"time": "2026-03-23", "spread": 0.51, "us2y": 3.83, "us3m": 3.74, "us10y": 4.34, "gold": 4404.1001}, {"time": "2026-03-24", "spread": 0.49, "us2y": 3.9, "us3m": 3.74, "us10y": 4.39, "gold": 4399.2998}, {"time": "2026-03-25", "spread": 0.49, "us2y": 3.84, "us3m": 3.73, "us10y": 4.33, "gold": 4549.7998}, {"time": "2026-03-26", "spread": 0.46, "us2y": 3.96, "us3m": 3.73, "us10y": 4.42, "gold": 4375.5}, {"time": "2026-03-27", "spread": 0.56, "us2y": 3.88, "us3m": 3.73, "us10y": 4.44, "gold": 4492.0}, {"time": "2026-03-30", "spread": 0.53, "us2y": 3.82, "us3m": 3.71, "us10y": 4.35, "gold": 4526.0}, {"time": "2026-03-31", "spread": 0.51, "us2y": 3.79, "us3m": 3.7, "us10y": 4.3, "gold": 4647.6001}, {"time": "2026-04-01", "spread": 0.52, "us2y": 3.81, "us3m": 3.7, "us10y": 4.33, "gold": 4783.2002}, {"time": "2026-04-02", "spread": 0.52, "us2y": 3.79, "us3m": 3.7, "us10y": 4.31, "gold": 4651.5}, {"time": "2026-04-03", "spread": 0.51, "us2y": 3.84, "us3m": 3.71, "us10y": 4.35, "gold": null}, {"time": "2026-04-06", "spread": 0.5, "us2y": 3.84, "us3m": 3.72, "us10y": 4.34, "gold": 4656.7998}, {"time": "2026-04-07", "spread": 0.52, "us2y": 3.81, "us3m": 3.71, "us10y": 4.33, "gold": 4657.1001}, {"time": "2026-04-08", "spread": 0.5, "us2y": 3.79, "us3m": 3.69, "us10y": 4.29, "gold": 4749.5}, {"time": "2026-04-09", "spread": 0.51, "us2y": 3.78, "us3m": 3.68, "us10y": 4.29, "gold": 4792.2002}, {"time": "2026-04-10", "spread": 0.5, "us2y": 3.81, "us3m": 3.69, "us10y": 4.31, "gold": 4761.8999}, {"time": "2026-04-13", "spread": 0.52, "us2y": 3.78, "us3m": 3.71, "us10y": 4.3, "gold": 4742.3999}, {"time": "2026-04-14", "spread": 0.5, "us2y": 3.76, "us3m": 3.71, "us10y": 4.26, "gold": 4825.0}, {"time": "2026-04-15", "spread": 0.53, "us2y": 3.76, "us3m": 3.71, "us10y": 4.29, "gold": 4800.0}, {"time": "2026-04-16", "spread": 0.54, "us2y": 3.78, "us3m": 3.7, "us10y": 4.32, "gold": 4785.3999}, {"time": "2026-04-17", "spread": 0.55, "us2y": 3.71, "us3m": 3.7, "us10y": 4.26, "gold": 4857.6001}, {"time": "2026-04-20", "spread": 0.54, "us2y": 3.72, "us3m": 3.71, "us10y": 4.26, "gold": 4806.6001}, {"time": "2026-04-21", "spread": 0.52, "us2y": 3.78, "us3m": 3.69, "us10y": 4.3, "gold": 4698.3999}, {"time": "2026-04-22", "spread": 0.51, "us2y": 3.79, "us3m": 3.69, "us10y": 4.3, "gold": 4732.5}, {"time": "2026-04-23", "spread": 0.51, "us2y": 3.83, "us3m": 3.69, "us10y": 4.34, "gold": 4705.1001}, {"time": "2026-04-24", "spread": 0.53, "us2y": 3.78, "us3m": 3.69, "us10y": 4.31, "gold": 4722.2998}, {"time": "2026-04-27", "spread": 0.57, "us2y": 3.78, "us3m": 3.68, "us10y": 4.35, "gold": 4675.3999}, {"time": "2026-04-28", "spread": 0.52, "us2y": 3.84, "us3m": 3.68, "us10y": 4.36, "gold": 4591.5}, {"time": "2026-04-29", "spread": 0.5, "us2y": 3.92, "us3m": 3.68, "us10y": 4.42, "gold": 4545.2002}, {"time": "2026-04-30", "spread": 0.52, "us2y": 3.88, "us3m": 3.68, "us10y": 4.4, "gold": 4614.7002}, {"time": "2026-05-01", "spread": 0.51, "us2y": 3.88, "us3m": 3.68, "us10y": 4.39, "gold": 4629.8999}, {"time": "2026-05-04", "spread": 0.5, "us2y": 3.95, "us3m": 3.7, "us10y": 4.45, "gold": 4519.5}, {"time": "2026-05-05", "spread": 0.5, "us2y": 3.93, "us3m": 3.69, "us10y": 4.43, "gold": 4555.7998}, {"time": "2026-05-06", "spread": 0.49, "us2y": 3.87, "us3m": 3.69, "us10y": 4.36, "gold": 4681.8999}, {"time": "2026-05-07", "spread": 0.49, "us2y": 3.92, "us3m": 3.69, "us10y": 4.41, "gold": 4699.7998}, {"time": "2026-05-08", "spread": 0.48, "us2y": 3.9, "us3m": 3.69, "us10y": 4.38, "gold": 4720.3999}, {"time": "2026-05-11", "spread": 0.47, "us2y": 3.95, "us3m": 3.7, "us10y": 4.42, "gold": 4718.7002}, {"time": "2026-05-12", "spread": 0.46, "us2y": 4.0, "us3m": 3.7, "us10y": 4.46, "gold": 4677.6001}, {"time": "2026-05-13", "spread": 0.48, "us2y": 3.98, "us3m": 3.69, "us10y": 4.46, "gold": 4697.7002}, {"time": "2026-05-14", "spread": 0.47, "us2y": 4.0, "us3m": 3.69, "us10y": 4.47, "gold": 4678.1001}, {"time": "2026-05-15", "spread": 0.5, "us2y": 4.09, "us3m": 3.69, "us10y": 4.59, "gold": 4555.7998}, {"time": "2026-05-18", "spread": 0.54, "us2y": 4.07, "us3m": 3.68, "us10y": 4.61, "gold": 4552.5}, {"time": "2026-05-19", "spread": 0.54, "us2y": 4.13, "us3m": 3.67, "us10y": 4.67, "gold": 4506.2998}, {"time": "2026-05-20", "spread": 0.53, "us2y": 4.04, "us3m": 3.65, "us10y": 4.57, "gold": 4531.2998}, {"time": "2026-05-21", "spread": 0.49, "us2y": 4.08, "us3m": 3.68, "us10y": 4.57, "gold": 4539.7998}, {"time": "2026-05-22", "spread": 0.43, "us2y": 4.13, "us3m": 3.68, "us10y": 4.56, "gold": 4521.0}, {"time": "2026-05-26", "spread": 0.49, "us2y": 4.01, "us3m": 3.68, "us10y": 4.5, "gold": 4500.3999}, {"time": "2026-05-27", "spread": 0.48, "us2y": 4.0, "us3m": 3.68, "us10y": 4.48, "gold": 4447.5}, {"time": "2026-05-28", "spread": 0.46, "us2y": 3.99, "us3m": 3.69, "us10y": 4.45, "gold": 4499.2998}, {"time": "2026-05-29", "spread": 0.47, "us2y": 3.98, "us3m": 3.69, "us10y": 4.45, "gold": 4560.5}, {"time": "2026-06-01", "spread": 0.42, "us2y": 4.05, "us3m": 3.78, "us10y": 4.47, "gold": 4475.2002}, {"time": "2026-06-02", "spread": 0.41, "us2y": 4.05, "us3m": 3.77, "us10y": 4.46, "gold": 4489.1001}, {"time": "2026-06-03", "spread": 0.41, "us2y": 4.08, "us3m": 3.78, "us10y": 4.49, "gold": 4436.7002}, {"time": "2026-06-04", "spread": 0.42, "us2y": 4.05, "us3m": 3.78, "us10y": 4.47, "gold": 4475.7998}, {"time": "2026-06-05", "spread": 0.38, "us2y": 4.17, "us3m": 3.78, "us10y": 4.55, "gold": 4337.1001}, {"time": "2026-06-08", "spread": 0.41, "us2y": 4.15, "us3m": 3.8, "us10y": 4.56, "gold": 4335.8999}, {"time": "2026-06-09", "spread": 0.4, "us2y": 4.13, "us3m": 3.79, "us10y": 4.53, "gold": 4260.0}, {"time": "2026-06-10", "spread": 0.42, "us2y": 4.13, "us3m": 3.79, "us10y": 4.55, "gold": 4108.2002}, {"time": "2026-06-11", "spread": 0.4, "us2y": 4.05, "us3m": 3.78, "us10y": 4.45, "gold": 4090.3}, {"time": "2026-06-12", "spread": 0.39, "us2y": 4.09, "us3m": 3.78, "us10y": 4.48, "gold": 4215.0}, {"time": "2026-06-15", "spread": 0.4, "us2y": 4.07, "us3m": 3.79, "us10y": 4.47, "gold": 4328.0}, {"time": "2026-06-16", "spread": 0.38, "us2y": 4.05, "us3m": 3.79, "us10y": 4.43, "gold": 4330.8999}, {"time": "2026-06-17", "spread": 0.29, "us2y": 4.2, "us3m": 3.83, "us10y": 4.49, "gold": 4358.8999}, {"time": "2026-06-18", "spread": 0.27, "us2y": 4.19, "us3m": 3.83, "us10y": 4.46, "gold": 4224.1001}, {"time": "2026-06-22", "spread": 0.27, "us2y": 4.24, "us3m": 3.85, "us10y": 4.51, "gold": 4181.8999}, {"time": "2026-06-23", "spread": 0.34, "us2y": 4.16, "us3m": 3.85, "us10y": 4.5, "gold": 4129.8999}, {"time": "2026-06-24", "spread": 0.3, "us2y": 4.11, "us3m": 3.85, "us10y": 4.41, "gold": 3990.3}, {"time": "2026-06-25", "spread": 0.31, "us2y": 4.09, "us3m": 3.84, "us10y": 4.4, "gold": 4030.5}, {"time": "2026-06-26", "spread": 0.31, "us2y": 4.07, "us3m": 3.83, "us10y": 4.38, "gold": 4078.7}, {"time": "2026-06-29", "spread": 0.28, "us2y": 4.1, "us3m": 3.87, "us10y": 4.38, "gold": 4022.3}, {"time": "2026-06-30", "spread": 0.3, "us2y": 4.14, "us3m": 3.87, "us10y": 4.44, "gold": 4022.8999}, {"time": "2026-07-01", "spread": 0.31, "us2y": 4.17, "us3m": 3.85, "us10y": 4.48, "gold": 4068.3}, {"time": "2026-07-02", "spread": 0.35, "us2y": 4.14, "us3m": 3.82, "us10y": 4.49, "gold": 4112.7002}, {"time": "2026-07-06", "spread": 0.35, "us2y": 4.13, "us3m": 3.87, "us10y": 4.48, "gold": 4155.1001}, {"time": "2026-07-07", "spread": 0.36, "us2y": 4.19, "us3m": 3.86, "us10y": 4.55, "gold": 4108.7998}, {"time": "2026-07-08", "spread": 0.35, "us2y": 4.21, "us3m": 3.87, "us10y": 4.56, "gold": 4070.8999}, {"time": "2026-07-09", "spread": 0.38, "us2y": 4.16, "us3m": 3.83, "us10y": 4.54, "gold": 4130.6001}, {"time": "2026-07-10", "spread": 0.35, "us2y": 4.21, "us3m": 3.85, "us10y": 4.56, "gold": 4104.1001}, {"time": "2026-07-13", "spread": 0.36, "us2y": 4.26, "us3m": 3.89, "us10y": 4.62, "gold": 3997.0}, {"time": "2026-07-14", "spread": 0.4, "us2y": 4.18, "us3m": 3.84, "us10y": 4.58, "gold": 4061.1001}, {"time": "2026-07-15", "spread": 0.42, "us2y": 4.13, "us3m": 3.83, "us10y": 4.55, "gold": 4044.0}, {"time": "2026-07-16", "spread": 0.41, "us2y": 4.16, "us3m": 3.84, "us10y": 4.57, "gold": 3985.6001}, {"time": "2026-07-17", "spread": 0.37, "us2y": 4.18, "us3m": 3.85, "us10y": 4.55, "gold": 4012.7}, {"time": "2026-07-20", "spread": 0.39, "us2y": 4.21, "us3m": 3.86, "us10y": 4.6, "gold": 4010.3}, {"time": "2026-07-21", "spread": 0.37, "us2y": 4.26, "us3m": 3.87, "us10y": 4.63, "gold": 4071.1001}, {"time": "2026-07-22", "spread": 0.36, "us2y": 4.31, "us3m": 3.89, "us10y": 4.67, "gold": 4146.8999}, {"time": "2026-07-23", "spread": 0.34, "us2y": 4.37, "us3m": 3.95, "us10y": 4.71, "gold": 4046.6001}, {"time": "2026-07-24", "spread": 0.36, "us2y": 4.33, "us3m": 3.96, "us10y": 4.69, "gold": 4067.6001}, {"time": "2026-07-27", "spread": 0.34, "us2y": 4.31, "us3m": 3.96, "us10y": 4.65, "gold": 4078.7}];
+    const TIMEFRAMES = {"1M": 30, "3M": 90, "6M": 180, "1Y": 365};
+    const DEFAULT_TF = "3M";
+
+    const SERIES_META = [
+      { key: "us10y",  label: "US 10Y", color: "#ef5350", yAxisIndex: 1, lineType: "solid",  lineWidth: 1.5, z: 2, endLabel: false },
+      { key: "us2y",   label: "US 2Y",  color: "#42a5f5", yAxisIndex: 1, lineType: "solid",  lineWidth: 1.5, z: 2, endLabel: false },
+      { key: "us3m",   label: "US 3M",  color: "#787b86", yAxisIndex: 1, lineType: "dotted", lineWidth: 1.5, z: 2, endLabel: false },
+      { key: "spread", label: "10Y-2Y", color: "#ab47bc", yAxisIndex: 0, lineType: "solid",  lineWidth: 4.5, z: 10, endLabel: true },
+      { key: "gold",   label: "Gold",   color: "#f5a623", yAxisIndex: 2, lineType: "solid",  lineWidth: 2,   z: 3, endLabel: true },
+    ];
+
+    const visibility = {};
+    SERIES_META.forEach(m => { visibility[m.label] = true; });
+
+    let currentXMin = RAW_DATA[0].time;
+    let currentXMax = RAW_DATA[RAW_DATA.length - 1].time;
+
+    function fmt(val, digits=2) {
+      if (val == null || val === undefined) return "-";
+      return Number(val).toFixed(digits);
+    }
+
+    function daysBefore(timeStr, days) {
+      const d = new Date(timeStr + "T00:00:00Z");
+      d.setUTCDate(d.getUTCDate() - days);
+      return d.toISOString().slice(0, 10);
+    }
+
+    function parseTime(timeStr) {
+      return new Date(timeStr + "T00:00:00Z").getTime();
+    }
+
+    function formatDate(value) {
+      const d = new Date(typeof value === "number" ? value : value);
+      if (Number.isNaN(d.getTime())) return String(value);
+      const y = d.getUTCFullYear();
+      const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+      const day = String(d.getUTCDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+
+    function buildSeriesData(key, xMin, xMax) {
+      const xMinTs = parseTime(xMin);
+      const xMaxTs = parseTime(xMax);
+      return RAW_DATA
+        .filter(d => {
+          const t = parseTime(d.time);
+          return t >= xMinTs && t <= xMaxTs;
+        })
+        .map(d => {
+          const v = d[key];
+          return [parseTime(d.time), v != null ? v : null];
+        });
+    }
+
+    function calcYRange(yAxisIndex, xMin, xMax, paddingRatio = 0.08) {
+      const xMinTs = parseTime(xMin);
+      const xMaxTs = parseTime(xMax);
+      let minVal = Infinity;
+      let maxVal = -Infinity;
+
+      SERIES_META.forEach(meta => {
+        if (meta.yAxisIndex !== yAxisIndex || !visibility[meta.label]) return;
+        RAW_DATA.forEach(d => {
+          const ts = parseTime(d.time);
+          if (ts < xMinTs || ts > xMaxTs) return;
+          const v = d[meta.key];
+          if (v != null && !Number.isNaN(v)) {
+            minVal = Math.min(minVal, v);
+            maxVal = Math.max(maxVal, v);
+          }
+        });
+      });
+
+      if (!Number.isFinite(minVal) || !Number.isFinite(maxVal)) {
+        return { scale: true };
+      }
+      if (minVal === maxVal) {
+        const pad = Math.abs(minVal) * 0.05 || 0.1;
+        return { min: minVal - pad, max: maxVal + pad, scale: true };
+      }
+      const pad = (maxVal - minVal) * paddingRatio;
+      return { min: minVal - pad, max: maxVal + pad, scale: true };
+    }
+
+    function findNearestRowInRange(ts) {
+      const xMinTs = parseTime(currentXMin);
+      const xMaxTs = parseTime(currentXMax);
+      ts = Math.max(xMinTs, Math.min(xMaxTs, ts));
+
+      let best = null;
+      let bestDist = Infinity;
+      RAW_DATA.forEach(d => {
+        const t = parseTime(d.time);
+        if (t < xMinTs || t > xMaxTs) return;
+        const dist = Math.abs(t - ts);
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = d;
+        }
+      });
+      return best;
+    }
+
+    function buildSeriesList(xMin, xMax) {
+      return SERIES_META.map(meta => {
+        const visible = visibility[meta.label];
+        const series = {
+          id: meta.key,
+          name: meta.label,
+          type: "line",
+          yAxisIndex: meta.yAxisIndex,
+          z: meta.z,
+          show: visible,
+          showSymbol: false,
+          smooth: false,
+          connectNulls: false,
+          sampling: "none",
+          lineStyle: {
+            color: meta.color,
+            width: meta.lineWidth,
+            type: meta.lineType,
+            opacity: visible ? 1 : 0,
+          },
+          itemStyle: { color: meta.color, opacity: visible ? 1 : 0 },
+          emphasis: { focus: "none", disabled: !visible },
+          data: buildSeriesData(meta.key, xMin, xMax),
+        };
+        if (meta.endLabel) {
+          series.endLabel = {
+            show: visible,
+            formatter: meta.label,
+            color: meta.color,
+            fontWeight: "bold",
+            distance: 8,
+          };
+        }
+        return series;
+      });
+    }
+
+    function buildYAxisConfig(index, xMin, xMax) {
+      const range = calcYRange(index, xMin, xMax);
+      const configs = [
+        {
+          type: "value",
+          name: "10Y-2Y (%)",
+          position: "left",
+          nameTextStyle: { color: "#ab47bc", fontSize: 11 },
+          axisLine: { show: true, lineStyle: { color: "#ab47bc", width: 1 } },
+          axisTick: { show: true, lineStyle: { color: "#ab47bc" } },
+          axisLabel: { color: "#ab47bc", formatter: (v) => v.toFixed(2) + "%" },
+          splitLine: { show: false },
+        },
+        {
+          type: "value",
+          name: "Rate (%)",
+          position: "right",
+          offset: 0,
+          nameTextStyle: { color: "#787b86", fontSize: 11 },
+          axisLine: { show: true, lineStyle: { color: "#d1d4dc", width: 1 } },
+          axisTick: { show: true, lineStyle: { color: "#d1d4dc" } },
+          axisLabel: { color: "#787b86", formatter: (v) => v.toFixed(2) + "%" },
+          splitLine: { show: true, lineStyle: { color: "#eff0f2", type: "dashed" } },
+        },
+        {
+          type: "value",
+          name: "Gold (USD)",
+          position: "right",
+          offset: 44,
+          nameTextStyle: { color: "#f5a623", fontSize: 11 },
+          axisLine: { show: true, lineStyle: { color: "#f5a623", width: 1 } },
+          axisTick: { show: true, lineStyle: { color: "#f5a623" } },
+          axisLabel: { color: "#f5a623", margin: 4, formatter: (v) => v.toFixed(0) },
+          splitLine: { show: false },
+        },
+      ];
+      const axis = configs[index];
+      axis.scale = range.scale !== false;
+      if (range.min != null) axis.min = range.min;
+      if (range.max != null) axis.max = range.max;
+      return axis;
+    }
+
+    const chartEl = document.getElementById("main-chart");
+    const tooltipEl = document.getElementById("hover-tooltip");
+    const chart = echarts.init(chartEl, null, { renderer: "canvas" });
+
+    function hideHoverTooltip() {
+      tooltipEl.style.display = "none";
+    }
+
+    function showHoverTooltip(row, clientX, clientY) {
+      if (!row) {
+        hideHoverTooltip();
+        return;
+      }
+      let html = `<div class="tip-date">${row.time}</div>`;
+      SERIES_META.forEach(meta => {
+        if (!visibility[meta.label]) return;
+        const v = row[meta.key];
+        if (v == null) return;
+        const val = meta.key === "gold" ? "$" + fmt(v, 2) : fmt(v) + "%";
+        html += `<div class="tip-row"><span style="color:${meta.color}">${meta.label}</span><span style="font-weight:500">${val}</span></div>`;
+      });
+      tooltipEl.innerHTML = html;
+      tooltipEl.style.display = "block";
+
+      const tipW = tooltipEl.offsetWidth || 210;
+      const tipH = tooltipEl.offsetHeight || 140;
+      let x = clientX + 16;
+      let y = clientY - tipH / 2;
+      if (x + tipW > window.innerWidth - 12) x = clientX - tipW - 16;
+      if (x < 12) x = 12;
+      if (y < 12) y = 12;
+      if (y + tipH > window.innerHeight - 12) y = window.innerHeight - tipH - 12;
+      tooltipEl.style.left = x + "px";
+      tooltipEl.style.top = y + "px";
+    }
+
+    function onChartMouseMove(e) {
+      const rect = chartEl.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const inGrid = chart.containPixel("grid", [x, y]);
+      if (!inGrid) {
+        hideHoverTooltip();
+        chart.dispatchAction({ type: "updateAxisPointer", currTrigger: "leave" });
+        return;
+      }
+
+      const coord = chart.convertFromPixel({ xAxisIndex: 0, yAxisIndex: 0 }, [x, y]);
+      if (!coord || coord[0] == null) {
+        hideHoverTooltip();
+        return;
+      }
+
+      const row = findNearestRowInRange(coord[0]);
+      showHoverTooltip(row, e.clientX, e.clientY);
+
+      chart.dispatchAction({
+        type: "updateAxisPointer",
+        currTrigger: "mousemove",
+        x: x,
+        y: y,
+      });
+    }
+
+    function getChartOption(xMin, xMax) {
+      const xMinTs = parseTime(xMin);
+      const xMaxTs = parseTime(xMax);
+
+      return {
+        backgroundColor: "#ffffff",
+        animation: false,
+        legend: { show: false },
+        grid: {
+          left: 4,
+          right: 4,
+          top: 28,
+          bottom: 52,
+          containLabel: true,
+        },
+        tooltip: { show: false },
+        xAxis: {
+          type: "time",
+          min: xMinTs,
+          max: xMaxTs,
+          axisPointer: {
+            show: true,
+            snap: true,
+            label: { formatter: (params) => formatDate(params.value) },
+          },
+          axisLine: { lineStyle: { color: "#d1d4dc" } },
+          axisTick: { lineStyle: { color: "#d1d4dc" } },
+          axisLabel: {
+            color: "#787b86",
+            formatter: (value) => formatDate(value),
+          },
+          splitLine: { show: false },
+        },
+        yAxis: [
+          buildYAxisConfig(0, xMin, xMax),
+          buildYAxisConfig(1, xMin, xMax),
+          buildYAxisConfig(2, xMin, xMax),
+        ],
+        series: buildSeriesList(xMin, xMax),
+      };
+    }
+
+    function renderChart() {
+      hideHoverTooltip();
+      chart.setOption(getChartOption(currentXMin, currentXMax), {
+        notMerge: false,
+        replaceMerge: ["series", "xAxis", "yAxis"],
+      });
+    }
+
+    function applyTimeframe(tf) {
+      const days = TIMEFRAMES[tf];
+      const last = RAW_DATA[RAW_DATA.length - 1].time;
+      const from = daysBefore(last, days);
+      currentXMin = from < RAW_DATA[0].time ? RAW_DATA[0].time : from;
+      currentXMax = last;
+      renderChart();
+      document.querySelectorAll("#timeframe-btns .btn").forEach(b => {
+        b.classList.toggle("active", b.dataset.tf === tf);
+      });
+    }
+
+    const seriesBtnContainer = document.getElementById("series-btns");
+    SERIES_META.forEach(meta => {
+      const btn = document.createElement("button");
+      btn.className = "btn active";
+      btn.textContent = meta.label;
+      btn.style.borderColor = meta.color;
+      btn.addEventListener("click", () => {
+        const next = !visibility[meta.label];
+        const visibleCount = SERIES_META.filter(m => visibility[m.label]).length;
+        if (!next && visibleCount <= 1) return;
+        visibility[meta.label] = next;
+        btn.classList.toggle("active", next);
+        btn.classList.toggle("hidden-series", !next);
+        renderChart();
+      });
+      seriesBtnContainer.appendChild(btn);
+    });
+
+    const tfBtnContainer = document.getElementById("timeframe-btns");
+    Object.keys(TIMEFRAMES).forEach(tf => {
+      const btn = document.createElement("button");
+      btn.className = "btn" + (tf === DEFAULT_TF ? " active" : "");
+      btn.textContent = tf;
+      btn.dataset.tf = tf;
+      btn.addEventListener("click", () => applyTimeframe(tf));
+      tfBtnContainer.appendChild(btn);
+    });
+
+    applyTimeframe(DEFAULT_TF);
+
+    chartEl.addEventListener("mousemove", onChartMouseMove);
+    chartEl.addEventListener("mouseleave", () => {
+      hideHoverTooltip();
+      chart.dispatchAction({ type: "updateAxisPointer", currTrigger: "leave" });
+    });
+
+    window.addEventListener("resize", () => chart.resize());
+    new ResizeObserver(() => chart.resize()).observe(document.getElementById("charts-wrap"));
+  </script>
+</body>
+</html>
