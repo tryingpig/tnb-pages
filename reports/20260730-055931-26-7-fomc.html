@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FOMC 통화정책 분석 리포트 - TNBfolio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&amp;family=JetBrains+Mono:wght@400;600&amp;family=Noto+Serif+KR:wght@300;400;600;700&amp;display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+    <style>
+        :root {
+            --pentagon-blue: #1B2A4A;
+            --gold: #9A7B2F;
+            --bear-red: #C8392B;
+            --base-blue: #1A5C9E;
+            --bull-green: #2E7D52;
+            --bg-white: #ffffff;
+            --gray-light: #f8f8f8;
+            --gray-border: #e2e8f0;
+            --text-dark: #1A202C;
+            --text-muted: #718096;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-white);
+            color: var(--text-dark);
+            font-family: 'Noto Serif KR', serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* 1. HEADER */
+        header {
+            background-color: var(--pentagon-blue);
+            color: #ffffff;
+            border-bottom: 4px solid var(--gold);
+            padding: 24px 40px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .brand-logo {
+            font-family: 'DM Serif Display', serif;
+            font-size: 28px;
+            color: var(--gold);
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        .header-meta {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: #a0aec0;
+        }
+
+        .header-content {
+            max-width: 1080px;
+            margin: 0 auto;
+        }
+
+        .badge-macro {
+            display: inline-block;
+            background-color: rgba(154, 123, 47, 0.2);
+            color: var(--gold);
+            border: 1px solid var(--gold);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 2px;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .report-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 32px;
+            line-height: 1.2;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .report-subtitle {
+            font-size: 15px;
+            color: #cbd5e0;
+            font-weight: 300;
+        }
+
+        /* 2. RATE TICKER */
+        .rate-ticker {
+            background-color: var(--bear-red);
+            color: #ffffff;
+            padding: 12px 40px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .ticker-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ticker-label {
+            opacity: 0.8;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .ticker-val {
+            font-weight: 600;
+        }
+
+        /* 3. VOTE BANNER */
+        .vote-banner {
+            background-color: #f9f5ec;
+            border-left: 4px solid var(--gold);
+            padding: 16px 40px;
+            font-size: 14px;
+            color: #2d3748;
+            margin-bottom: 30px;
+        }
+
+        .vote-banner-title {
+            font-weight: 700;
+            color: var(--pentagon-blue);
+            margin-bottom: 4px;
+        }
+
+        /* CONTAINER */
+        .container {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 0 40px;
+        }
+
+        /* SECTION STYLING */
+        .section-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gold);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .section-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 22px;
+            color: var(--pentagon-blue);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--gray-border);
+        }
+
+        .section-wrapper {
+            margin-bottom: 40px;
+        }
+
+        /* 5. OVERVIEW */
+        .overview-box {
+            background-color: var(--gray-light);
+            border: 1px solid var(--gray-border);
+            padding: 24px;
+            border-radius: 4px;
+        }
+
+        .overview-box p {
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: #2d3748;
+            text-align: justify;
+        }
+
+        .overview-box p:last-child {
+            margin-bottom: 0;
+            font-weight: 600;
+            color: var(--pentagon-blue);
+        }
+
+        /* 6. KPI STRIP */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        .kpi-card {
+            background-color: #ffffff;
+            border: 1px solid var(--gray-border);
+            padding: 16px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .kpi-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .kpi-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .kpi-unit {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* COLOR UTILS */
+        .text-bear { color: var(--bear-red); }
+        .text-bull { color: var(--bull-green); }
+        .text-base { color: var(--base-blue); }
+        .text-gold { color: var(--gold); }
+
+        /* GRID LAYOUTS */
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .grid-3col {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        /* 7. RATE DECISION DETAIL CARDS */
+        .card-detail {
+            background: #ffffff;
+            border: 1px solid var(--gray-border);
+            border-top-width: 3px;
+            padding: 20px;
+            border-radius: 4px;
+        }
+
+        .card-detail.red { border-top-color: var(--bear-red); }
+        .card-detail.blue { border-top-color: var(--base-blue); }
+        .card-detail.gold { border-top-color: var(--gold); }
+
+        .card-detail h4 {
+            font-size: 15px;
+            color: var(--pentagon-blue);
+            margin-bottom: 8px;
+        }
+
+        .card-detail p {
+            font-size: 13px;
+            color: #4a5568;
+        }
+
+        /* 8. CHAIR PRESS CONFERENCE (REMARKS) */
+        .quote-card {
+            background: #ffffff;
+            border: 1px solid var(--gray-border);
+            border-left: 4px solid var(--pentagon-blue);
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .quote-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .quote-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 2px;
+            color: #ffffff;
+        }
+
+        .tag-hawkish { background-color: var(--bear-red); }
+        .tag-dovish { background-color: var(--bull-green); }
+        .tag-neutral { background-color: var(--base-blue); }
+        .tag-data { background-color: var(--gold); }
+
+        .quote-en {
+            font-family: 'Noto Serif KR', serif;
+            font-style: italic;
+            font-size: 13px;
+            color: #2d3748;
+            margin-bottom: 4px;
+        }
+
+        .quote-kr {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--pentagon-blue);
+            margin-bottom: 8px;
+        }
+
+        .quote-interp {
+            font-size: 12px;
+            color: #4a5568;
+            background-color: var(--gray-light);
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+
+        /* 9. KEY HEADLINES */
+        .headline-card {
+            background: #ffffff;
+            border: 1px solid var(--gray-border);
+            padding: 12px 16px;
+            border-radius: 4px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 13px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-top: 6px;
+            flex-shrink: 0;
+        }
+
+        .dot-red { background-color: var(--bear-red); }
+        .dot-blue { background-color: var(--base-blue); }
+        .dot-green { background-color: var(--bull-green); }
+        .dot-gold { background-color: var(--gold); }
+
+        /* 11. CHARTS */
+        .chart-box {
+            background: #ffffff;
+            border: 1px solid var(--gray-border);
+            padding: 16px;
+            border-radius: 4px;
+            height: 300px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 240px;
+            width: 100%;
+        }
+
+        /* 12. ECONOMIC PROJECTIONS TABLE */
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 12px;
+        }
+
+        table.sep-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        table.sep-table th {
+            background-color: var(--pentagon-blue);
+            color: #ffffff;
+            padding: 10px;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        table.sep-table td {
+            padding: 10px;
+            border-bottom: 1px solid var(--gray-border);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        table.sep-table tr:nth-child(even) {
+            background-color: var(--gray-light);
+        }
+
+        td.highlight-gold {
+            background-color: rgba(154, 123, 47, 0.15);
+            font-weight: 600;
+            color: var(--gold);
+        }
+
+        /* 16. DISSENTING VIEWS */
+        .dissent-box {
+            background-color: #fdf2f2;
+            border-left: 4px solid var(--bear-red);
+            padding: 16px;
+            margin-bottom: 12px;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .dissent-name {
+            font-weight: 700;
+            color: var(--bear-red);
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .dissent-desc {
+            font-size: 13px;
+            color: #4a5568;
+        }
+
+        /* FOOTER */
+        footer {
+            background-color: var(--pentagon-blue);
+            color: #ffffff;
+            padding: 24px 40px;
+            margin-top: 60px;
+            font-size: 12px;
+        }
+
+        .footer-container {
+            max-width: 1080px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .footer-source {
+            color: #a0aec0;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        @media (max-width: 768px) {
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .grid-2col, .grid-3col { grid-template-columns: 1fr; }
+            header, .rate-ticker, .vote-banner, .container, footer { padding-left: 20px; padding-right: 20px; }
+        }
+    </style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+
+    <!-- 1. HEADER -->
+    <header>
+        <div class="header-top">
+            <div class="brand-logo">TNBfolio</div>
+            <div class="header-meta">2026.07.29 | FOMC POLICY REPORT</div>
+        </div>
+        <div class="header-content">
+            <span class="badge-macro">[MACRO] CENTRAL BANK · FOMC</span>
+            <h1 class="report-title">연준, 기준금리 3.50%~3.75% 동결… 3명 매파적 반대표 속 긴축 가능성 시사</h1>
+            <p class="report-subtitle">Kevin Warsh 의장 체제 두 번째 회의, 2% 물가 목표 완결 의지 표명 및 시장 긴축 여건 주시</p>
+        </div>
+    </header>
+
+    <!-- 2. RATE TICKER -->
+    <div class="rate-ticker">
+        <div class="ticker-item">
+            <span class="ticker-label">TARGET RATE:</span>
+            <span class="ticker-val">3.50% - 3.75% (동결)</span>
+        </div>
+        <div class="ticker-item">
+            <span class="ticker-label">VOTE TALLY:</span>
+            <span class="ticker-val">9-3 (찬성 9 / 반대 3)</span>
+        </div>
+        <div class="ticker-item">
+            <span class="ticker-label">SEP DOT PLOT MEDIAN:</span>
+            <span class="ticker-val">비정례 회의 (Dot Plot 미제공)</span>
+        </div>
+        <div class="ticker-item">
+            <span class="ticker-label">MARKET REACTION:</span>
+            <span class="ticker-val">S&amp;P500 -1.5% | 10Y Yield 4.621% (+7bp)</span>
+        </div>
+    </div>
+
+    <!-- 3. VOTE BANNER -->
+    <div class="vote-banner">
+        <div class="vote-banner-title">의결 배너 (Vote Split)</div>
+        <p>연방공개시장위원회(FOMC)는 찬성 9표, 반대 3표로 기준금리 동결을 승인했다. Beth Hammack(클리블랜드), Lorie Logan(달라스), Neel Kashkari(미네아폴리스) 총 3명의 지역연은 총재는 인플레이션 위험을 이유로 0.25%p 금리 인상(3.75%~4.00%)을 요구하며 매파적 반대표를 행사했다.</p>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="container">
+
+        <!-- 5. OVERVIEW -->
+        <div class="section-wrapper">
+            <span class="section-label">OVERVIEW</span>
+            <h2 class="section-title">종합 평가 및 핵심 요약</h2>
+            <div class="overview-box">
+                <p>연방준비제도(Fed)는 7월 FOMC 정례회의에서 연방기금금리 목표범위를 3.50%~3.75%로 유지하기로 결정했다. 이번 동결 결정은 시장의 예상에 부합했으나, 투표 결과에서는 3명의 위원이 25bp 인상을 주장하며 강력한 매파적 이견을 제출했다. 이는 2016년 이후 단일 회의에서 동일한 방향의 반대표가 3표나 나온 첫 사례로, 연준 내부에서 인플레이션 재발에 대한 경계감이 한층 고조되었음을 보여준다.</p>
+                <p>이번 회의는 non-SEP 회의로 신규 점도표나 경제전망은 발표되지 않았다. 그러나 지난 6월 점도표에서 연내 추가 인상 가능성을 열어둔 데 이어, 이번 회의의 3인 반대표 제출은 오는 9월 FOMC에서의 금리 인상 가능성을 대폭 끌어올렸다. 시장 프라이싱 역시 9월 인상 확률을 발표 전 34% 수준에서 회의 직후 57% 이상으로 상향 반영했다.</p>
+                <p>Kevin Warsh 연준 의장은 기자회견을 통해 5년 이상 지속된 2% 목표 상회 인플레이션을 단기간에 치료할 수 없음을 강조하며, 연준의 인플레이션 목표는 유연한(soft) 목표가 아닌 오직 '2% 단일 목표'만 존재한다고 선언했다. 또한 최근 시장금리 상승을 통한 금융여건 긴축 조치를 긍정적으로 평가하며, 필요시 정책 행동에 주저하지 않을 것임을 명확히 했다.</p>
+                <p>결과적으로 7월 FOMC는 기준금리를 동결했으나 3인의 매파적 반대표와 Warsh 의장의 강경한 물가 안정 의지가 결합되면서, 시장에는 사실상 9월 금리 인상 재개의 전초전으로 받아들여졌다.</p>
+            </div>
+        </div>
+
+        <!-- 6. KPI STRIP -->
+        <div class="section-wrapper">
+            <span class="section-label">KEY METRICS</span>
+            <h2 class="section-title">주요 지표 요약</h2>
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-label">기준금리 목표범위</div>
+                    <div class="kpi-value text-base">3.50-3.75</div>
+                    <div class="kpi-unit">% (동결)</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">금리 변경폭</div>
+                    <div class="kpi-value text-base">0</div>
+                    <div class="kpi-unit">bp</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">2026년말 점도표 중간값</div>
+                    <div class="kpi-value text-gold">3.88</div>
+                    <div class="kpi-unit">% (6월 SEP 기준)</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">6월 CPI 헤드라인</div>
+                    <div class="kpi-value text-bear">3.5</div>
+                    <div class="kpi-unit">% (YoY)</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">S&amp;P 500 반응</div>
+                    <div class="kpi-value text-bear">-1.50</div>
+                    <div class="kpi-unit">%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. RATE DECISION DETAIL -->
+        <div class="section-wrapper">
+            <span class="section-label">DECISION DETAIL</span>
+            <h2 class="section-title">금리 결정 세부사항</h2>
+            <div class="grid-3col">
+                <div class="card-detail red">
+                    <h4>기준금리 및 의결 구도</h4>
+                    <p>기준금리를 3.50%~3.75%로 동결했으나 9대 3의 팽팽한 의견 대립이 표출되었다. 3명의 반대 위원은 즉각적인 25bp 인상을 요구했으며, 이는 위원회 내 긴축 압력이 상당함을 입증한다.</p>
+                </div>
+                <div class="card-detail blue">
+                    <h4>성명서 문구 변화</h4>
+                    <p>성명서 길이는 약 130단어 수준의 간결한 형태를 유지했다. 경제 활동은 '견조한 속도(solid pace)'로 확장 중이며, 물가는 에너지를 포함한 특정 부문의 공급 충격을 반영하여 목표치 대비 높은 상태를 유지하고 있다고 평가했다.</p>
+                </div>
+                <div class="card-detail gold">
+                    <h4>포워드 가이던스 철회</h4>
+                    <p>Warsh 의장 취임 이후 명시적인 포워드 가이던스 문구가 제거되었다. 연준은 경직된 미래 경로 제시 대신 실시간 수집되는 경제 데이터와 시장 신호에 기초하여 회의별로 정책을 결정하는 프레임워크를 고수하고 있다.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 8. CHAIR PRESS CONFERENCE -->
+        <div class="section-wrapper">
+            <span class="section-label">CHAIR REMARKS</span>
+            <h2 class="section-title">의장 발언 상세 (Press Conference)</h2>
+
+            <div class="quote-card">
+                <div class="quote-header">
+                    <span class="quote-title">인플레이션 목표관</span>
+                    <span class="quote-tag tag-hawkish">HAWKISH</span>
+                </div>
+                <div class="quote-en">"There is no soft inflation target... There is only one target, and it is 2 percent."</div>
+                <div class="quote-kr">"유연한 인플레이션 목표는 존재하지 않는다. 오직 단 하나의 목표, 즉 2% 목표만 존재한다."</div>
+                <div class="quote-interp">지난 5년간의 목표 상회 인플레이션으로 인해 연준이 높은 물가를 용인할 것이라는 시장의 오해를 완벽히 일축했다. 2% 물가안정 목표 달성에 대한 강한 의지를 재확인했다.</div>
+            </div>
+
+            <div class="quote-card">
+                <div class="quote-header">
+                    <span class="quote-title">금융여건 및 시장 반응</span>
+                    <span class="quote-tag tag-neutral">NEUTRAL</span>
+                </div>
+                <div class="quote-en">"I was comforted that markets in the inter-meeting period weren't reacting to us... but relied on their own judgment."</div>
+                <div class="quote-kr">"회기간 동안 시장이 연준의 점도표나 연설에 반응하지 않고 스스로 판단을 내린 점에 대해 안도했다."</div>
+                <div class="quote-interp">최근 국채금리 상승으로 인한 금융여건 긴축을 시장 자율적 조정으로 수용했다. 시장의 금리 인상 프라이싱을 연준이 즉각 추인할 필요는 없지만 긍정적 변화로 평가했다.</div>
+            </div>
+
+            <div class="quote-card">
+                <div class="quote-header">
+                    <span class="quote-title">정책 결정 임하는 태도</span>
+                    <span class="quote-tag tag-data">DATA-DEPENDENT</span>
+                </div>
+                <div class="quote-en">"This is not a period of watching and waiting, but a period of watching and thinking deeply."</div>
+                <div class="quote-kr">"지금은 단순히 관망하며 기다리는 기간이 아니라, 관망하며 깊이 생각하는 기간이다."</div>
+                <div class="quote-interp">오늘의 동결 조치가 정책 관성이나 인하로의 전환이 아니며, 인플레이션의 수면 아래 역학관계를 면밀히 검토하여 향후 회의에서 결단할 것임을 시사했다.</div>
+            </div>
+
+            <div class="quote-card">
+                <div class="quote-header">
+                    <span class="quote-title">포워드 가이던스 철회 소신</span>
+                    <span class="quote-tag tag-hawkish">HAWKISH</span>
+                </div>
+                <div class="quote-en">"Providing forward guidance is prudent in times of crisis, but not in quiet times."</div>
+                <div class="quote-kr">"포워드 가이던스를 제공하는 것은 위기 상황에서는 신중한 조치이지만 평온한 시기에는 그렇지 않다."</div>
+                .
+                <div class="quote-interp">미래 정책 경로에 대한 사전 약속을 주지 않음으로써 시장의 자율적 리스크 평가를 유도하고 연준의 정책 대응 유연성을 극대화하겠다는 의도를 드러냈다.</div>
+            </div>
+        </div>
+
+        <!-- 9. KEY HEADLINES -->
+        <div class="section-wrapper">
+            <span class="section-label">NEWSWIRE HEADLINES</span>
+            <h2 class="section-title">주요 뉴스와이어 헤드라인</h2>
+            <div class="grid-2col">
+                <div class="headline-card">
+                    <div class="dot dot-red"></div>
+                    <div>Warsh, 2% 물가 목표 복귀 약속에 흔들림 없을 것임을 서약… 분열된 연준은 금리 동결 승인 했다.</div>
+                </div>
+                <div class="headline-card">
+                    <div class="dot dot-red"></div>
+                    <div>3인의 지역연은 총재(클리블랜드·달라스·미네아폴리스) 25bp 금리 인상 요구하며 반대표 행사 했다.</div>
+                </div>
+                <div class="headline-card">
+                    <div class="dot dot-red"></div>
+                    <div>30년물 미국 국채 금리 5.20% 돌파… 2007년 이후 최고치 기록 했다.</div>
+                </div>
+                <div class="headline-card">
+                    <div class="dot dot-gold"></div>
+                    <div>Warsh 의장 "유연한 인플레이션 목표는 없으며 오직 2% 목표만 존재한다" 발언 했다.</div>
+                </div>
+                <div class="headline-card">
+                    <div class="dot dot-red"></div>
+                    <div>나스닥 100 지수 1.8% 하락하며 조정장 진입… 필라델피아 반도체 지수 5.3% 급락 했다.</div>
+                </div>
+                <div class="headline-card">
+                    <div class="dot dot-gold"></div>
+                    <div>CME FedWatch: 9월 FOMC 금리 인상 확률 회의 직후 57%로 상승 했다.</div>
+                </div>
+                <div class="headline-card">
+                    <div class="dot dot-blue"></div>
+                    <div>성명서 문구 약 130단어로 간결 유지 및 경제 활동 '견조한 속도' 확장 문구 재확인 했다.</div>
+                </div>
+                <div class="headline-card">
+                    <div class="dot dot-red"></div>
+                    <div>중동 갈등 심화로 국제유가(WTI) 7% 이상 급등하며 $85/배럴 돌파 했다.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 10. MARKET REACTION -->
+        <div class="section-wrapper">
+            <span class="section-label">MARKET REACTION</span>
+            <h2 class="section-title">회의 이후 시장 반응</h2>
+            <div class="kpi-grid" style="margin-bottom: 20px;">
+                <div class="kpi-card">
+                    <div class="kpi-label">S&amp;P 500</div>
+                    <div class="kpi-value text-bear">-1.50%</div>
+                    <div class="kpi-unit">종가 기준</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">나스닥 종합</div>
+                    <div class="kpi-value text-bear">-1.70%</div>
+                    <div class="kpi-unit">조정장 진입</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">10년물 국채금리</div>
+                    <div class="kpi-value text-bear">4.621%</div>
+                    <div class="kpi-unit">+7 bp 상승</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">30년물 국채금리</div>
+                    <div class="kpi-value text-bear">5.20%+</div>
+                    <div class="kpi-unit">2007년래 최고</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">WTI 원유</div>
+                    <div class="kpi-value text-bear">$85.00</div>
+                    <div class="kpi-unit">+7.0% 급등</div>
+                </div>
+            </div>
+            <div class="overview-box">
+                <p>성명서 발표 직후 3인의 매파적 반대표 소식이 전해지면서 국채 시장은 즉각적인 매도세로 반응했다. 단기 정책 금리에 민감한 2년물 금리가 하락한 반면, 장기 인플레이션 프리미엄을 반영하며 10년물 및 30년물 금리가 급등하여 수익률 곡선이 가파라지는(Steepening) 양상이 나타났다.</p>
+                <p>이어진 Warsh 의장의 기자회견에서 2% 물가 목표에 대한 타협 없는 강경 태도가 확인되자 주식 시장의 낙폭이 확대되었다. 빅테크 자본지출(CAPEX) 우려와 중동발 오일 충격이 가세하며 나스닥 100 지수는 전고점 대비 11% 이상 하락해 조정장에 공식 진입했다.</p>
+            </div>
+        </div>
+
+        <!-- 11. VISUALIZATION -->
+        <div class="section-wrapper">
+            <span class="section-label">VISUALIZATION</span>
+            <h2 class="section-title">정책금리 및 시장 변동 추이</h2>
+            <div class="grid-2col">
+                <div class="chart-box">
+                    <div style="font-size: 13px; font-weight: 600; color: var(--pentagon-blue); margin-bottom: 12px;">차트 A: 연도별/회의별 기준금리 추이 (%)</div>
+                    <div class="chart-container">
+                        <canvas id="chartA" width="456" height="240" style="display: block; box-sizing: border-box; height: 240px; width: 456px;"></canvas>
+                    </div>
+                </div>
+                <div class="chart-box">
+                    <div style="font-size: 13px; font-weight: 600; color: var(--pentagon-blue); margin-bottom: 12px;">차트 B: 회의 당일 시간대별 시장 반응</div>
+                    <div class="chart-container">
+                        <canvas id="chartB" width="456" height="240" style="display: block; box-sizing: border-box; height: 240px; width: 456px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 12. ECONOMIC PROJECTIONS -->
+        <div class="section-wrapper">
+            <span class="section-label">ECONOMIC PROJECTIONS</span>
+            <h2 class="section-title">경제전망(SEP) 요약 (6월 기준)</h2>
+            <div class="table-container">
+                <table class="sep-table">
+                    <thead>
+                        <tr>
+                            <th>지표 (%)</th>
+                            <th>2026</th>
+                            <th>2027</th>
+                            <th>2028</th>
+                            <th>Longer Run</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>실질 GDP 성장률</td>
+                            <td>2.1</td>
+                            <td>2.0</td>
+                            <td>1.9</td>
+                            <td>1.8</td>
+                        </tr>
+                        <tr>
+                            <td>실업률</td>
+                            <td>4.1</td>
+                            <td>4.2</td>
+                            <td>4.2</td>
+                            <td>4.1</td>
+                        </tr>
+                        <tr>
+                            <td>PCE 인플레이션</td>
+                            <td class="highlight-gold">2.8</td>
+                            <td>2.3</td>
+                            <td>2.0</td>
+                            <td>2.0</td>
+                        </tr>
+                        <tr>
+                            <td>근원 PCE 인플레이션</td>
+                            <td class="highlight-gold">2.9</td>
+                            <td>2.4</td>
+                            <td>2.0</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>연방기금금리 (중간값)</td>
+                            <td class="highlight-gold">3.88</td>
+                            <td>3.40</td>
+                            <td>2.90</td>
+                            <td>2.80</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p style="font-size: 12px; color: var(--text-muted);">* 7월 회의는 비정례 회의로 SEP가 발표되지 않았으며, 위 표는 직전 6월 SEP 하이라이트 재구성 수치임.</p>
+        </div>
+
+        <!-- 15. MACRO & RISK ASSESSMENT -->
+        <div class="section-wrapper">
+            <span class="section-label">RISK ASSESSMENT</span>
+            <h2 class="section-title">거시경제 및 리스크 평가</h2>
+            <div class="grid-2col">
+                <div class="card-detail blue">
+                    <h4>경기 및 고용 판단</h4>
+                    <p>경제 활동은 견조한 확장을 이어가고 있다. 신규 고용 창출은 노동력 증대 속도와 궤를 같이하고 있으며 실업률은 낮은 수준에서 안정적인 흐름을 유지하고 있다.</p>
+                </div>
+                <div class="card-detail red">
+                    <h4>인플레이션 리스크</h4>
+                    <p>중동 갈등에 따른 에너지 가격 상승과 AI 자본투자에 따른 전력·장비 수요 급증이 물가 상방 압력으로 작용하고 있다. 관세 부과 우려 역시 물가 안정을 위협하는 요인이다.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 16. DISSENTING VIEWS -->
+        <div class="section-wrapper">
+            <span class="section-label">DISSENTING VIEWS</span>
+            <h2 class="section-title">반대 의견 (Dissenting Views)</h2>
+            <div class="dissent-box">
+                <div class="dissent-name">Beth Hammack (클리블랜드 연은 총재) — 매파적 반대</div>
+                <div class="dissent-desc">인플레이션이 5년 연속 목표치를 상회하고 유가 등 공급 충격이 가속화되는 상황에서 동결은 실책이 될 수 있으며, 즉각적인 25bp 금리 인상이 필요하다고 주장했다.</div>
+            </div>
+            <div class="dissent-box">
+                <div class="dissent-name">Lorie Logan (달라스 연은 총재) — 매파적 반대</div>
+                <div class="dissent-desc">금융 여건의 선제적 긴축과 물가 기대심리 고착화를 막기 위해 금리 인상 신호를 명확히 해야 한다는 점을 강조하며 25bp 인상에 표를 던졌다.</div>
+            </div>
+            <div class="dissent-box">
+                <div class="dissent-name">Neel Kashkari (미네아폴리스 연은 총재) — 매파적 반대</div>
+                <div class="dissent-desc">노동시장이 견조한 견디목 역할을 하고 있는 만큼, 물가 안정이라는 단일 과제 해결을 위해 정책 금리를 3.75%~4.00% 수준으로 상향해야 한다고 판단했다.</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-container">
+            <div class="brand-logo" style="font-size: 20px;">TNBfolio</div>
+            <div class="footer-source">
+                FOMC Statement (2026.07.29) | Chair Press Conference | Federal Reserve Board
+            </div>
+            <div style="font-family: 'JetBrains Mono', monospace; color: #a0aec0;">
+                PUBLISHED: 2026.07.30
+            </div>
+        </div>
+    </footer>
+
+    <!-- CHART.JS SCRIPT -->
+    <script>
+        // Chart A: Dot Plot / Target Rate History
+        const ctxA = document.getElementById('chartA').getContext('2d');
+        new Chart(ctxA, {
+            type: 'bar',
+            data: {
+                labels: ['2026.03', '2026.04', '2026.06', '2026.07 (금번)'],
+                datasets: [{
+                    label: '기준금리 (상단 %)',
+                    data: [4.25, 3.75, 3.75, 3.75],
+                    backgroundColor: ['#1B2A4A', '#1B2A4A', '#1B2A4A', '#9A7B2F'],
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { min: 3.0, max: 4.5, ticks: { font: { family: 'JetBrains Mono' } } },
+                    x: { ticks: { font: { family: 'JetBrains Mono' } } }
+                }
+            }
+        });
+
+        // Chart B: Market Movement Intra-day
+        const ctxB = document.getElementById('chartB').getContext('2d');
+        new Chart(ctxB, {
+            type: 'bar',
+            data: {
+                labels: ['발표 30분전', '성명서 발표', '기자회견 시작', '기자회견 종료', '장마감'],
+                datasets: [
+                    {
+                        type: 'line',
+                        label: '10년물 금리(%)',
+                        data: [4.55, 4.58, 4.60, 4.62, 4.621],
+                        borderColor: '#1A5C9E',
+                        backgroundColor: '#1A5C9E',
+                        yAxisID: 'y1',
+                        borderWidth: 2,
+                        pointRadius: 3
+                    },
+                    {
+                        type: 'bar',
+                        label: 'S&P 500 변동률(%)',
+                        data: [0.1, -0.4, -0.8, -1.2, -1.5],
+                        backgroundColor: ['#2E7D52', '#C8392B', '#C8392B', '#C8392B', '#C8392B'],
+                        yAxisID: 'y2',
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { font: { family: 'Noto Serif KR', size: 10 } } }
+                },
+                scales: {
+                    x: { ticks: { font: { family: 'Noto Serif KR', size: 10 } } },
+                    y1: {
+                        type: 'linear',
+                        position: 'left',
+                        min: 4.50,
+                        max: 4.70,
+                        ticks: { font: { family: 'JetBrains Mono', size: 10 } }
+                    },
+                    y2: {
+                        type: 'linear',
+                        position: 'right',
+                        min: -2.0,
+                        max: 0.5,
+                        grid: { drawOnChartArea: false },
+                        ticks: { font: { family: 'JetBrains Mono', size: 10 } }
+                    }
+                }
+            }
+        });
+
+        // Auto Download Script using data URI
+        
+    </script>
+
+</body></html>
