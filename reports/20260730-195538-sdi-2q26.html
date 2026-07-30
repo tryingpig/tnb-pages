@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TNBfolio 시각화 리포트 — 삼성SDI 2Q26 실적 & 컨퍼런스콜</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@400;600;700&family=Noto+Serif+KR:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pentagon-blue: #1B2A4A;
+    --gold: #9A7B2F;
+    --bear-red: #C8392B;
+    --base-blue: #1A5C9E;
+    --bull-green: #2E7D52;
+    --bg-white: #ffffff;
+    --card-bg: #f8f9fa;
+    --border-color: #e9ecef;
+    --text-dark: #212529;
+    --text-muted: #6c757d;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background-color: var(--bg-white);
+    color: var(--text-dark);
+    font-family: 'Noto Serif KR', serif;
+    line-height: 1.6;
+    padding: 40px 20px;
+  }
+
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+    background-color: var(--bg-white);
+  }
+
+  /* Masthead */
+  .masthead {
+    border-bottom: 2px solid var(--pentagon-blue);
+    padding-bottom: 24px;
+    margin-bottom: 36px;
+  }
+
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .headline {
+    font-family: 'DM Serif Display', 'Noto Serif KR', serif;
+    font-size: 2.2rem;
+    color: var(--pentagon-blue);
+    line-height: 1.25;
+    margin-bottom: 12px;
+    word-break: keep-all;
+  }
+
+  .subhead {
+    font-size: 1.05rem;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    word-break: keep-all;
+  }
+
+  .meta-info {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    display: flex;
+    gap: 16px;
+  }
+
+  /* Section Title */
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--pentagon-blue);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background-color: var(--border-color);
+  }
+
+  .section {
+    margin-bottom: 40px;
+  }
+
+  /* KPI Grid */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .kpi-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-top: 3px solid var(--pentagon-blue);
+    padding: 20px;
+    border-radius: 4px;
+  }
+
+  .kpi-title {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .kpi-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--pentagon-blue);
+    margin-bottom: 8px;
+  }
+
+  .kpi-badge-group {
+    display: flex;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+  }
+
+  .badge {
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-weight: 600;
+  }
+
+  .badge-bull {
+    background-color: #e8f5e9;
+    color: var(--bull-green);
+  }
+
+  /* Chart Section */
+  .chart-container {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 24px;
+    border-radius: 4px;
+    text-align: center;
+  }
+
+  /* Drivers Grid */
+  .drivers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+  }
+
+  .driver-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    border-radius: 4px;
+  }
+
+  .driver-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+  }
+
+  .driver-title {
+    font-weight: 700;
+    color: var(--pentagon-blue);
+  }
+
+  .driver-rev {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: var(--base-blue);
+  }
+
+  .driver-list {
+    list-style: none;
+    font-size: 0.9rem;
+  }
+
+  .driver-list li {
+    position: relative;
+    padding-left: 14px;
+    margin-bottom: 6px;
+    word-break: keep-all;
+  }
+
+  .driver-list li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: var(--gold);
+  }
+
+  /* Table */
+  .data-table-wrapper {
+    overflow-x: auto;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    text-align: left;
+  }
+
+  .data-table th, .data-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .data-table th {
+    background-color: var(--card-bg);
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--pentagon-blue);
+    font-weight: 700;
+  }
+
+  .arrow-cell {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--gold);
+    font-weight: 700;
+  }
+
+  /* Timeline */
+  .timeline {
+    position: relative;
+    padding-left: 20px;
+    border-left: 2px solid var(--pentagon-blue);
+  }
+
+  .timeline-item {
+    position: relative;
+    margin-bottom: 24px;
+  }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -26px;
+    top: 4px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--gold);
+    border: 2px solid var(--bg-white);
+  }
+
+  .timeline-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--gold);
+  }
+
+  .timeline-title {
+    font-weight: 700;
+    color: var(--pentagon-blue);
+    margin-bottom: 4px;
+  }
+
+  .timeline-desc {
+    font-size: 0.9rem;
+    color: var(--text-dark);
+    word-break: keep-all;
+  }
+
+  /* Management Quote Block */
+  .quote-card {
+    background-color: var(--card-bg);
+    border-left: 4px solid var(--gold);
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    border-radius: 0 4px 4px 0;
+  }
+
+  .speaker-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--pentagon-blue);
+    margin-bottom: 6px;
+  }
+
+  .quote-content {
+    font-size: 0.92rem;
+    color: var(--text-dark);
+    font-style: normal;
+    line-height: 1.6;
+    word-break: keep-all;
+  }
+
+  /* Footer */
+  .footer {
+    border-top: 1px solid var(--border-color);
+    padding-top: 20px;
+    margin-top: 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .branding {
+    font-weight: 700;
+    color: var(--pentagon-blue);
+  }
+</style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- 1. MASTHEAD -->
+  <header class="masthead">
+    <div class="eyebrow">TNBfolio Earnings Analysis</div>
+    <h1 class="headline">"7분기 만의 영업흑자 전환"…AI ESS·고부가 배터리가 실적 반등 견인</h1>
+    <p class="subhead">삼성SDI 2Q26 영업이익 2,038억원 달성으로 조기 턴어라운드 성공. 미국 ESS 수주 급증에 2028년 생산능력 초과 전망 및 증설 검토</p>
+    <div class="meta-info">
+      <span>DATE: 2026-07-30</span>
+      <span>REPORT ISSUE: #2026-Q2-SDI</span>
+    </div>
+  </header>
+
+  <!-- 2. KEY KPI CARDS -->
+  <section class="section">
+    <div class="section-label">01. Key Performance Indicators</div>
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-title">매출액 (Revenue)</div>
+        <div class="kpi-value">3조 7,688억</div>
+        <div class="kpi-badge-group">
+          <span class="badge badge-bull">YoY +18.5%</span>
+          <span class="badge badge-bull">QoQ +5.4%</span>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">영업이익 (Operating Profit)</div>
+        <div class="kpi-value">2,038억</div>
+        <div class="kpi-badge-group">
+          <span class="badge badge-bull">흑자전환 (7분기만)</span>
+          <span class="badge badge-bull">상반기 누적 482억</span>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">당기순이익 (Net Profit)</div>
+        <div class="kpi-value">4,716억</div>
+        <div class="kpi-badge-group">
+          <span class="badge badge-bull">YoY 흑자전환</span>
+          <span class="badge badge-bull">QoQ +740.5%</span>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">배터리 영업이익 (Battery OP)</div>
+        <div class="kpi-value">1,593억</div>
+        <div class="kpi-badge-group">
+          <span class="badge badge-bull">YoY 흑자전환</span>
+          <span class="badge badge-bull">매출 3.52조 (+18.8%)</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. TREND CHART (SVG) -->
+  <section class="section">
+    <div class="section-label">02. Quarterly Operating Profit Trend (KRW Billion)</div>
+    <div class="chart-container">
+      <svg viewBox="0 0 800 280" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <!-- Grid lines -->
+        <line x1="60" y1="40" x2="760" y2="40" stroke="#e9ecef" stroke-dasharray="4" />
+        <line x1="60" y1="95" x2="760" y2="95" stroke="#e9ecef" stroke-dasharray="4" />
+        <line x1="60" y1="150" x2="760" y2="150" stroke="#e9ecef" fill="none" stroke-width="1.5" />
+        <line x1="60" y1="205" x2="760" y2="205" stroke="#e9ecef" stroke-dasharray="4" />
+
+        <!-- Y-Axis Labels -->
+        <text x="50" y="45" font-family="JetBrains Mono" font-size="10" fill="#6c757d" text-anchor="end">3,000</text>
+        <text x="50" y="100" font-family="JetBrains Mono" font-size="10" fill="#6c757d" text-anchor="end">1,500</text>
+        <text x="50" y="154" font-family="JetBrains Mono" font-size="10" fill="#212529" font-weight="bold" text-anchor="end">0</text>
+        <text x="50" y="210" font-family="JetBrains Mono" font-size="10" fill="#6c757d" text-anchor="end">-1,500</text>
+
+        <!-- Zero Line Marker -->
+        <line x1="60" y1="150" x2="760" y2="150" stroke="#1B2A4A" stroke-width="1.5"/>
+
+        <!-- Bars for 3Q24, 1Q26, 2Q26 -->
+        <!-- 3Q24: 적자 시작 지점 (2024년 3분기 이후 7분기 적자 흐름) -->
+        <rect x="150" y="150" width="60" height="40" fill="#C8392B" rx="2"/>
+        <!-- 1Q26: 적자 지속 (상반기 누적 482억 흑자이므로 1Q26은 약 -1,556억 적자) -->
+        <rect x="370" y="150" width="60" height="57" fill="#C8392B" rx="2"/>
+        <!-- 2Q26: +2,038억 흑자 전환 -->
+        <rect x="590" y="75" width="60" height="75" fill="#2E7D52" rx="2"/>
+
+        <!-- Values on top/bottom of bars -->
+        <text x="180" y="205" font-family="JetBrains Mono" font-size="11" font-weight="bold" fill="#C8392B" text-anchor="middle">적자 진입</text>
+        <text x="400" y="222" font-family="JetBrains Mono" font-size="11" font-weight="bold" fill="#C8392B" text-anchor="middle">-1,556억(E)</text>
+        <text x="620" y="65" font-family="JetBrains Mono" font-size="11" font-weight="bold" fill="#2E7D52" text-anchor="middle">+2,038억</text>
+
+        <!-- X-Axis Labels -->
+        <text x="180" y="250" font-family="JetBrains Mono" font-size="12" font-weight="bold" fill="#212529" text-anchor="middle">3Q24</text>
+        <text x="400" y="250" font-family="JetBrains Mono" font-size="12" font-weight="bold" fill="#212529" text-anchor="middle">1Q26</text>
+        <text x="620" y="250" font-family="JetBrains Mono" font-size="12" font-weight="bold" fill="#2E7D52" text-anchor="middle">2Q26 (흑자전환)</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- 4. PERFORMANCE DRIVERS -->
+  <section class="section">
+    <div class="section-label">03. Business Unit Performance Drivers</div>
+    <div class="drivers-grid">
+      <div class="driver-card">
+        <div class="driver-header">
+          <span class="driver-title">배터리 사업부 (Battery)</span>
+          <span class="driver-rev">3조 5,190억원</span>
+        </div>
+        <ul class="driver-list">
+          <li>AI 데이터센터 확산에 따른 UPS, BBU 및 전력용 ESS 수요 급증.</li>
+          <li>미국 현지 생산 확대에 따른 AMPC 수혜 및 관세 환급 효과 반영.</li>
+          <li>유럽 시장 향 전기차 배터리 및 전동공구용 고출력 배터리 판매 확대.</li>
+          <li>메르세데스-벤츠 신규 프로젝트 수주로 독일 프리미엄 3사(BMW, 아우디, 벤츠) 전 고객사 확보.</li>
+        </ul>
+      </div>
+
+      <div class="driver-card">
+        <div class="driver-header">
+          <span class="driver-title">전자재료 사업부 (Electronic Materials)</span>
+          <span class="driver-rev">2,498억원</span>
+        </div>
+        <ul class="driver-list">
+          <li>반도체 공정용 소재의 견조한 판매 호조로 안정적 수익성 확보.</li>
+          <li>폴더블 스마트폰 신규 출시 대응 고부가 필름 소재 판매 확대.</li>
+          <li>영업이익 445억원 달성 (YoY +34.8%)으로 고수익성 유지.</li>
+          <li>반도체 신규 패키징 소재 고객 다변화 추진 중.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. EXPANSION & CAPEX TABLE -->
+  <section class="section">
+    <div class="section-label">04. Expansion & Tech Roadmap</div>
+    <div class="data-table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>구분</th>
+            <th>현재 상태 (Current Status)</th>
+            <th class="arrow-cell"></th>
+            <th>목표 및 계획 (Target & Strategy)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>미국 ESS LFP 라인</strong></td>
+            <td>양산 품질 검증 단계 (SPE 공장 라인 전환)</td>
+            <td class="arrow-cell">→</td>
+            <td>2026년 10월 셀 양산 개시 및 연내 SBB 2.0 솔루션 공급</td>
+          </tr>
+          <tr>
+            <td><strong>미국 ESS 캐파 (CAPA)</strong></td>
+            <td>2029년까지 수주물량 확보 수준</td>
+            <td class="arrow-cell">→</td>
+            <td>2028년 수요 초과 예상에 따라 추가 증설 방안 내부 검토 중</td>
+          </tr>
+          <tr>
+            <td><strong>전고체 배터리</strong></td>
+            <td>개발 협력 및 하반기 휴머노이드 샘플 공급</td>
+            <td class="arrow-cell">→</td>
+            <td>2027년 하반기 양산 목표 (휴머노이드 선적용 후 EV 확대)</td>
+          </tr>
+          <tr>
+            <td><strong>차세대 배터리 포트폴리오</strong></td>
+            <td>소듐이온 배터리 및 HEV용 원통형 수주</td>
+            <td class="arrow-cell">→</td>
+            <td>소듐이온 UPS/전력용 ESS 양산 구체화 및 LFP EV 수주 확대</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 6. TIMELINE -->
+  <section class="section">
+    <div class="section-label">05. Key Milestone Timeline</div>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-date">2026년 2분기 (달성)</div>
+        <div class="timeline-title">7분기 만의 영업흑자 전환 조기 달성</div>
+        <div class="timeline-desc">AI ESS 및 BBU/UPS 고출력 배터리 판매 호조로 당초 하반기 턴어라운드 목표를 앞당겨 상반기 누적 흑자 달성.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date">2026년 10월 ~ 연내</div>
+        <div class="timeline-title">미국 LFP 셀 양산 & 휴머노이드 전고체 샘플 공급</div>
+        <div class="timeline-desc">미국 각형 LFP 셀 양산 시작 및 SBB 2.0 공급, 휴머노이드용 전고체 배터리 샘플 공급 개시. 유럽 EV 연내 추가 수주 기대.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date">2027년 하반기</div>
+        <div class="timeline-title">전고체 배터리 세계 최초 양산</div>
+        <div class="timeline-desc">휴머노이드 로봇향 양산 역량 확보 후 전기차(EV) 등 다양한 애플리케이션으로 전고체 적용 확대.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date">2028년 ~ 2029년</div>
+        <div class="timeline-title">미국 ESS 수요 캐파 초과 대응 및 추가 증설 가동</div>
+        <div class="timeline-desc">미국 Non-PFE 요건 충족 수주 급증에 따라 2028년부터 기존 생산능력을 초과하는 수요 대응을 위한 신규 증설 라인 가동.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. MANAGEMENT QUOTES -->
+  <section class="section">
+    <div class="section-label">06. Executive Remarks (Conference Call)</div>
+
+    <div class="quote-card">
+      <div class="speaker-tag">조용휘 부사장 (삼성SDI ESS비즈니스팀장) — 미국 ESS LFP 양산 및 Non-PFE 공급망</div>
+      <div class="quote-content">
+        "미국 내 에너지저장장치(ESS)용 각형 리튬인산철(LFP) 라인은 양산 품질 검증 단계에 있으며, 당초 계획대로 10월 중에 셀 양산을 시작해 연내에 SBB 2.0 솔루션 형태로 고객 공급을 개시할 예정이다. 금지외국기관(PFE) 공급망 준비는 원가 비중이 높은 LFP 소재 공급망 구축이 핵심인데 당사는 국내 및 미국 업체 중심으로 다양한 파트너십을 구축해 필요한 LFP 양극재 물량을 이미 선점했다. 다른 주요 부품들에 대해서도 파트너사들과의 현지화를 통해 비중국산(Non-PFE) 기준을 충족할 수 있는 공급망을 구축한 상태이다."
+      </div>
+    </div>
+
+    <div class="quote-card">
+      <div class="speaker-tag">조용휘 부사장 (삼성SDI ESS비즈니스팀장) — ESS 수주 및 추가 캐파 검토</div>
+      <div class="quote-content">
+        "최근 미국 시장에서는 비중국산(Non-PFE) 공급망 요건을 만족하면서도 안전성이 뛰어난 리튬인산철(LFP) 제품에 대한 선호도가 높은 상황이어서 당사 수주도 활발하게 진행되고 있다. 현재까지 확보된 수주 규모는 2029년까지의 캐파를 상당 부분 커버하는 수준이며 하반기 중 수주 가능성이 높은 프로젝트들까지 반영할 경우에는 2028년부터 생산 능력을 초과할 전망이다. 현재 추가 캐파 확보 방안을 내부 검토하고 있으며, 구체화하는 시점에 시장과 소통할 계획이다."
+      </div>
+    </div>
+
+    <div class="quote-card">
+      <div class="speaker-tag">조용휘 부사장 (삼성SDI ESS비즈니스팀장) — AI 데이터센터 증설 영향</div>
+      <div class="quote-content">
+        "미국 전력 시장을 보면 미국 내 ESS의 중요성이 점차 더욱 커지고 있어서 인공지능(AI) 데이터센터 투자 둔화가 당사 ESS 사업에 미치는 영향은 제한적일 것이다. 비중국산 공급망 기준을 충족하면서도 안전성이 뛰어난 각형 LFP 제품을 더욱 선호하고 있어 앞으로도 제품 기술력 강화, 공급 역량 확대를 통해 시장 수요에 잘 대응해서 성장성을 지속 확보해 나가겠다. 증설 속도가 둔화하더라도 미국 ESS 시장의 구조적 성장세는 유효하다고 판단한다."
+      </div>
+    </div>
+
+    <div class="quote-card">
+      <div class="speaker-tag">조한재 부사장 (삼성SDI 전략마케팅실장) — 유럽 EV 시장 및 수주 전망</div>
+      <div class="quote-content">
+        "유럽 주요국의 전기차 보조금 재개와 고유가 지속, 완성차 업체들의 신규 플랫폼 출시 등에 힘입어 전기차 판매가 빠르게 늘고 있다. 헝가리 생산 거점을 기반으로 이미 주요 부품 소재 공급망을 구축한 점이 강점으로 작용하고 있어 현재 다수의 유럽 완성차업체들과 신규 프로젝트 협의를 진행하고 있다. 추가 수주 성과를 기대해도 좋다."
+      </div>
+    </div>
+
+    <div class="quote-card">
+      <div class="speaker-tag">조한재 부사장 (삼성SDI 전략마케팅실장) — 전고체 배터리 및 휴머노이드</div>
+      <div class="quote-content">
+        "이미 다수의 고객사에 고출력 원형 배터리를 공급하고 있으며 최근 글로벌 주요 업체들의 양산 계획 확대에 따라 원형 및 전고체 배터리 기술을 바탕으로 여러 프로젝트를 협의 중이다. 전기차 분야에서 현재 여러 고객들과 셀 대형화 등 개발 협력을 진행 중인데 내년에 휴머노이드용으로 먼저 양산 역량을 확보한 후 이를 기반으로 전기차를 비롯한 다양한 애플리케이션으로 사업을 확대할 것이다."
+      </div>
+    </div>
+
+    <div class="quote-card">
+      <div class="speaker-tag">삼성전기 / 삼성SDI 공식 총평</div>
+      <div class="quote-content">
+        "당초 하반기 턴어라운드를 예상했지만 매출 성장과 수익성 개선이 예상보다 빠르게 진행되면서 흑자 전환 시점이 앞당겨졌다. 지속 가능한 외형 성장과 안정적인 수익성 확보를 동시에 추진해 나가겠다."
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. FOOTER -->
+  <footer class="footer">
+    <div class="branding">by TNBfolio</div>
+    <div>Samsung SDI 2Q26 Earnings Visual Report</div>
+  </footer>
+
+</div>
+
+</body>
+</html>
