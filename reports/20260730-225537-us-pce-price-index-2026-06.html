@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>pce_202606_report</title>
+  <!-- Google Fonts: DM Serif Display, JetBrains Mono, Noto Serif KR -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@400;600;700&family=Noto+Serif+KR:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --bg-main: #FAFAFA;
+      --bg-card: #FFFFFF;
+      --text-main: #1A1714;
+      --text-muted: #6B7280;
+      --color-red: #EF4444;
+      --color-green: #10B981;
+      --color-neutral: #6B7280;
+      --border-color: #E5E7EB;
+      --header-dark: #1A1714;
+      --bg-table-even: #F8F7F5;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: 'Noto Serif KR', serif;
+      line-height: 1.6;
+      padding: 30px 20px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    /* Font Utility Classes */
+    .font-serif { font-family: 'Noto Serif KR', serif; }
+    .font-en-serif { font-family: 'DM Serif Display', serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+    /* Card Base */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    .section-title {
+      font-family: 'Noto Serif KR', serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--header-dark);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* ① 헤더 커버 */
+    .header-cover {
+      background: var(--header-dark);
+      color: #FFFFFF;
+      padding: 32px;
+      border-radius: 8px;
+      position: relative;
+    }
+    .brand-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: #F3F4F6;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .header-title {
+      font-family: 'Noto Serif KR', serif;
+      font-size: 2.1rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      line-height: 1.25;
+    }
+    .header-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.88rem;
+      color: #D1D5DB;
+    }
+    .badge-analysis {
+      background: rgba(255, 255, 255, 0.15);
+      color: #FFFFFF;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    /* ② 서프라이즈 배너 */
+    .surprise-container {
+      border-top: 6px solid var(--color-green);
+      padding: 24px;
+      background: var(--bg-card);
+      border-radius: 8px;
+      border-left: 1px solid var(--border-color);
+      border-right: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+    }
+    .surprise-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      text-align: center;
+    }
+    .surprise-item {
+      padding: 12px;
+      background: #F9FAFB;
+      border-radius: 6px;
+    }
+    .surprise-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .surprise-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+    .surprise-direction {
+      color: var(--color-green);
+    }
+
+    /* ③ KPI 카드 */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+    }
+    .kpi-title {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .kpi-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .kpi-change {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    /* 차트 박스 */
+    .chart-container {
+      position: relative;
+      height: 360px;
+      width: 100%;
+    }
+
+    /* ⑥ 테이블 스타일 */
+    .table-wrapper {
+      overflow-x: auto;
+      max-height: 480px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+    thead {
+      position: sticky;
+      top: 0;
+      background-color: var(--header-dark);
+      color: #FFFFFF;
+      z-index: 10;
+    }
+    thead th {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      padding: 12px 14px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      border-bottom: 1px solid #374151;
+    }
+    tbody tr:nth-child(even) {
+      background-color: var(--bg-table-even);
+    }
+    tbody tr:hover {
+      background-color: #F3F4F6;
+    }
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .td-number {
+      font-family: 'JetBrains Mono', monospace;
+      text-align: right;
+    }
+    .cell-pos {
+      background-color: rgba(239, 68, 68, 0.08);
+      color: #DC2626;
+      font-weight: 600;
+    }
+    .cell-neg {
+      background-color: rgba(16, 185, 129, 0.08);
+      color: #059669;
+      font-weight: 600;
+    }
+
+    /* ⑦ 시장 영향 분석 카드 */
+    .impact-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    .impact-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-left: 4px solid var(--header-dark);
+      border-radius: 6px;
+      padding: 20px;
+    }
+    .impact-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .impact-title {
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+    .impact-stat {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .impact-body {
+      font-size: 0.9rem;
+      color: #374151;
+      line-height: 1.55;
+    }
+
+    /* ⑧ CME FedWatch */
+    .fedwatch-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    .fedwatch-box {
+      background: #F9FAFB;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 20px;
+    }
+    .fedwatch-box-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      text-align: center;
+    }
+    .prob-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+    }
+    .prob-bar-bg {
+      background: #E5E7EB;
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .prob-bar-fill {
+      background: var(--header-dark);
+      height: 100%;
+    }
+
+    /* ⑨ 시장 반응 요약 */
+    .market-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    .market-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 16px;
+      text-align: center;
+    }
+    .market-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .market-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .market-change {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+    }
+
+    /* ⑩ 결론 및 전망 */
+    .conclusion-list {
+      list-style-type: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .conclusion-item {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      font-size: 0.95rem;
+    }
+    .conclusion-num {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--header-dark);
+      color: #FFFFFF;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .sub-box-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .sub-box {
+      background: #F9FAFB;
+      border: 1px solid var(--border-color);
+      padding: 16px;
+      border-radius: 6px;
+    }
+    .sub-box-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+      color: var(--header-dark);
+    }
+
+    /* ⑪ 푸터 */
+    footer {
+      border-top: 1px solid var(--border-color);
+      padding-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    @media (max-width: 768px) {
+      .surprise-grid, .impact-grid, .fedwatch-grid, .market-grid, .sub-box-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <script>
+    
+  </script>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ① 헤더 커버 -->
+  <header class="header-cover">
+    <div class="brand-tag">TNBfolio Macro Intelligence Report</div>
+    <h1 class="header-title">2026년 6월 미국 개인 소득 및 지출 (PCE 물가지수) 심층 리포트</h1>
+    <div class="header-meta">
+      <span>발표일: 2026년 7월 30일 (미국 BEA)</span>
+      <span class="badge-analysis">채널 자체 분석</span>
+    </div>
+  </header>
+
+  <!-- ② 서프라이즈 배너 -->
+  <section class="surprise-container">
+    <div class="surprise-grid">
+      <div class="surprise-item">
+        <div class="surprise-label">헤드라인 PCE MoM 발표치</div>
+        <div class="surprise-value font-mono">-0.1%</div>
+      </div>
+      <div class="surprise-item">
+        <div class="surprise-label">시장 전망치 (Consensus)</div>
+        <div class="surprise-value font-mono">-0.1%</div>
+      </div>
+      <div class="surprise-item">
+        <div class="surprise-label">서프라이즈 방향</div>
+        <div class="surprise-value surprise-direction font-mono">0.0%p (부합 및 완화)</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ③ 핵심 지표 KPI 카드 -->
+  <section class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-title">헤드라인 PCE YoY</div>
+      <div class="kpi-value">3.7%</div>
+      <div class="kpi-change" style="color: var(--color-green);">
+        ▼ 전월 4.1% 대비 0.4%p 둔화
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-title">근원(Core) PCE YoY</div>
+      <div class="kpi-value">3.3%</div>
+      <div class="kpi-change" style="color: var(--color-green);">
+        ▼ 전월 3.4% 대비 0.1%p 둔화
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-title">헤드라인 PCE MoM</div>
+      <div class="kpi-value">-0.1%</div>
+      <div class="kpi-change" style="color: var(--color-green);">
+        ▼ 전월 0.5% 대비 마이너스 전환
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-title">근원(Core) PCE MoM</div>
+      <div class="kpi-value">0.1%</div>
+      <div class="kpi-change" style="color: var(--color-green);">
+        ▼ 전월 0.3% 대비 0.2%p 둔화
+      </div>
+    </div>
+  </section>
+
+  <!-- ④ 트렌드 차트 (Chart.js) -->
+  <section class="card">
+    <div class="section-title">
+      <span>18개월 PCE 물가지수 YoY 추이 (2025.01 ~ 2026.06)</span>
+      <span class="font-mono" style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);">단위: %</span>
+    </div>
+    <div class="chart-container">
+      <canvas id="trendChart"></canvas>
+    </div>
+  </section>
+
+  <!-- ⑤ 항목별 상세 수치 차트 -->
+  <section class="card">
+    <div class="section-title">
+      <span>주요 세부 항목별 6월 MoM 물가 변화율</span>
+      <span class="font-mono" style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);">인플레 완화(초록) / 심화(빨강)</span>
+    </div>
+    <div class="chart-container" style="height: 380px;">
+      <canvas id="itemChart"></canvas>
+    </div>
+  </section>
+
+  <!-- ⑥ 전체 항목 데이터 테이블 -->
+  <section class="card">
+    <div class="section-title">개인 소비 지출 및 물가지수 세부 데이터</div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>항목명 (Item)</th>
+            <th class="td-number">금월 MoM (2026.06)</th>
+            <th class="td-number">전월 MoM (2026.05)</th>
+            <th class="td-number">금월 YoY (2026.06)</th>
+            <th class="td-number">전월 YoY (2026.05)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>PCE 가격 지수 (헤드라인)</strong></td>
+            <td class="td-number cell-neg">-0.1%</td>
+            <td class="td-number cell-pos">0.5%</td>
+            <td class="td-number">3.7%</td>
+            <td class="td-number">4.1%</td>
+          </tr>
+          <tr>
+            <td><strong>근원 PCE 가격 지수 (식품·에너지 제외)</strong></td>
+            <td class="td-number cell-pos">0.1%</td>
+            <td class="td-number cell-pos">0.3%</td>
+            <td class="td-number">3.3%</td>
+            <td class="td-number">3.4%</td>
+          </tr>
+          <tr>
+            <td>상품 총계 (Goods)</td>
+            <td class="td-number cell-neg">-0.6%</td>
+            <td class="td-number cell-pos">0.4%</td>
+            <td class="td-number">3.7%</td>
+            <td class="td-number">4.8%</td>
+          </tr>
+          <tr>
+            <td>내구재 (Durable Goods)</td>
+            <td class="td-number">0.0%</td>
+            <td class="td-number">0.0%</td>
+            <td class="td-number">2.9%</td>
+            <td class="td-number">3.4%</td>
+          </tr>
+          <tr>
+            <td>비내구재 (Nondurable Goods)</td>
+            <td class="td-number cell-neg">-1.0%</td>
+            <td class="td-number cell-pos">0.7%</td>
+            <td class="td-number">4.1%</td>
+            <td class="td-number">5.5%</td>
+          </tr>
+          <tr>
+            <td>휘발유 및 기타 에너지 상품</td>
+            <td class="td-number cell-neg">-9.2%</td>
+            <td class="td-number cell-pos">6.5%</td>
+            <td class="td-number">15.8%</td>
+            <td class="td-number">24.3%</td>
+          </tr>
+          <tr>
+            <td>가정용 식품 및 음료</td>
+            <td class="td-number cell-pos">0.3%</td>
+            <td class="td-number cell-pos">0.1%</td>
+            <td class="td-number">0.6%</td>
+            <td class="td-number">0.9%</td>
+          </tr>
+          <tr>
+            <td>서비스 총계 (Services)</td>
+            <td class="td-number cell-pos">0.1%</td>
+            <td class="td-number cell-pos">0.5%</td>
+            <td class="td-number">3.7%</td>
+            <td class="td-number">3.8%</td>
+          </tr>
+          <tr>
+            <td>주거 (Housing)</td>
+            <td class="td-number cell-pos">0.2%</td>
+            <td class="td-number cell-pos">0.3%</td>
+            <td class="td-number">3.2%</td>
+            <td class="td-number">3.2%</td>
+          </tr>
+          <tr>
+            <td>의료 서비스 (Medical Care)</td>
+            <td class="td-number cell-pos">0.3%</td>
+            <td class="td-number cell-pos">0.3%</td>
+            <td class="td-number">2.6%</td>
+            <td class="td-number">2.6%</td>
+          </tr>
+          <tr>
+            <td>운송 서비스 (Transportation)</td>
+            <td class="td-number cell-pos">0.6%</td>
+            <td class="td-number cell-pos">0.9%</td>
+            <td class="td-number">2.4%</td>
+            <td class="td-number">1.8%</td>
+          </tr>
+          <tr>
+            <td>금융 서비스 및 보험</td>
+            <td class="td-number cell-pos">0.2%</td>
+            <td class="td-number cell-pos">1.3%</td>
+            <td class="td-number">3.0%</td>
+            <td class="td-number">3.0%</td>
+          </tr>
+          <tr>
+            <td><strong>개인 소득 (Personal Income)</strong></td>
+            <td class="td-number cell-pos">0.2%</td>
+            <td class="td-number cell-pos">0.7%</td>
+            <td class="td-number">-</td>
+            <td class="td-number">-</td>
+          </tr>
+          <tr>
+            <td><strong>실질 가처분 소득 (Real DPI)</strong></td>
+            <td class="td-number cell-pos">0.3%</td>
+            <td class="td-number cell-pos">0.2%</td>
+            <td class="td-number">-</td>
+            <td class="td-number">-</td>
+          </tr>
+          <tr>
+            <td><strong>실질 개인 소비 지출 (Real PCE)</strong></td>
+            <td class="td-number cell-pos">0.4%</td>
+            <td class="td-number cell-pos">0.4%</td>
+            <td class="td-number">2.5%</td>
+            <td class="td-number">2.4%</td>
+          </tr>
+          <tr>
+            <td>개인 저축률 (Saving Rate)</td>
+            <td class="td-number">2.7%</td>
+            <td class="td-number">2.8%</td>
+            <td class="td-number">-</td>
+            <td class="td-number">-</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ⑦ 시장 영향 분석 카드 4개 -->
+  <section class="card">
+    <div class="section-title">구조적 세부 영역 분석</div>
+    <div class="impact-grid">
+      <div class="impact-card">
+        <div class="impact-header">
+          <span class="impact-title">1. 에너지 동향</span>
+          <span class="impact-stat" style="background: rgba(16, 185, 129, 0.15); color: #059669;">-9.2% (MoM)</span>
+        </div>
+        <div class="impact-body">
+          휘발유 및 기타 에너지 상품 가격이 전월 대비 9.2% 하락했다. 이는 헤드라인 PCE 지수를 마이너스(-0.1%)로 견인한 핵심 요인으로 작용했다.
+        </div>
+      </div>
+      <div class="impact-card">
+        <div class="impact-header">
+          <span class="impact-title">2. 쉘터·주거비</span>
+          <span class="impact-stat" style="background: rgba(16, 185, 129, 0.15); color: #059669;">0.2% (MoM)</span>
+        </div>
+        <div class="impact-body">
+          주거비 상승률이 전월 0.3%에서 0.2%로 둔화되었다. 전년 동월 대비로도 3.2% 상승률을 기록하며 안정세를 이어갔다.
+        </div>
+      </div>
+      <div class="impact-card">
+        <div class="impact-header">
+          <span class="impact-title">3. 코어 지속성</span>
+          <span class="impact-stat" style="background: rgba(16, 185, 129, 0.15); color: #059669;">0.1% (MoM)</span>
+        </div>
+        <div class="impact-body">
+          식품과 에너지를 제외한 근원 PCE 가격지수는 전월 대비 0.1% 상승하는 데 그쳤다. 전월 0.3% 대비 상승폭이 감소하여 근원 물가 하락세를 나타냈다.
+        </div>
+      </div>
+      <div class="impact-card">
+        <div class="impact-header">
+          <span class="impact-title">4. 실질임금 및 구매력</span>
+          <span class="impact-stat" style="background: rgba(239, 68, 68, 0.15); color: #DC2626;">+0.3% (Real DPI)</span>
+        </div>
+        <div class="impact-body">
+          물가 안정에 힘입어 실질 가처분 개인 소득(Real DPI)이 전월 대비 0.3% 증가했다. 실질 개인 소비 지출(Real PCE) 또한 0.4% 증가하며 가계 구매력을 유지했다.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑧ CME FedWatch 변화 시각화 -->
+  <section class="card">
+    <div class="section-title">CME FedWatch 금리 전망 변화 (차기 FOMC)</div>
+    <div class="fedwatch-grid">
+      <div class="fedwatch-box">
+        <div class="fedwatch-box-title">지표 발표 전 (Before)</div>
+        <div class="prob-item">
+          <span>금리 동결 (Hold)</span>
+          <span>62.5%</span>
+        </div>
+        <div class="prob-bar-bg"><div class="prob-bar-fill" style="width: 62.5%;"></div></div>
+        <div class="prob-item" style="margin-top: 12px;">
+          <span>25bp 인하 (Cut)</span>
+          <span>37.5%</span>
+        </div>
+        <div class="prob-bar-bg"><div class="prob-bar-fill" style="width: 37.5%;"></div></div>
+      </div>
+      <div class="fedwatch-box">
+        <div class="fedwatch-box-title">지표 발표 후 (After)</div>
+        <div class="prob-item">
+          <span>금리 동결 (Hold)</span>
+          <span>28.0% (▼ 34.5%p)</span>
+        </div>
+        <div class="prob-bar-bg"><div class="prob-bar-fill" style="width: 28.0%;"></div></div>
+        <div class="prob-item" style="margin-top: 12px;">
+          <span>25bp 인하 (Cut)</span>
+          <span style="color: var(--color-green); font-weight: bold;">72.0% (▲ 34.5%p)</span>
+        </div>
+        <div class="prob-bar-bg"><div class="prob-bar-fill" style="width: 72.0%; background: var(--color-green);"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑨ 시장 반응 요약 -->
+  <section class="card">
+    <div class="section-title">지표 발표 직후 금융시장 반응</div>
+    <div class="market-grid">
+      <div class="market-card">
+        <div class="market-label">주식 (S&P 500)</div>
+        <div class="market-val">5,482.10</div>
+        <div class="market-change" style="color: var(--color-green);">▲ 0.85% (상승)</div>
+      </div>
+      <div class="market-card">
+        <div class="market-label">미 국채 2년물 금리</div>
+        <div class="market-val">4.38%</div>
+        <div class="market-change" style="color: var(--color-green);">▼ 7.2bp (하락)</div>
+      </div>
+      <div class="market-card">
+        <div class="market-label">달러 인덱스 (DXY)</div>
+        <div class="market-val">103.85</div>
+        <div class="market-change" style="color: var(--color-green);">▼ 0.42% (약세)</div>
+      </div>
+      <div class="market-card">
+        <div class="market-label">달러/원 환율</div>
+        <div class="market-val">1,372.50</div>
+        <div class="market-change" style="color: var(--color-green);">▼ 6.80원 (하락)</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑩ 결론 및 전망 -->
+  <section class="card">
+    <div class="section-title">결론 및 향후 전망</div>
+    <ul class="conclusion-list">
+      <li class="conclusion-item">
+        <span class="conclusion-num">1</span>
+        <div><strong>디스인플레이션 흐름 재개:</strong> 6월 헤드라인 PCE MoM(-0.1%)이 마이너스로 전환하고 근원 PCE MoM(0.1%) 역시 둔화하면서 물가 상방 압력이 완화되었다.</div>
+      </li>
+      <li class="conclusion-item">
+        <span class="conclusion-num">2</span>
+        <div><strong>실질 소비 동력 유지:</strong> 실질 개인 소비 지출(Real PCE)이 전월 대비 0.4% 증가를 기록하여 물가 안정 속에서도 소비 지출이 견조하게 유지되었다.</div>
+      </li>
+      <li class="conclusion-item">
+        <span class="conclusion-num">3</span>
+        <div><strong>실질 가처분 소득 증가:</strong> 실질 가처분 개인 소득(Real DPI)이 0.3% 증가하여 물가 상승률을 상회하는 소득 흐름을 형성했다.</div>
+      </li>
+    </ul>
+
+    <div class="sub-box-grid">
+      <div class="sub-box">
+        <div class="sub-box-title">다음 FOMC 결정에 미치는 영향</div>
+        <p style="font-size: 0.9rem; color: #374151;">
+          근원 PCE 물가지수의 전월 대비 0.1% 상승은 연준의 물가 목표치 수렴 가능성을 높였다. 이에 따라 시장 내 통화정책 완화 기대를 강화했다.
+        </p>
+      </div>
+      <div class="sub-box">
+        <div class="sub-box-title">다음 주목 지표</div>
+        <p style="font-size: 0.9rem; color: #374151;">
+          다음 발표 지표는 2026년 8월 26일 오전 8시 30분(EDT)에 발표되는 2026년 7월 개인 소득 및 지출 데이터다.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑪ 푸터 -->
+  <footer>
+    <div>TNBfolio Macro Intelligence</div>
+    <div>Report Generated: 2026.07.30</div>
+    <div>본 리포트는 정보 제공을 목적으로 작성되었으며 투자 권유를 구성하지 않는다.</div>
+  </footer>
+
+</div>
+
+<script>
+  // Trend Chart (18 Months YoY)
+  const ctxTrend = document.getElementById('trendChart').getContext('2d');
+  
+  const labelsTrend = [
+    '2025.01', '2025.02', '2025.03', '2025.04', '2025.05', '2025.06',
+    '2025.07', '2025.08', '2025.09', '2025.10', '2025.11', '2025.12',
+    '2026.01', '2026.02', '2026.03', '2026.04', '2026.05', '2026.06'
+  ];
+
+  const headlineData = [2.6, 2.7, 2.4, 2.3, 2.5, 2.6, 2.6, 2.7, 2.8, 2.7, 2.8, 2.9, 2.9, 2.9, 3.5, 3.8, 4.1, 3.7];
+  const coreData = [2.8, 3.0, 2.7, 2.6, 2.8, 2.8, 2.9, 2.9, 2.8, 2.8, 2.8, 3.0, 3.1, 3.0, 3.3, 3.3, 3.4, 3.3];
+
+  const pointRadiusHeadline = headlineData.map((v, i) => i === headlineData.length - 1 ? 8 : 3);
+  const pointRadiusCore = coreData.map((v, i) => i === coreData.length - 1 ? 8 : 3);
+
+  new Chart(ctxTrend, {
+    type: 'line',
+    data: {
+      labels: labelsTrend,
+      datasets: [
+        {
+          label: '헤드라인 PCE YoY (%)',
+          data: headlineData,
+          borderColor: '#EF4444',
+          backgroundColor: '#EF4444',
+          borderWidth: 2,
+          pointRadius: pointRadiusHeadline,
+          pointHoverRadius: 9,
+          tension: 0.2
+        },
+        {
+          label: '근원(Core) PCE YoY (%)',
+          data: coreData,
+          borderColor: '#1A1714',
+          backgroundColor: '#1A1714',
+          borderWidth: 2,
+          pointRadius: pointRadiusCore,
+          pointHoverRadius: 9,
+          tension: 0.2
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: { font: { family: 'Noto Serif KR', size: 12 } }
+        }
+      },
+      scales: {
+        y: {
+          min: 1.5,
+          max: 4.5,
+          grid: { color: '#E5E7EB' },
+          ticks: { font: { family: 'JetBrains Mono' } }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { font: { family: 'JetBrains Mono', size: 10 } }
+        }
+      }
+    }
+  });
+
+  // Item Chart (Horizontal Bar for MoM)
+  const ctxItem = document.getElementById('itemChart').getContext('2d');
+  
+  const itemLabels = [
+    '에너지 상품(휘발유 등)',
+    '기타 내구재',
+    '비내구재 총계',
+    '상품 총계',
+    '의류 및 신발',
+    '오락 서비스',
+    '외식 및 숙박',
+    '내구재 총계',
+    '서비스 총계',
+    '주거 (Housing)',
+    '금융 및 보험',
+    '의료 서비스',
+    '가정용 식품',
+    '운송 서비스'
+  ];
+
+  const itemValues = [-9.2, -2.3, -1.0, -0.6, -0.2, -0.1, -0.1, 0.0, 0.1, 0.2, 0.2, 0.3, 0.3, 0.6];
+  const itemColors = itemValues.map(v => v > 0 ? '#EF4444' : (v < 0 ? '#10B981' : '#6B7280'));
+
+  new Chart(ctxItem, {
+    type: 'bar',
+    data: {
+      labels: itemLabels,
+      datasets: [{
+        label: '6월 MoM 변화율 (%)',
+        data: itemValues,
+        backgroundColor: itemColors,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) { return context.raw + '%'; }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: '#E5E7EB' },
+          ticks: { font: { family: 'JetBrains Mono' } }
+        },
+        y: {
+          grid: { display: false },
+          ticks: { font: { family: 'Noto Serif KR', size: 11 } }
+        }
+      }
+    }
+  });
+</script>
+
+</body>
+</html>
