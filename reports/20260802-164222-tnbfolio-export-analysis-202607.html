@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<title>TNBfolio 수출데이터 분석 | 2026년 7월</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green:#0e9f6e; --green-bg:#e6f7f1;
+  --blue:#2563eb; --blue-bg:#eaf1ff;
+  --yellow:#d69e00; --yellow-bg:#fdf6e3;
+  --orange:#e8622c; --orange-bg:#fdeee6;
+  --red:#dc2626; --red-bg:#fdecec;
+  --ink:#1a1d23; --sub:#6b7280; --line:#e5e7eb; --bg:#ffffff;
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font-family:'Noto Sans KR',sans-serif; }
+.wrap { max-width:1200px; margin:0 auto; padding:24px 20px 60px; }
+header.top { padding:28px 0 18px; border-bottom:3px solid var(--ink); }
+header.top h1 { margin:0 0 6px; font-size:26px; font-weight:900; }
+header.top .date { color:var(--sub); font-size:14px; }
+.badges { display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+.badge { padding:6px 14px; border-radius:20px; font-weight:700; font-size:13px; }
+.badge.sb { background:var(--green-bg); color:var(--green); }
+.badge.buy { background:var(--blue-bg); color:var(--blue); }
+.badge.hold { background:var(--yellow-bg); color:var(--yellow); }
+.badge.reduce { background:var(--orange-bg); color:var(--orange); }
+.badge.sell { background:var(--red-bg); color:var(--red); }
+.correction-box { background:#fff8e1; border:1.5px solid #f0c25e; border-radius:10px; padding:14px 18px; margin:20px 0; font-size:13.5px; line-height:1.8; color:#5c4400; }
+.correction-box b { color:#8a6400; }
+.methodbar { background:#f7f8fa; border:1px solid var(--line); border-radius:10px; padding:14px 18px; margin:20px 0; font-size:13.5px; color:#374151; line-height:1.7; }
+.ov-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin:24px 0; }
+.ov-card { border:1px solid var(--line); border-radius:12px; padding:16px; text-align:center; }
+.ov-card .n { font-size:30px; font-weight:900; }
+.ov-card .l { font-size:12.5px; color:var(--sub); margin-top:4px; }
+.ov-card.sb .n { color:var(--green); }
+.ov-card.buy .n { color:var(--blue); }
+.ov-card.hold .n { color:var(--yellow); }
+.ov-card.reduce .n { color:var(--orange); }
+.ov-card.sell .n { color:var(--red); }
+.insight-box { border-radius:12px; padding:20px 22px; margin:26px 0; background:linear-gradient(135deg,#f7f8fa,#fff); border:1px solid var(--line); }
+.insight-box h2 { margin:0 0 12px; font-size:17px; }
+.insight-box ul { margin:0; padding-left:20px; line-height:1.9; font-size:14.5px; }
+.insight-box li.g { color:var(--green); font-weight:600; }
+.insight-box li.y { color:#8a6d00; font-weight:600; }
+.insight-box li.r { color:var(--red); font-weight:600; }
+section { margin:34px 0; }
+section h2 { font-size:19px; border-left:5px solid var(--ink); padding-left:10px; margin-bottom:16px; }
+section.sb h2 { border-color:var(--green); }
+section.buy h2 { border-color:var(--blue); }
+section.hold h2 { border-color:var(--yellow); }
+section.reduce h2 { border-color:var(--orange); }
+.grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.card { border:1px solid var(--line); border-radius:10px; overflow:hidden; display:flex; }
+.card-bar { width:5px; background:var(--blue); }
+section.sb .card-bar { background:var(--green); }
+section.reduce .card-bar { background:var(--orange); }
+.card-body { padding:12px 14px; flex:1; }
+.card-title { font-weight:700; font-size:14.5px; margin-bottom:2px; }
+.card-items { font-size:11.5px; color:var(--sub); margin-bottom:8px; }
+.flag { font-size:10px; background:var(--yellow-bg); color:var(--yellow); padding:2px 6px; border-radius:6px; margin-left:4px; }
+.mini-table { width:100%; border-collapse:collapse; font-size:12.5px; }
+.mini-table td { padding:3px 0; }
+.mini-table td:first-child { color:var(--sub); }
+.mini-table td:last-child { text-align:right; font-family:'JetBrains Mono',monospace; }
+.pos { color:var(--green); }
+.neg { color:var(--red); }
+table.full { width:100%; border-collapse:collapse; font-size:13px; }
+table.full th { text-align:left; border-bottom:2px solid var(--ink); padding:8px 6px; font-size:12px; color:var(--sub); }
+table.full td { padding:7px 6px; border-bottom:1px solid var(--line); }
+.ratebadge { font-size:11px; padding:2px 8px; border-radius:10px; font-weight:700; }
+.ratebadge.sb { background:var(--green-bg); color:var(--green); }
+.ratebadge.buy { background:var(--blue-bg); color:var(--blue); }
+.ratebadge.hold { background:var(--yellow-bg); color:var(--yellow); }
+.ratebadge.reduce { background:var(--orange-bg); color:var(--orange); }
+.ratebadge.sell { background:var(--red-bg); color:var(--red); }
+.surprise-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.surprise-box { border-radius:10px; padding:16px 18px; font-size:13.5px; line-height:1.8; }
+.surprise-box.warn { background:var(--red-bg); border:1px solid #f5c6c6; }
+.surprise-box.up { background:var(--green-bg); border:1px solid #b7e4d3; }
+footer { margin-top:40px; padding-top:20px; border-top:1px solid var(--line); font-size:12px; color:var(--sub); line-height:1.8; }
+</style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <h1>📊 TNBfolio 수출데이터 분석 대시보드</h1>
+  <div class="date">분석 기준: 2026년 7월 수출 데이터 (관세청 수출 통계, 7월 31일 반영분) · 발행일 2026-08-02 (1차 수정)</div>
+  <div class="badges">
+    <span class="badge sb">Strong Buy 44</span>
+    <span class="badge buy">Buy 78</span>
+    <span class="badge hold">Hold 19</span>
+    <span class="badge reduce">Reduce 15</span>
+    <span class="badge sell">Sell 1</span>
+  </div>
+</header>
+
+<div class="correction-box">
+<b>🔧 수정 안내</b> — 1차 배포본에서 누락되었던 6개 품목을 반영해 재산출했습니다.
+가장 중요한 정정은 <b>HBM(Monolithic Integrated Circuits)</b> 데이터(월 3.67조원 규모)가 최초 집계에서 빠져 있었던 부분입니다.
+HBM을 포함하자 삼성전자·SK하이닉스 반도체 메모리 합산 YoY는 <b>+301.7% → +234.4%</b>로 하향 조정되었습니다 —
+HBM 자체는 YoY <b>-8.5%</b>로 오히려 역성장 중이며, 이는 D램·SSD 등 범용 메모리의 초강세가 HBM을 웃돌고 있다는 의미로 해석됩니다.
+그 외 해저케이블 세부품목(대한전선·LS, YoY -99.2%) 반영으로 전력기기 섹터 YoY가 10.9%→4.0%로 조정되었고,
+원자로용기·증기발생기(두산에너빌리티)·Furnace/세정장비 등 소규모 품목도 추가했습니다(금액 미미, 순위 영향 없음).
+</div>
+
+<div class="methodbar">
+<b>방법론</b> · 2026년 7월 월 마감(31일) 수출 데이터를 기준으로 HS Code 단위 375개 품목 시트 중 7월 데이터가 존재하는 216개 품목을 동일 기업 단위로 합산하여 분석했습니다.
+YoY·MoM은 원화 금액 기준 전월/전년동월 대비, QoQ는 직전 3개월(5~7월) 합산액과 그 이전 3개월(2~4월) 합산액의 증감률로 계산했습니다.
+등급은 <b>YoY&gt;30%+QoQ&gt;15% → Strong Buy</b>, <b>YoY&gt;10% → Buy</b>, <b>-10%~10% → Hold</b>, <b>YoY&lt;-10% → Reduce/Sell</b> 규칙을 기본으로 하되,
+전년동월 기저가 비정상적으로 낮아 YoY가 과장된 품목은 카드에 "저기저효과 주의" 태그로 별도 표시했습니다.
+</div>
+
+<div class="ov-grid">
+  <div class="ov-card sb"><div class="n">44</div><div class="l">Strong Buy</div></div>
+  <div class="ov-card buy"><div class="n">78</div><div class="l">Buy</div></div>
+  <div class="ov-card hold"><div class="n">19</div><div class="l">Hold</div></div>
+  <div class="ov-card reduce"><div class="n">15</div><div class="l">Reduce</div></div>
+  <div class="ov-card sell"><div class="n">1</div><div class="l">Sell</div></div>
+</div>
+
+<div class="insight-box">
+<h2>📌 이번 달 핵심 인사이트 (수정본)</h2>
+<ul>
+<li class="g">반도체 메모리 슈퍼사이클 지속(수정 반영): D램 YoY +527.9%, MCP +163.8%, SSD +559.1% — 삼성전자·SK하이닉스향 합산 수출 61.8조원(HBM 포함), 3개월 QoQ +40.1%로 가속.</li>
+<li class="y">HBM만 놓고 보면 YoY -8.5%로 역성장 — 범용 D램·낸드·SSD가 HBM보다 훨씬 가파르게 성장하며 메모리 수출을 견인하고 있다는 뜻입니다.</li>
+<li class="g">철강(유정용강관) 깜짝 반등: 휴스틸·세아제강 유정용강관(EPWP110) YoY +378%, 니켈도금강판(TCC스틸) +98%.</li>
+<li class="g">K-뷰티 미용시술 라인 견조: 휴젤·파마리서치(필러·보톡스), 메디톡스, 에이피알 모두 YoY 88~92%대 동반 상승.</li>
+<li class="r">전력기기(수정 반영): 해저케이블 세부품목 반영 후 섹터 YoY가 10.9%→4.0%로 낮아졌고, 산업용 로봇은 여전히 3개월 연속 역성장.</li>
+</ul>
+</div>
+
+<section class="sb">
+<h2>⭐⭐ Strong Buy — 44개 기업</h2>
+<div class="grid3"><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">후성(093370) <span class="flag">저기저효과 주의</span></div>
+    <div class="card-items">LIPF6</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>104억</td></tr>
+      <tr><td>YoY</td><td class="pos">+5604.7%</td></tr>
+      <tr><td>MoM</td><td class="pos">+16.8%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+33.1%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">인텍플러스(064290) </div>
+    <div class="card-items">반도체외관검사장비</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>947억</td></tr>
+      <tr><td>YoY</td><td class="pos">+1241.4%</td></tr>
+      <tr><td>MoM</td><td class="pos">+435.1%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+200.2%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">KCC(002380) </div>
+    <div class="card-items">진공차단기용세라믹, 선박용에폭시방청도료</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>1,530억</td></tr>
+      <tr><td>YoY</td><td class="pos">+351.8%</td></tr>
+      <tr><td>MoM</td><td class="pos">+248.8%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+137.1%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">HPSP(403870) </div>
+    <div class="card-items">고압수소 열처리 장비</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>287억</td></tr>
+      <tr><td>YoY</td><td class="pos">+297.8%</td></tr>
+      <tr><td>MoM</td><td class="pos">+22.6%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+153.5%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">녹십자(006280) <span class="flag">저기저효과 주의</span></div>
+    <div class="card-items">혈액분획물</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>639억</td></tr>
+      <tr><td>YoY</td><td class="pos">+234.5%</td></tr>
+      <tr><td>MoM</td><td class="neg">-9.0%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+129.5%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">SK하이닉스(000660) </div>
+    <div class="card-items">D램, 낸드플래시, 이미지센서, SSD1...</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>617,763억</td></tr>
+      <tr><td>YoY</td><td class="pos">+234.4%</td></tr>
+      <tr><td>MoM</td><td class="neg">-10.6%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+40.1%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">삼성전자(005930) </div>
+    <div class="card-items">D램, 낸드플래시, 이미지센서, SSD1...</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>617,782억</td></tr>
+      <tr><td>YoY</td><td class="pos">+234.4%</td></tr>
+      <tr><td>MoM</td><td class="neg">-10.6%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+40.1%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">에이피티씨(089970) </div>
+    <div class="card-items">산화막건식식각장비</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>1,176억</td></tr>
+      <tr><td>YoY</td><td class="pos">+148.8%</td></tr>
+      <tr><td>MoM</td><td class="pos">+25.6%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+121.1%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">슈프리마(236200) </div>
+    <div class="card-items">바이오인식시스템</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>194억</td></tr>
+      <tr><td>YoY</td><td class="pos">+120.7%</td></tr>
+      <tr><td>MoM</td><td class="pos">+108.5%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+39.5%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">휴스틸(005010) </div>
+    <div class="card-items">무계목 강관, EPWP110유정용강관1, ERWJ55튜빙용강관3, ERW산업용보일러관4</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>1,158억</td></tr>
+      <tr><td>YoY</td><td class="pos">+120.5%</td></tr>
+      <tr><td>MoM</td><td class="pos">+24.3%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+41.2%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">세아제강(306200) </div>
+    <div class="card-items">무계목 강관, EPWP110유정용강관1, ERWJ55튜빙용강관3, ERW산업용보일러관4</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>1,158억</td></tr>
+      <tr><td>YoY</td><td class="pos">+120.5%</td></tr>
+      <tr><td>MoM</td><td class="pos">+24.3%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+41.2%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">율촌화학(008730) </div>
+    <div class="card-items">전도성 접합 필름</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>296억</td></tr>
+      <tr><td>YoY</td><td class="pos">+102.7%</td></tr>
+      <tr><td>MoM</td><td class="pos">+39.7%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+16.7%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">TCC스틸(721250) </div>
+    <div class="card-items">니켈도금강판</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>157억</td></tr>
+      <tr><td>YoY</td><td class="pos">+98.3%</td></tr>
+      <tr><td>MoM</td><td class="pos">+12.7%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+40.2%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">이수화학(005950) </div>
+    <div class="card-items">알킬벤젠</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>431억</td></tr>
+      <tr><td>YoY</td><td class="pos">+93.7%</td></tr>
+      <tr><td>MoM</td><td class="neg">-38.8%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+71.2%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">파마리서치(214450) </div>
+    <div class="card-items">필러</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>6,392억</td></tr>
+      <tr><td>YoY</td><td class="pos">+92.3%</td></tr>
+      <tr><td>MoM</td><td class="pos">+11.7%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+22.9%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">휴젤(145020) </div>
+    <div class="card-items">필러, 보톡스</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>7,342억</td></tr>
+      <tr><td>YoY</td><td class="pos">+91.8%</td></tr>
+      <tr><td>MoM</td><td class="pos">+10.8%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+23.9%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">메디톡스(086900) </div>
+    <div class="card-items">보톡스</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>950억</td></tr>
+      <tr><td>YoY</td><td class="pos">+88.0%</td></tr>
+      <tr><td>MoM</td><td class="pos">+5.5%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+31.4%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">대한광통신(010170) </div>
+    <div class="card-items">광섬유케이블, 광섬유, 광케이블</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>305억</td></tr>
+      <tr><td>YoY</td><td class="pos">+85.0%</td></tr>
+      <tr><td>MoM</td><td class="pos">+4.1%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+26.4%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">케이씨텍(281820) </div>
+    <div class="card-items">Wet Station, CMP, Grinder(웨이퍼연마장치</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>605억</td></tr>
+      <tr><td>YoY</td><td class="pos">+82.7%</td></tr>
+      <tr><td>MoM</td><td class="neg">-28.4%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+22.9%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">애경산업(018250) </div>
+    <div class="card-items">샴푸, 화장품 기타2, 화장품 기타3, 화장품 기타4</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>1,775억</td></tr>
+      <tr><td>YoY</td><td class="pos">+79.5%</td></tr>
+      <tr><td>MoM</td><td class="pos">+5.5%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+18.4%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">케어젠(214370) </div>
+    <div class="card-items">필러, 펩타이드</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>7,573억</td></tr>
+      <tr><td>YoY</td><td class="pos">+79.0%</td></tr>
+      <tr><td>MoM</td><td class="pos">+8.8%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+21.0%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">티에스이(131290) </div>
+    <div class="card-items">반도체 소켓, 인터페이스보드</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>3,180억</td></tr>
+      <tr><td>YoY</td><td class="pos">+69.3%</td></tr>
+      <tr><td>MoM</td><td class="pos">+15.1%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+26.2%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">아모텍(052710) </div>
+    <div class="card-items">칩바리스터</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>23억</td></tr>
+      <tr><td>YoY</td><td class="pos">+58.4%</td></tr>
+      <tr><td>MoM</td><td class="pos">+30.3%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+16.0%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">와이지-원(019210) </div>
+    <div class="card-items">엔드밀, 드릴, 탭</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>454억</td></tr>
+      <tr><td>YoY</td><td class="pos">+57.8%</td></tr>
+      <tr><td>MoM</td><td class="pos">+21.9%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+24.2%</td></tr>
+    </table>
+  </div>
+</div></div>
+</section>
+
+<section class="buy">
+<h2>⭐ Buy — 78개 기업 (상위 24개 표시)</h2>
+<div class="grid3"><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">현대에너지솔루션(322000) </div>
+    <div class="card-items">태양광패널</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>115억</td></tr>
+      <tr><td>YoY</td><td class="pos">+679.0%</td></tr>
+      <tr><td>MoM</td><td class="pos">+316.6%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="neg">-47.9%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">코세스(089890) </div>
+    <div class="card-items">Ball Mounter</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>40억</td></tr>
+      <tr><td>YoY</td><td class="pos">+616.5%</td></tr>
+      <tr><td>MoM</td><td class="neg">-71.7%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+13.3%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">에스티팜(237690) </div>
+    <div class="card-items">올리고뉴클레오타이드</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>529억</td></tr>
+      <tr><td>YoY</td><td class="pos">+203.4%</td></tr>
+      <tr><td>MoM</td><td class="pos">+68.7%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="neg">-10.5%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">오로스테크놀로지(322310) </div>
+    <div class="card-items">반도체오버레이계측기</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>16억</td></tr>
+      <tr><td>YoY</td><td class="pos">+151.4%</td></tr>
+      <tr><td>MoM</td><td class="neg">-23.0%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="neg">-18.8%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">에코프로비엠(247540) </div>
+    <div class="card-items">양극재 NCA</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>2,132억</td></tr>
+      <tr><td>YoY</td><td class="pos">+120.0%</td></tr>
+      <tr><td>MoM</td><td class="neg">-12.1%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="neg">-3.4%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">디알젬(263690) </div>
+    <div class="card-items">제너레이터, 이동형엑스선촬영장치</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>367억</td></tr>
+      <tr><td>YoY</td><td class="pos">+107.2%</td></tr>
+      <tr><td>MoM</td><td class="pos">+21.2%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+6.4%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">우진플라임(049800) </div>
+    <div class="card-items">플라스틱사출기</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>387억</td></tr>
+      <tr><td>YoY</td><td class="pos">+99.0%</td></tr>
+      <tr><td>MoM</td><td class="pos">+179.5%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+1.9%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">에이피알(278470) </div>
+    <div class="card-items">미용기기(가정용)</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>298억</td></tr>
+      <tr><td>YoY</td><td class="pos">+90.3%</td></tr>
+      <tr><td>MoM</td><td class="neg">-6.4%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+6.3%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">엘오티베큠(083310) </div>
+    <div class="card-items">진공펌프</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>120억</td></tr>
+      <tr><td>YoY</td><td class="pos">+70.0%</td></tr>
+      <tr><td>MoM</td><td class="pos">+19.2%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+8.1%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">한화오션(042660) </div>
+    <div class="card-items">극초대형컨테이너선, 셔틀탱커</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>46,548억</td></tr>
+      <tr><td>YoY</td><td class="pos">+68.3%</td></tr>
+      <tr><td>MoM</td><td class="pos">+15.8%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+14.1%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">삼성중공업(010140) </div>
+    <div class="card-items">극초대형컨테이너선, 셔틀탱커</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>46,548억</td></tr>
+      <tr><td>YoY</td><td class="pos">+68.3%</td></tr>
+      <tr><td>MoM</td><td class="pos">+15.8%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+14.1%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">삼성바이오로직스(207940) </div>
+    <div class="card-items">바이오의약품1</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>3,490억</td></tr>
+      <tr><td>YoY</td><td class="pos">+67.9%</td></tr>
+      <tr><td>MoM</td><td class="pos">+14.5%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+2.7%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">셀트리온(068270) </div>
+    <div class="card-items">바이오의약품1</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>3,490억</td></tr>
+      <tr><td>YoY</td><td class="pos">+67.9%</td></tr>
+      <tr><td>MoM</td><td class="pos">+14.5%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+2.7%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">LG디스플레이(034220) </div>
+    <div class="card-items">OLED패널</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>19억</td></tr>
+      <tr><td>YoY</td><td class="pos">+63.8%</td></tr>
+      <tr><td>MoM</td><td class="pos">+62.1%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+2.2%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">와이엠티(251370) </div>
+    <div class="card-items">고연성무전해니켈-금도금액</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>140억</td></tr>
+      <tr><td>YoY</td><td class="pos">+49.6%</td></tr>
+      <tr><td>MoM</td><td class="pos">+31.2%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="neg">-23.2%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">루트로닉(085370) </div>
+    <div class="card-items">에스테틱의료기기, 피부미용 레이저 기기1, 피부미용레이저 기타</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>989억</td></tr>
+      <tr><td>YoY</td><td class="pos">+46.0%</td></tr>
+      <tr><td>MoM</td><td class="neg">-26.1%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+8.1%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">한국콜마(161890) </div>
+    <div class="card-items">기초화장품제품류, 안티에이징 미백 화</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>7,990억</td></tr>
+      <tr><td>YoY</td><td class="pos">+45.0%</td></tr>
+      <tr><td>MoM</td><td class="neg">-5.2%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+12.4%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">네오티스(085910) </div>
+    <div class="card-items">연성회로기판가공용마이크로드릴, 자동차용모터월기어샤프트</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>307억</td></tr>
+      <tr><td>YoY</td><td class="pos">+44.2%</td></tr>
+      <tr><td>MoM</td><td class="pos">+34.4%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+1.2%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">LG생활건강(051900) </div>
+    <div class="card-items">메이크업용 제품류, 마스크 팩, 피부세척용 계면활성제품, 샴푸...</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>12,793억</td></tr>
+      <tr><td>YoY</td><td class="pos">+43.1%</td></tr>
+      <tr><td>MoM</td><td class="neg">-3.0%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+11.1%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">아모레퍼시픽(090430) </div>
+    <div class="card-items">메이크업용 제품류, 마스크 팩, 피부세척용 계면활성제품, 화장품 기타2...</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>12,425억</td></tr>
+      <tr><td>YoY</td><td class="pos">+42.3%</td></tr>
+      <tr><td>MoM</td><td class="neg">-3.9%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+11.5%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">티씨케이(064760) </div>
+    <div class="card-items">SIC RING2, SIC RING3, SIC RING4, SIC RING7</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>6,412억</td></tr>
+      <tr><td>YoY</td><td class="pos">+42.0%</td></tr>
+      <tr><td>MoM</td><td class="neg">-0.3%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+7.1%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">에스엠(041510) </div>
+    <div class="card-items">음반수출</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>548억</td></tr>
+      <tr><td>YoY</td><td class="pos">+41.8%</td></tr>
+      <tr><td>MoM</td><td class="neg">-25.8%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="neg">-4.2%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">JYP Ent.(035900) </div>
+    <div class="card-items">음반수출</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>548억</td></tr>
+      <tr><td>YoY</td><td class="pos">+41.8%</td></tr>
+      <tr><td>MoM</td><td class="neg">-25.8%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="neg">-4.2%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">하이브(352820) </div>
+    <div class="card-items">음반수출</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>548억</td></tr>
+      <tr><td>YoY</td><td class="pos">+41.8%</td></tr>
+      <tr><td>MoM</td><td class="neg">-25.8%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="neg">-4.2%</td></tr>
+    </table>
+  </div>
+</div></div>
+</section>
+
+<section class="hold">
+<h2>➡️ Hold — 19개 기업</h2>
+<table class="full">
+<tr><th>기업</th><th>품목</th><th>7월 수출액</th><th>YoY</th><th>MoM</th><th>QoQ</th></tr>
+<tr><td>DSR제강(069730)</td><td>파워로프</td><td>301억</td><td class='pos'>+9.2%</td><td>+9.7%</td><td>+14.6%</td></tr><tr><td>우양(103840)</td><td>베이커리, 핫도그</td><td>255억</td><td class='pos'>+9.0%</td><td>-2.4%</td><td>+14.3%</td></tr><tr><td>풀무원(017810)</td><td>베이커리, 핫도그</td><td>255억</td><td class='pos'>+9.0%</td><td>-2.4%</td><td>+14.3%</td></tr><tr><td>티앤엘(340570)</td><td>조제 드레싱과 습포제</td><td>181억</td><td class='pos'>+7.2%</td><td>+35.7%</td><td>+9.7%</td></tr><tr><td>오스템임플란트(048260)</td><td>임플란트</td><td>1,027억</td><td class='pos'>+5.3%</td><td>-23.6%</td><td>+16.1%</td></tr><tr><td>덴티움(145720)</td><td>임플란트</td><td>1,027억</td><td class='pos'>+5.3%</td><td>-23.6%</td><td>+16.1%</td></tr><tr><td>디오(039840)</td><td>임플란트</td><td>1,027억</td><td class='pos'>+5.3%</td><td>-23.6%</td><td>+16.1%</td></tr><tr><td>메타바이오메드(059210)</td><td>봉합재 (살균한 외과용, 흡수성 실 </td><td>76억</td><td class='pos'>+5.2%</td><td>+16.8%</td><td>+2.7%</td></tr><tr><td>국도화학(007690)</td><td>Epoxy</td><td>1,046억</td><td class='pos'>+1.8%</td><td>-16.1%</td><td>-2.9%</td></tr><tr><td>바텍(043150)</td><td>치과영상의료기기</td><td>326억</td><td class='pos'>+1.3%</td><td>-18.3%</td><td>+4.3%</td></tr><tr><td>제이브이엠(054950)</td><td>약포장지, 열전사 프린팅 리본</td><td>95억</td><td class='pos'>+1.2%</td><td>-8.9%</td><td>+15.1%</td></tr><tr><td>대한전선(001440)</td><td>해저 매설용 케이블10kV~100kV, 해저 매설용 케이블1000V~10kV</td><td>1,747억</td><td class='neg'>-1.8%</td><td>-27.5%</td><td>+11.3%</td></tr><tr><td>LS(006260)</td><td>해저 매설용 케이블10kV~100kV, 해저 매설용 케이블1000V~10kV</td><td>1,747억</td><td class='neg'>-1.8%</td><td>-27.5%</td><td>+11.3%</td></tr><tr><td>동성화인텍(033500)</td><td>초저온보냉PU</td><td>346억</td><td class='neg'>-5.5%</td><td>-15.4%</td><td>-0.7%</td></tr><tr><td>비씨엔씨(146320)</td><td>반도체 플라스마 식각공정용 합성쿼츠 </td><td>53억</td><td class='neg'>-5.8%</td><td>+10.4%</td><td>+13.7%</td></tr><tr><td>원익QNC(074600)</td><td>반도체 플라스마 식각공정용 합성쿼츠 </td><td>53억</td><td class='neg'>-5.8%</td><td>+10.4%</td><td>+13.7%</td></tr><tr><td>피엔티(137400)</td><td>2차전지 코터, 2차전지 프레스</td><td>4,089억</td><td class='neg'>-6.0%</td><td>+4.3%</td><td>+30.2%</td></tr><tr><td>퀀타매트릭스(317690)</td><td>신속 항균제감수성검사 dRAST2</td><td>354억</td><td class='neg'>-6.1%</td><td>+0.2%</td><td>-7.3%</td></tr><tr><td>LSELECTRIC(010120)</td><td>직류용배선차단기</td><td>269억</td><td class='neg'>-7.4%</td><td>-24.4%</td><td>+1.7%</td></tr>
+</table>
+</section>
+
+<section class="reduce">
+<h2>🔽❌ Reduce / Sell — 16개 기업</h2>
+<div class="grid3"><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">제룡전기(033100) </div>
+    <div class="card-items">소형변압기1, 소형변압기2</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>231억</td></tr>
+      <tr><td>YoY</td><td class="neg">-44.7%</td></tr>
+      <tr><td>MoM</td><td class="neg">-36.7%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="neg">-7.2%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">우리산업(215360) </div>
+    <div class="card-items">PTC히터</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>37억</td></tr>
+      <tr><td>YoY</td><td class="neg">-43.1%</td></tr>
+      <tr><td>MoM</td><td class="pos">+16.5%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+13.3%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">디알텍(214680) </div>
+    <div class="card-items">의료용디텍터</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>49억</td></tr>
+      <tr><td>YoY</td><td class="neg">-27.1%</td></tr>
+      <tr><td>MoM</td><td class="neg">-15.3%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="neg">-1.3%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">레이언스(228850) </div>
+    <div class="card-items">의료용디텍터</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>49억</td></tr>
+      <tr><td>YoY</td><td class="neg">-27.1%</td></tr>
+      <tr><td>MoM</td><td class="neg">-15.3%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="neg">-1.3%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">뷰웍스(100120) </div>
+    <div class="card-items">의료용디텍터</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>49억</td></tr>
+      <tr><td>YoY</td><td class="neg">-27.1%</td></tr>
+      <tr><td>MoM</td><td class="neg">-15.3%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="neg">-1.3%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">이오테크닉스(039030) </div>
+    <div class="card-items">레이저마커</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>35억</td></tr>
+      <tr><td>YoY</td><td class="neg">-24.4%</td></tr>
+      <tr><td>MoM</td><td class="neg">-60.2%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="neg">-41.8%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">레이(228670) </div>
+    <div class="card-items">치과용 구강스캐너</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>187억</td></tr>
+      <tr><td>YoY</td><td class="neg">-24.2%</td></tr>
+      <tr><td>MoM</td><td class="neg">-23.8%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="neg">-9.4%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">경동나비엔(009450) </div>
+    <div class="card-items">가스물가열기, 가스보일러, 전기온수기</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>778억</td></tr>
+      <tr><td>YoY</td><td class="neg">-22.4%</td></tr>
+      <tr><td>MoM</td><td class="pos">+9.8%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+14.4%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">에스피지(058610) </div>
+    <div class="card-items">기타 산업용 로봇</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>259억</td></tr>
+      <tr><td>YoY</td><td class="neg">-18.3%</td></tr>
+      <tr><td>MoM</td><td class="neg">-18.8%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="neg">-8.0%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">로보스타(090360) </div>
+    <div class="card-items">기타 산업용 로봇</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>259억</td></tr>
+      <tr><td>YoY</td><td class="neg">-18.3%</td></tr>
+      <tr><td>MoM</td><td class="neg">-18.8%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="neg">-8.0%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">하이트진로(000080) </div>
+    <div class="card-items">소주</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>99억</td></tr>
+      <tr><td>YoY</td><td class="neg">-17.0%</td></tr>
+      <tr><td>MoM</td><td class="neg">-18.4%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="pos">+6.5%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">로보티즈(108490) </div>
+    <div class="card-items">인간크기 휴머노이드로봇 플랫폼, 로봇스마트액추에이터, 기타 산업용 로봇</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>1,370억</td></tr>
+      <tr><td>YoY</td><td class="neg">-16.1%</td></tr>
+      <tr><td>MoM</td><td class="neg">-4.7%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="neg">-8.4%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">빅솔론(093190) </div>
+    <div class="card-items">모바일프린터</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>166억</td></tr>
+      <tr><td>YoY</td><td class="neg">-14.4%</td></tr>
+      <tr><td>MoM</td><td class="neg">-6.8%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="neg">-10.3%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">DSR(155660) </div>
+    <div class="card-items">산업용합성섬유로프</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>74억</td></tr>
+      <tr><td>YoY</td><td class="neg">-13.3%</td></tr>
+      <tr><td>MoM</td><td class="pos">+12.4%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="neg">-14.8%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">효성티앤씨(298020) </div>
+    <div class="card-items">스판덱스1</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>105억</td></tr>
+      <tr><td>YoY</td><td class="neg">-10.5%</td></tr>
+      <tr><td>MoM</td><td class="neg">-12.8%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="neg">-7.0%</td></tr>
+    </table>
+  </div>
+</div><div class="card">
+  <div class="card-bar"></div>
+  <div class="card-body">
+    <div class="card-title">테크윙(089030) </div>
+    <div class="card-items">Test Handler, Probe Station</div>
+    <table class="mini-table">
+      <tr><td>수출액(7월)</td><td>1,416억</td></tr>
+      <tr><td>YoY</td><td class="neg">-60.9%</td></tr>
+      <tr><td>MoM</td><td class="pos">+7.0%</td></tr>
+      <tr><td>QoQ(3개월)</td><td class="neg">-16.6%</td></tr>
+    </table>
+  </div>
+</div></div>
+</section>
+
+<section>
+<h2>🏭 섹터별 요약 (YoY 순, 수정본)</h2>
+<table class="full">
+<tr><th>섹터</th><th>7월 수출액</th><th>YoY</th><th>MoM</th><th>QoQ</th><th>품목수</th></tr>
+<tr><td>철강</td><td>2,022억</td><td class='pos'>+234.6%</td><td class='pos'>+17.8%</td><td class='pos'>+26.1%</td><td>11</td></tr><tr><td>반도체 메모리</td><td>617,763억</td><td class='pos'>+234.4%</td><td class='neg'>-10.6%</td><td class='pos'>+40.1%</td><td>7</td></tr><tr><td>기타 개별주</td><td>745억</td><td class='pos'>+74.2%</td><td class='pos'>+37.1%</td><td class='pos'>+8.7%</td><td>5</td></tr><tr><td>조선/해운</td><td>48,174억</td><td class='pos'>+65.6%</td><td class='pos'>+15.2%</td><td class='pos'>+14.1%</td><td>10</td></tr><tr><td>K-뷰티/화장품</td><td>22,603억</td><td class='pos'>+55.8%</td><td class='neg'>-0.4%</td><td class='pos'>+14.6%</td><td>15</td></tr><tr><td>바이오/헬스</td><td>7,846억</td><td class='pos'>+49.7%</td><td class='pos'>+3.1%</td><td class='pos'>+9.7%</td><td>15</td></tr><tr><td>2차전지 소재</td><td>19,922억</td><td class='pos'>+36.3%</td><td class='neg'>-2.0%</td><td class='pos'>+12.9%</td><td>17</td></tr><tr><td>반도체 소재/부품</td><td>10,465억</td><td class='pos'>+31.4%</td><td class='pos'>+2.6%</td><td class='pos'>+7.3%</td><td>10</td></tr><tr><td>기타</td><td>19,101억</td><td class='pos'>+31.3%</td><td class='pos'>+14.8%</td><td class='pos'>+15.4%</td><td>40</td></tr><tr><td>자동차</td><td>81,745억</td><td class='pos'>+25.0%</td><td class='neg'>-6.4%</td><td class='pos'>+9.8%</td><td>12</td></tr><tr><td>K-푸드</td><td>2,644억</td><td class='pos'>+22.9%</td><td class='neg'>-8.6%</td><td class='pos'>+0.2%</td><td>3</td></tr><tr><td>소재/화학</td><td>22,077억</td><td class='pos'>+21.1%</td><td class='neg'>-1.5%</td><td class='pos'>+13.5%</td><td>25</td></tr><tr><td>반도체 테스트/장비</td><td>10,571억</td><td class='pos'>+19.6%</td><td class='pos'>+2.5%</td><td class='pos'>+28.5%</td><td>21</td></tr><tr><td>건설기계</td><td>5,996억</td><td class='pos'>+16.5%</td><td class='pos'>+10.4%</td><td class='pos'>+1.4%</td><td>5</td></tr><tr><td>전력기기</td><td>5,031억</td><td class='pos'>+4.0%</td><td class='neg'>-2.2%</td><td class='pos'>+0.8%</td><td>14</td></tr><tr><td>2차전지 장비</td><td>4,089억</td><td class='neg'>-6.0%</td><td class='pos'>+4.3%</td><td class='pos'>+30.2%</td><td>3</td></tr><tr><td>산업용 로봇</td><td>1,370억</td><td class='neg'>-16.1%</td><td class='neg'>-4.7%</td><td class='neg'>-8.4%</td><td>3</td></tr>
+</table>
+</section>
+
+<section>
+<div class="surprise-grid">
+<div class="surprise-box up">
+<b>🎉 이달의 서프라이즈</b><br>
+· 인텍플러스(반도체외관검사장비) YoY +1241%, QoQ +200% — 3개월 연속 급증<br>
+· 녹십자(혈액분획물) YoY +234%, QoQ +129.5% — 전년 7월이 이례적 저점이라 기저효과 감안 필요<br>
+· 후성(LiPF6) YoY +5604% — 절대금액은 아직 104억원 수준으로 전년 기저(1.8억원)가 극히 낮았던 착시
+</div>
+<div class="surprise-box warn">
+<b>⚠️ 경고 신호</b><br>
+· 테크윙(Test Handler·Probe Station) YoY -60.9% — 반도체 후공정 장비 발주 공백 우려<br>
+· 제룡전기(소형변압기) YoY -44.7%, MoM -36.7%<br>
+· HBM 단독 YoY -8.5% — 범용 메모리 대비 성장 둔화, 20일·월말 확정치로 추가 확인 필요<br>
+· 산업용 로봇 3종목 전부 역성장
+</div>
+</div>
+</section>
+
+<section>
+<h2>📋 전체 종목 랭킹 (YoY 기준 정렬, 157개사)</h2>
+<table class="full">
+<tr><th>#</th><th>기업</th><th>품목</th><th>7월 수출액</th><th>YoY</th><th>MoM</th><th>QoQ</th><th>등급</th></tr>
+<tr><td>1</td><td>후성(093370)</td><td>LIPF6</td><td>104억</td><td class='pos'>+5604.7%</td><td>+16.8%</td><td>+33.1%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>2</td><td>인텍플러스(064290)</td><td>반도체외관검사장비</td><td>947억</td><td class='pos'>+1241.4%</td><td>+435.1%</td><td>+200.2%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>3</td><td>현대에너지솔루션(322000)</td><td>태양광패널</td><td>115억</td><td class='pos'>+679.0%</td><td>+316.6%</td><td>-47.9%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>4</td><td>코세스(089890)</td><td>Ball Mounter</td><td>40억</td><td class='pos'>+616.5%</td><td>-71.7%</td><td>+13.3%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>5</td><td>KCC(002380)</td><td>진공차단기용세라믹, 선박용에폭시방청도료</td><td>1,530억</td><td class='pos'>+351.8%</td><td>+248.8%</td><td>+137.1%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>6</td><td>HPSP(403870)</td><td>고압수소 열처리 장비</td><td>287억</td><td class='pos'>+297.8%</td><td>+22.6%</td><td>+153.5%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>7</td><td>녹십자(006280)</td><td>혈액분획물</td><td>639억</td><td class='pos'>+234.5%</td><td>-9.0%</td><td>+129.5%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>8</td><td>SK하이닉스(000660)</td><td>D램, 낸드플래시</td><td>617,763억</td><td class='pos'>+234.4%</td><td>-10.6%</td><td>+40.1%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>9</td><td>삼성전자(005930)</td><td>D램, 낸드플래시</td><td>617,782억</td><td class='pos'>+234.4%</td><td>-10.6%</td><td>+40.1%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>10</td><td>에스티팜(237690)</td><td>올리고뉴클레오타이드</td><td>529억</td><td class='pos'>+203.4%</td><td>+68.7%</td><td>-10.5%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>11</td><td>오로스테크놀로지(322310)</td><td>반도체오버레이계측기</td><td>16억</td><td class='pos'>+151.4%</td><td>-23.0%</td><td>-18.8%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>12</td><td>에이피티씨(089970)</td><td>산화막건식식각장비</td><td>1,176억</td><td class='pos'>+148.8%</td><td>+25.6%</td><td>+121.1%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>13</td><td>슈프리마(236200)</td><td>바이오인식시스템</td><td>194억</td><td class='pos'>+120.7%</td><td>+108.5%</td><td>+39.5%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>14</td><td>휴스틸(005010)</td><td>무계목 강관, EPWP110유정용강관1</td><td>1,158억</td><td class='pos'>+120.5%</td><td>+24.3%</td><td>+41.2%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>15</td><td>세아제강(306200)</td><td>무계목 강관, EPWP110유정용강관1</td><td>1,158억</td><td class='pos'>+120.5%</td><td>+24.3%</td><td>+41.2%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>16</td><td>에코프로비엠(247540)</td><td>양극재 NCA</td><td>2,132억</td><td class='pos'>+120.0%</td><td>-12.1%</td><td>-3.4%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>17</td><td>디알젬(263690)</td><td>제너레이터, 이동형엑스선촬영장치</td><td>367억</td><td class='pos'>+107.2%</td><td>+21.2%</td><td>+6.4%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>18</td><td>율촌화학(008730)</td><td>전도성 접합 필름</td><td>296억</td><td class='pos'>+102.7%</td><td>+39.7%</td><td>+16.7%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>19</td><td>우진플라임(049800)</td><td>플라스틱사출기</td><td>387억</td><td class='pos'>+99.0%</td><td>+179.5%</td><td>+1.9%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>20</td><td>TCC스틸(721250)</td><td>니켈도금강판</td><td>157억</td><td class='pos'>+98.3%</td><td>+12.7%</td><td>+40.2%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>21</td><td>이수화학(005950)</td><td>알킬벤젠</td><td>431억</td><td class='pos'>+93.7%</td><td>-38.8%</td><td>+71.2%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>22</td><td>파마리서치(214450)</td><td>필러</td><td>6,392억</td><td class='pos'>+92.3%</td><td>+11.7%</td><td>+22.9%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>23</td><td>휴젤(145020)</td><td>필러, 보톡스</td><td>7,342억</td><td class='pos'>+91.8%</td><td>+10.8%</td><td>+23.9%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>24</td><td>에이피알(278470)</td><td>미용기기(가정용)</td><td>298억</td><td class='pos'>+90.3%</td><td>-6.4%</td><td>+6.3%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>25</td><td>메디톡스(086900)</td><td>보톡스</td><td>950억</td><td class='pos'>+88.0%</td><td>+5.5%</td><td>+31.4%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>26</td><td>대한광통신(010170)</td><td>광섬유케이블, 광섬유, 광케이블</td><td>305억</td><td class='pos'>+85.0%</td><td>+4.1%</td><td>+26.4%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>27</td><td>케이씨텍(281820)</td><td>Wet Station, CMP, Grinder(웨이퍼연마장치</td><td>605억</td><td class='pos'>+82.7%</td><td>-28.4%</td><td>+22.9%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>28</td><td>애경산업(018250)</td><td>샴푸, 화장품 기타2</td><td>1,775억</td><td class='pos'>+79.5%</td><td>+5.5%</td><td>+18.4%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>29</td><td>케어젠(214370)</td><td>필러, 펩타이드</td><td>7,573억</td><td class='pos'>+79.0%</td><td>+8.8%</td><td>+21.0%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>30</td><td>엘오티베큠(083310)</td><td>진공펌프</td><td>120억</td><td class='pos'>+70.0%</td><td>+19.2%</td><td>+8.1%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>31</td><td>티에스이(131290)</td><td>반도체 소켓, 인터페이스보드</td><td>3,180억</td><td class='pos'>+69.3%</td><td>+15.1%</td><td>+26.2%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>32</td><td>한화오션(042660)</td><td>극초대형컨테이너선, 셔틀탱커</td><td>46,548억</td><td class='pos'>+68.3%</td><td>+15.8%</td><td>+14.1%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>33</td><td>삼성중공업(010140)</td><td>극초대형컨테이너선, 셔틀탱커</td><td>46,548억</td><td class='pos'>+68.3%</td><td>+15.8%</td><td>+14.1%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>34</td><td>삼성바이오로직스(207940)</td><td>바이오의약품1</td><td>3,490억</td><td class='pos'>+67.9%</td><td>+14.5%</td><td>+2.7%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>35</td><td>셀트리온(068270)</td><td>바이오의약품1</td><td>3,490억</td><td class='pos'>+67.9%</td><td>+14.5%</td><td>+2.7%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>36</td><td>LG디스플레이(034220)</td><td>OLED패널</td><td>19억</td><td class='pos'>+63.8%</td><td>+62.1%</td><td>+2.2%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>37</td><td>아모텍(052710)</td><td>칩바리스터</td><td>23억</td><td class='pos'>+58.4%</td><td>+30.3%</td><td>+16.0%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>38</td><td>와이지-원(019210)</td><td>엔드밀, 드릴</td><td>454억</td><td class='pos'>+57.8%</td><td>+21.9%</td><td>+24.2%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>39</td><td>SK바이오사이언스(302440)</td><td>인체백신</td><td>345억</td><td class='pos'>+54.7%</td><td>-24.1%</td><td>+20.8%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>40</td><td>해성디에스(195870)</td><td>리드프레임</td><td>725억</td><td class='pos'>+54.6%</td><td>-1.1%</td><td>+21.8%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>41</td><td>제이시스메디칼(287410)</td><td>에스테틱의료기기, 피부미용레이저 기타</td><td>766억</td><td class='pos'>+54.5%</td><td>-25.8%</td><td>+17.6%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>42</td><td>와이엠티(251370)</td><td>고연성무전해니켈-금도금액</td><td>140억</td><td class='pos'>+49.6%</td><td>+31.2%</td><td>-23.2%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>43</td><td>삼아알미늄(006110)</td><td>알루미늄판, 시트,스트립1(두께0.2, 알루미늄판, 시트,스트립2(두께0.2</td><td>5,665억</td><td class='pos'>+47.4%</td><td>-10.7%</td><td>+18.4%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>44</td><td>이녹스첨단소재(272290)</td><td>OLED 봉지재 필름</td><td>626억</td><td class='pos'>+47.2%</td><td>+64.2%</td><td>+22.9%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>45</td><td>isc(095340)</td><td>반도체 소켓</td><td>1,750억</td><td class='pos'>+46.5%</td><td>+16.0%</td><td>+19.9%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>46</td><td>리노공업(058470)</td><td>반도체 핀, 반도체 소켓</td><td>1,784억</td><td class='pos'>+46.3%</td><td>+15.5%</td><td>+20.1%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>47</td><td>파크시스템스(140860)</td><td>산업용자동화원자현미경</td><td>143억</td><td class='pos'>+46.0%</td><td>-29.9%</td><td>+93.9%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>48</td><td>루트로닉(085370)</td><td>에스테틱의료기기, 피부미용 레이저 기기1</td><td>989억</td><td class='pos'>+46.0%</td><td>-26.1%</td><td>+8.1%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>49</td><td>한국콜마(161890)</td><td>기초화장품제품류, 안티에이징 미백 화</td><td>7,990억</td><td class='pos'>+45.0%</td><td>-5.2%</td><td>+12.4%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>50</td><td>네오티스(085910)</td><td>연성회로기판가공용마이크로드릴, 자동차용모터월기어샤프트</td><td>307억</td><td class='pos'>+44.2%</td><td>+34.4%</td><td>+1.2%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>51</td><td>일진머티리얼즈(020150)</td><td>동박, 동박3</td><td>1,866억</td><td class='pos'>+43.8%</td><td>-1.1%</td><td>+20.5%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>52</td><td>SKC(011790)</td><td>동박, 동박3</td><td>1,866억</td><td class='pos'>+43.8%</td><td>-1.1%</td><td>+20.5%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>53</td><td>솔루스첨단소재(336370)</td><td>동박, 동박3</td><td>1,866억</td><td class='pos'>+43.8%</td><td>-1.1%</td><td>+20.5%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>54</td><td>LG생활건강(051900)</td><td>메이크업용 제품류, 마스크 팩</td><td>12,793억</td><td class='pos'>+43.1%</td><td>-3.0%</td><td>+11.1%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>55</td><td>아모레퍼시픽(090430)</td><td>메이크업용 제품류, 마스크 팩</td><td>12,425억</td><td class='pos'>+42.3%</td><td>-3.9%</td><td>+11.5%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>56</td><td>티씨케이(064760)</td><td>SIC RING2, SIC RING3</td><td>6,412억</td><td class='pos'>+42.0%</td><td>-0.3%</td><td>+7.1%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>57</td><td>에스엠(041510)</td><td>음반수출</td><td>548억</td><td class='pos'>+41.8%</td><td>-25.8%</td><td>-4.2%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>58</td><td>JYP Ent.(035900)</td><td>음반수출</td><td>548억</td><td class='pos'>+41.8%</td><td>-25.8%</td><td>-4.2%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>59</td><td>하이브(352820)</td><td>음반수출</td><td>548억</td><td class='pos'>+41.8%</td><td>-25.8%</td><td>-4.2%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>60</td><td>와이지엔터테인먼트(122870)</td><td>음반수출</td><td>548억</td><td class='pos'>+41.8%</td><td>-25.8%</td><td>-4.2%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>61</td><td>알비더블유(361570)</td><td>음반수출</td><td>548억</td><td class='pos'>+41.8%</td><td>-25.8%</td><td>-4.2%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>62</td><td>큐브엔터(182360)</td><td>음반수출</td><td>548억</td><td class='pos'>+41.8%</td><td>-25.8%</td><td>-4.2%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>63</td><td>인바디(041830)</td><td>체성분분석기</td><td>176억</td><td class='pos'>+40.7%</td><td>+22.8%</td><td>+25.1%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>64</td><td>코오롱인더(120110)</td><td>타이어코드2, 아라미드</td><td>314억</td><td class='pos'>+40.1%</td><td>+13.5%</td><td>+6.6%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>65</td><td>덕산네오룩스(213420)</td><td>OLED 유기재료</td><td>254억</td><td class='pos'>+38.5%</td><td>+38.7%</td><td>+13.3%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>66</td><td>한화솔루션(009830)</td><td>태양광패널, 태양전지용EVA</td><td>1,844억</td><td class='pos'>+38.1%</td><td>-0.7%</td><td>-3.5%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>67</td><td>피에스케이(319660)</td><td>pr strip</td><td>325억</td><td class='pos'>+38.0%</td><td>-9.7%</td><td>+16.4%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>68</td><td>디와이파워(210540)</td><td>건설기계용유압실린더</td><td>442억</td><td class='pos'>+37.2%</td><td>+4.8%</td><td>+3.9%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>69</td><td>삼성전기(009150)</td><td>MLCC</td><td>2,338억</td><td class='pos'>+36.4%</td><td>+2.2%</td><td>+33.0%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>70</td><td>삼성SDI(006400)</td><td>전기차용 리튬전지</td><td>916억</td><td class='pos'>+36.0%</td><td>-0.7%</td><td>-32.8%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>71</td><td>LG에너지솔루션(373220)</td><td>전기차용 리튬전지</td><td>916억</td><td class='pos'>+36.0%</td><td>-0.7%</td><td>-32.8%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>72</td><td>대덕전자(353200)</td><td>PCB</td><td>4,665억</td><td class='pos'>+34.0%</td><td>+4.9%</td><td>+16.5%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>73</td><td>샘씨엔에스(252990)</td><td>PCB</td><td>4,665억</td><td class='pos'>+34.0%</td><td>+4.9%</td><td>+16.5%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>74</td><td>PI첨단소재(178920)</td><td>PI필름, 폴리이미드필름</td><td>87억</td><td class='pos'>+33.6%</td><td>+2.4%</td><td>+16.4%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>75</td><td>아모그린텍(125210)</td><td>금속 자성 코어</td><td>569억</td><td class='pos'>+33.4%</td><td>+17.6%</td><td>+11.4%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>76</td><td>인텔리안테크(189300)</td><td>이동체용위성방송수신안테나</td><td>14억</td><td class='pos'>+33.2%</td><td>-7.5%</td><td>+28.4%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>77</td><td>삼화전기(009470)</td><td>알루미늄 전해콘덴서</td><td>196억</td><td class='pos'>+32.7%</td><td>+8.6%</td><td>+1.6%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>78</td><td>이수페타시스(007660)</td><td>고다층인쇄회로기판</td><td>20억</td><td class='pos'>+31.5%</td><td>-34.7%</td><td>-31.9%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>79</td><td>디아이(003160)</td><td>Memory Tester, Burn-</td><td>675억</td><td class='pos'>+30.5%</td><td>-4.7%</td><td>+42.4%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>80</td><td>유니테스트(086390)</td><td>Memory Tester, Burn-</td><td>675억</td><td class='pos'>+30.5%</td><td>-4.7%</td><td>+42.4%</td><td><span class='ratebadge sb'>Strong Buy</span></td></tr><tr><td>81</td><td>동진쎄미켐(005290)</td><td>포토레지스트</td><td>347억</td><td class='pos'>+29.2%</td><td>+57.3%</td><td>-1.3%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>82</td><td>삼양식품(003230)</td><td>라면</td><td>2,290억</td><td class='pos'>+27.3%</td><td>-8.8%</td><td>-1.4%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>83</td><td>농심(004370)</td><td>라면</td><td>2,290억</td><td class='pos'>+27.3%</td><td>-8.8%</td><td>-1.4%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>84</td><td>현대차(005380)</td><td>승용차 신차 (3천~4천CC), 승용차 신차(1천CC~1500CC)</td><td>76,740억</td><td class='pos'>+26.5%</td><td>-7.4%</td><td>+10.4%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>85</td><td>기아(000270)</td><td>승용차 신차 (3천~4천CC), 승용차 신차(1천CC~1500CC)</td><td>76,740억</td><td class='pos'>+26.5%</td><td>-7.4%</td><td>+10.4%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>86</td><td>KG모빌리티(003620)</td><td>승용차 신차 (3천~4천CC), 승용차 신차(1천CC~1500CC)</td><td>76,740억</td><td class='pos'>+26.5%</td><td>-7.4%</td><td>+10.4%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>87</td><td>더블유씨피(393890)</td><td>2차전지 분리막</td><td>871억</td><td class='pos'>+26.2%</td><td>+11.2%</td><td>+15.9%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>88</td><td>주성엔지니어링(036930)</td><td>진공증착열원부품</td><td>234억</td><td class='pos'>+26.0%</td><td>+38.9%</td><td>+13.2%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>89</td><td>금호석유(011780)</td><td>BPA, NB라텍스</td><td>5,036억</td><td class='pos'>+24.7%</td><td>-2.1%</td><td>+5.3%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>90</td><td>심텍(222800)</td><td>PCB, GDDR기판, FPCB</td><td>7,407억</td><td class='pos'>+24.0%</td><td>+6.2%</td><td>+11.9%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>91</td><td>비츠로셀(082920)</td><td>리튬일차전지</td><td>237억</td><td class='pos'>+23.9%</td><td>+18.1%</td><td>+14.1%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>92</td><td>솔루엠(248070)</td><td>ESL(전자가격표시기)</td><td>61억</td><td class='pos'>+21.8%</td><td>+25.3%</td><td>+16.9%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>93</td><td>현대제철(004020)</td><td>자동차용 핫스탬핑, 철근2</td><td>4,623억</td><td class='pos'>+21.0%</td><td>+12.4%</td><td>+1.0%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>94</td><td>에스엘(005850)</td><td>자동차 헤드라이트1, 자동차 헤드라이트2</td><td>345억</td><td class='pos'>+20.4%</td><td>-4.8%</td><td>+1.1%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>95</td><td>비나텍(126340)</td><td>초고용량캐패시터, 고분자 전해질막 연료전지 막 전극 접</td><td>277억</td><td class='pos'>+19.4%</td><td>+10.5%</td><td>+12.2%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>96</td><td>진성티이씨(036890)</td><td>언더캐리지용트랙롤러</td><td>1,822억</td><td class='pos'>+19.3%</td><td>+6.2%</td><td>+3.7%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>97</td><td>한미반도체(042700)</td><td>반도체 소잉앤플레이스먼트시스템, 웨이퍼절단기</td><td>148억</td><td class='pos'>+19.1%</td><td>-53.8%</td><td>+99.3%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>98</td><td>현대일렉트릭(267260)</td><td>345kV이상분로리액터, 대형변압기1</td><td>2,783억</td><td class='pos'>+18.5%</td><td>+38.2%</td><td>-4.9%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>99</td><td>코텍(052330)</td><td>산업용모니터(카지노)</td><td>377억</td><td class='pos'>+18.4%</td><td>+12.4%</td><td>+6.8%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>100</td><td>효성중공업(298040)</td><td>대형변압기1, 대형변압기3</td><td>2,668억</td><td class='pos'>+17.4%</td><td>+48.9%</td><td>-6.6%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>101</td><td>효성첨단소재(298050)</td><td>타이어코드2</td><td>66억</td><td class='pos'>+17.2%</td><td>+9.9%</td><td>+33.8%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>102</td><td>포스코케미칼(003670)</td><td>배터리 전구체, 배터리 음극재</td><td>8,281억</td><td class='pos'>+16.9%</td><td>+6.0%</td><td>+21.6%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>103</td><td>테스(095610)</td><td>비정질탄소박막프라즈마화학증착장비</td><td>1,453억</td><td class='pos'>+16.8%</td><td>-33.9%</td><td>+33.8%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>104</td><td>효성화학(298000)</td><td>냉온수관용PP계초고압파이프수지</td><td>3,126억</td><td class='pos'>+16.4%</td><td>+4.0%</td><td>+21.4%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>105</td><td>덕산하이메탈(077360)</td><td>솔더볼</td><td>118억</td><td class='pos'>+15.7%</td><td>-30.1%</td><td>+11.4%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>106</td><td>대한유화(006650)</td><td>툴루엔, 자일렌</td><td>2,358억</td><td class='pos'>+14.5%</td><td>-2.3%</td><td>+11.9%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>107</td><td>태광(023160)</td><td>플랜트용관이음쇠류2, 플랜트용관이음쇠류4</td><td>884억</td><td class='pos'>+14.5%</td><td>+8.6%</td><td>+18.3%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>108</td><td>성광벤드(014620)</td><td>플랜트용관이음쇠류2, 플랜트용관이음쇠류4</td><td>884억</td><td class='pos'>+14.5%</td><td>+8.6%</td><td>+18.3%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>109</td><td>LX하우시스(108670)</td><td>고탄성PVC스포츠바닥재, 고내후성시트</td><td>5,448억</td><td class='pos'>+14.2%</td><td>+8.2%</td><td>+6.4%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>110</td><td>삼양홀딩스(000070)</td><td>BPA</td><td>425억</td><td class='pos'>+14.1%</td><td>+36.0%</td><td>-26.4%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>111</td><td>핸즈코퍼레이션(143210)</td><td>자동차용 알루미늄 휠</td><td>460억</td><td class='pos'>+13.7%</td><td>+20.4%</td><td>+2.5%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>112</td><td>일진다이아(081000)</td><td>공업용다이아몬드</td><td>27억</td><td class='pos'>+13.3%</td><td>+31.5%</td><td>-16.2%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>113</td><td>HD현대건설기계(267270)</td><td>휠 타입 굴착기 신품, 무한궤도식 굴착기 신품</td><td>3,732억</td><td class='pos'>+13.2%</td><td>+13.2%</td><td>+0.1%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>114</td><td>에스앤에스텍(101490)</td><td>블랭크마스크</td><td>69억</td><td class='pos'>+12.9%</td><td>-1.7%</td><td>+10.6%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>115</td><td>엘앤에프(066970)</td><td>양극재 NCM, 2차전지 양극재</td><td>6,189억</td><td class='pos'>+12.3%</td><td>+5.0%</td><td>+26.6%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>116</td><td>HD현대인프라코어(042670)</td><td>휠 타입 굴착기 신품, 무한궤도식 굴착기 신품</td><td>3,270억</td><td class='pos'>+12.2%</td><td>+13.2%</td><td>-1.0%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>117</td><td>코스모신소재(005070)</td><td>양극재 NCM</td><td>6,102억</td><td class='pos'>+12.0%</td><td>+4.7%</td><td>+26.9%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>118</td><td>LG화학(051910)</td><td>툴루엔, 자일렌</td><td>6,610억</td><td class='pos'>+11.4%</td><td>-4.4%</td><td>+17.6%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>119</td><td>롯데케미칼(011170)</td><td>툴루엔, 자일렌</td><td>6,138억</td><td class='pos'>+11.3%</td><td>-3.5%</td><td>+20.0%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>120</td><td>휴비츠(065510)</td><td>안과용의료기기1, 안광학기기</td><td>91억</td><td class='pos'>+11.2%</td><td>-11.6%</td><td>+35.5%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>121</td><td>휴비스(079980)</td><td>폴리에틸렌용융장섬유, 폴리에스터LM화이버</td><td>474억</td><td class='pos'>+10.9%</td><td>-10.7%</td><td>+2.7%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>122</td><td>비에이치(090460)</td><td>GDDR기판, FPCB</td><td>2,742억</td><td class='pos'>+10.1%</td><td>+8.3%</td><td>+5.0%</td><td><span class='ratebadge buy'>Buy</span></td></tr><tr><td>123</td><td>DSR제강(069730)</td><td>파워로프</td><td>301억</td><td class='pos'>+9.2%</td><td>+9.7%</td><td>+14.6%</td><td><span class='ratebadge hold'>Hold</span></td></tr><tr><td>124</td><td>우양(103840)</td><td>베이커리, 핫도그</td><td>255억</td><td class='pos'>+9.0%</td><td>-2.4%</td><td>+14.3%</td><td><span class='ratebadge hold'>Hold</span></td></tr><tr><td>125</td><td>풀무원(017810)</td><td>베이커리, 핫도그</td><td>255억</td><td class='pos'>+9.0%</td><td>-2.4%</td><td>+14.3%</td><td><span class='ratebadge hold'>Hold</span></td></tr><tr><td>126</td><td>티앤엘(340570)</td><td>조제 드레싱과 습포제</td><td>181억</td><td class='pos'>+7.2%</td><td>+35.7%</td><td>+9.7%</td><td><span class='ratebadge hold'>Hold</span></td></tr><tr><td>127</td><td>오스템임플란트(048260)</td><td>임플란트</td><td>1,027억</td><td class='pos'>+5.3%</td><td>-23.6%</td><td>+16.1%</td><td><span class='ratebadge hold'>Hold</span></td></tr><tr><td>128</td><td>덴티움(145720)</td><td>임플란트</td><td>1,027억</td><td class='pos'>+5.3%</td><td>-23.6%</td><td>+16.1%</td><td><span class='ratebadge hold'>Hold</span></td></tr><tr><td>129</td><td>디오(039840)</td><td>임플란트</td><td>1,027억</td><td class='pos'>+5.3%</td><td>-23.6%</td><td>+16.1%</td><td><span class='ratebadge hold'>Hold</span></td></tr><tr><td>130</td><td>메타바이오메드(059210)</td><td>봉합재 (살균한 외과용, 흡수성 실 </td><td>76억</td><td class='pos'>+5.2%</td><td>+16.8%</td><td>+2.7%</td><td><span class='ratebadge hold'>Hold</span></td></tr><tr><td>131</td><td>국도화학(007690)</td><td>Epoxy</td><td>1,046억</td><td class='pos'>+1.8%</td><td>-16.1%</td><td>-2.9%</td><td><span class='ratebadge hold'>Hold</span></td></tr><tr><td>132</td><td>바텍(043150)</td><td>치과영상의료기기</td><td>326억</td><td class='pos'>+1.3%</td><td>-18.3%</td><td>+4.3%</td><td><span class='ratebadge hold'>Hold</span></td></tr><tr><td>133</td><td>제이브이엠(054950)</td><td>약포장지, 열전사 프린팅 리본</td><td>95억</td><td class='pos'>+1.2%</td><td>-8.9%</td><td>+15.1%</td><td><span class='ratebadge hold'>Hold</span></td></tr><tr><td>134</td><td>대한전선(001440)</td><td>해저 매설용 케이블10kV~100kV, 해저 매설용 케이블1000V~10kV</td><td>1,747억</td><td class='neg'>-1.8%</td><td>-27.5%</td><td>+11.3%</td><td><span class='ratebadge hold'>Hold</span></td></tr><tr><td>135</td><td>LS(006260)</td><td>해저 매설용 케이블10kV~100kV, 해저 매설용 케이블1000V~10kV</td><td>1,747억</td><td class='neg'>-1.8%</td><td>-27.5%</td><td>+11.3%</td><td><span class='ratebadge hold'>Hold</span></td></tr><tr><td>136</td><td>동성화인텍(033500)</td><td>초저온보냉PU</td><td>346억</td><td class='neg'>-5.5%</td><td>-15.4%</td><td>-0.7%</td><td><span class='ratebadge hold'>Hold</span></td></tr><tr><td>137</td><td>비씨엔씨(146320)</td><td>반도체 플라스마 식각공정용 합성쿼츠 </td><td>53억</td><td class='neg'>-5.8%</td><td>+10.4%</td><td>+13.7%</td><td><span class='ratebadge hold'>Hold</span></td></tr><tr><td>138</td><td>원익QNC(074600)</td><td>반도체 플라스마 식각공정용 합성쿼츠 </td><td>53억</td><td class='neg'>-5.8%</td><td>+10.4%</td><td>+13.7%</td><td><span class='ratebadge hold'>Hold</span></td></tr><tr><td>139</td><td>피엔티(137400)</td><td>2차전지 코터, 2차전지 프레스</td><td>4,089억</td><td class='neg'>-6.0%</td><td>+4.3%</td><td>+30.2%</td><td><span class='ratebadge hold'>Hold</span></td></tr><tr><td>140</td><td>퀀타매트릭스(317690)</td><td>신속 항균제감수성검사 dRAST2</td><td>354억</td><td class='neg'>-6.1%</td><td>+0.2%</td><td>-7.3%</td><td><span class='ratebadge hold'>Hold</span></td></tr><tr><td>141</td><td>LSELECTRIC(010120)</td><td>직류용배선차단기</td><td>269억</td><td class='neg'>-7.4%</td><td>-24.4%</td><td>+1.7%</td><td><span class='ratebadge hold'>Hold</span></td></tr><tr><td>142</td><td>효성티앤씨(298020)</td><td>스판덱스1</td><td>105억</td><td class='neg'>-10.5%</td><td>-12.8%</td><td>-7.0%</td><td><span class='ratebadge reduce'>Reduce</span></td></tr><tr><td>143</td><td>DSR(155660)</td><td>산업용합성섬유로프</td><td>74억</td><td class='neg'>-13.3%</td><td>+12.4%</td><td>-14.8%</td><td><span class='ratebadge reduce'>Reduce</span></td></tr><tr><td>144</td><td>빅솔론(093190)</td><td>모바일프린터</td><td>166억</td><td class='neg'>-14.4%</td><td>-6.8%</td><td>-10.3%</td><td><span class='ratebadge reduce'>Reduce</span></td></tr><tr><td>145</td><td>로보티즈(108490)</td><td>인간크기 휴머노이드로봇 플랫폼, 로봇스마트액추에이터</td><td>1,370억</td><td class='neg'>-16.1%</td><td>-4.7%</td><td>-8.4%</td><td><span class='ratebadge reduce'>Reduce</span></td></tr><tr><td>146</td><td>하이트진로(000080)</td><td>소주</td><td>99억</td><td class='neg'>-17.0%</td><td>-18.4%</td><td>+6.5%</td><td><span class='ratebadge reduce'>Reduce</span></td></tr><tr><td>147</td><td>에스피지(058610)</td><td>기타 산업용 로봇</td><td>259억</td><td class='neg'>-18.3%</td><td>-18.8%</td><td>-8.0%</td><td><span class='ratebadge reduce'>Reduce</span></td></tr><tr><td>148</td><td>로보스타(090360)</td><td>기타 산업용 로봇</td><td>259억</td><td class='neg'>-18.3%</td><td>-18.8%</td><td>-8.0%</td><td><span class='ratebadge reduce'>Reduce</span></td></tr><tr><td>149</td><td>경동나비엔(009450)</td><td>가스물가열기, 가스보일러</td><td>778억</td><td class='neg'>-22.4%</td><td>+9.8%</td><td>+14.4%</td><td><span class='ratebadge reduce'>Reduce</span></td></tr><tr><td>150</td><td>레이(228670)</td><td>치과용 구강스캐너</td><td>187억</td><td class='neg'>-24.2%</td><td>-23.8%</td><td>-9.4%</td><td><span class='ratebadge reduce'>Reduce</span></td></tr><tr><td>151</td><td>이오테크닉스(039030)</td><td>레이저마커</td><td>35억</td><td class='neg'>-24.4%</td><td>-60.2%</td><td>-41.8%</td><td><span class='ratebadge reduce'>Reduce</span></td></tr><tr><td>152</td><td>디알텍(214680)</td><td>의료용디텍터</td><td>49억</td><td class='neg'>-27.1%</td><td>-15.3%</td><td>-1.3%</td><td><span class='ratebadge reduce'>Reduce</span></td></tr><tr><td>153</td><td>레이언스(228850)</td><td>의료용디텍터</td><td>49억</td><td class='neg'>-27.1%</td><td>-15.3%</td><td>-1.3%</td><td><span class='ratebadge reduce'>Reduce</span></td></tr><tr><td>154</td><td>뷰웍스(100120)</td><td>의료용디텍터</td><td>49억</td><td class='neg'>-27.1%</td><td>-15.3%</td><td>-1.3%</td><td><span class='ratebadge reduce'>Reduce</span></td></tr><tr><td>155</td><td>우리산업(215360)</td><td>PTC히터</td><td>37억</td><td class='neg'>-43.1%</td><td>+16.5%</td><td>+13.3%</td><td><span class='ratebadge reduce'>Reduce</span></td></tr><tr><td>156</td><td>제룡전기(033100)</td><td>소형변압기1, 소형변압기2</td><td>231억</td><td class='neg'>-44.7%</td><td>-36.7%</td><td>-7.2%</td><td><span class='ratebadge reduce'>Reduce</span></td></tr><tr><td>157</td><td>테크윙(089030)</td><td>Test Handler, Probe Station</td><td>1,416억</td><td class='neg'>-60.9%</td><td>+7.0%</td><td>-16.6%</td><td><span class='ratebadge sell'>Sell</span></td></tr>
+</table>
+</section>
+
+<footer>
+※ 본 분석은 관세청 수출입 통계(HS Code 기준)를 기업 매핑하여 산출한 참고 자료이며, 기업 전체 매출·영업이익과는 차이가 있을 수 있습니다.<br>
+※ 동일 품목에 복수 기업이 매핑된 경우(예: 삼성전자·SK하이닉스 D램/HBM) 품목 전체 수출액이 각 기업에 동일하게 반영되어 개별사 실적과 다를 수 있습니다.<br>
+※ 저기저효과(전년동월 이례적 저점)로 YoY가 과장된 종목은 카드 내 태그로 표시했으나, 태그가 없더라도 절대금액 레벨을 함께 확인하시기 바랍니다.<br>
+※ 투자 참고용 자료이며 투자 권유가 아닙니다. 최종 투자 판단과 책임은 투자자 본인에게 있습니다.<br>
+<b>TNBfolio</b>
+</footer>
+
+</div>
+</body>
+</html>
