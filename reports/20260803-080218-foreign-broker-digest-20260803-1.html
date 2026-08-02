@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TNBfolio · 외국계 증권사 리포트 요약 · 2026.08.03</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Noto+Serif+KR:wght@300;400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root{
+    --navy:#1B2A4A;
+    --gold:#9A6E00;
+    --gold-bright:#C4A35A;
+    --white:#ffffff;
+    --off:#f8f7f5;
+    --border:#e8e6e0;
+    --bull:#2E7D52;
+    --bear:#C8392B;
+    --base:#1A5C9E;
+    --neutral:#888780;
+    --new:#534AB7;
+    --ink:#1c1c1a;
+    --muted:#5f5e5a;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--white);
+    color:var(--ink);
+    font-family:'Noto Serif KR', serif;
+    font-weight:400;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'JetBrains Mono', monospace;}
+  .display{font-family:'DM Serif Display', serif;}
+
+  /* ===== HEADER ===== */
+  header.site{
+    background:var(--navy);
+    padding:22px 40px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  header.site .brand{
+    font-family:'DM Serif Display', serif;
+    font-size:26px;
+    color:var(--gold-bright);
+    letter-spacing:0.5px;
+  }
+  header.site .meta{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:rgba(255,255,255,0.5);
+    letter-spacing:1px;
+  }
+
+  /* ===== TITLE BAND ===== */
+  .title-band{
+    padding:56px 40px 40px;
+    max-width:1200px;
+    margin:0 auto;
+    border-bottom:1px solid var(--border);
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    letter-spacing:3px;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin-bottom:14px;
+  }
+  h1{
+    font-family:'DM Serif Display', serif;
+    font-weight:400;
+    font-size:42px;
+    color:var(--navy);
+    margin:0 0 14px;
+    line-height:1.25;
+  }
+  .sub{
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    color:var(--muted);
+  }
+
+  /* ===== THEME BANNER ===== */
+  .banner{
+    background:var(--off);
+    padding:32px 40px;
+  }
+  .banner-inner{
+    max-width:1200px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:1.4fr repeat(3,0.7fr) 1.3fr;
+    gap:24px;
+    align-items:start;
+  }
+  .banner-block .label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:8px;
+  }
+  .banner-block .value{
+    font-family:'DM Serif Display', serif;
+    font-size:22px;
+    line-height:1.3;
+  }
+  .banner-block .value.count{
+    font-family:'JetBrains Mono', monospace;
+    font-size:30px;
+    font-weight:600;
+  }
+  .banner-block.themes .value{ color:var(--navy); font-size:19px; }
+  .banner-block.bull .value{ color:var(--bull); }
+  .banner-block.neu .value{ color:var(--neutral); }
+  .banner-block.bear .value{ color:var(--bear); }
+  .banner-block.moves .names{
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    line-height:1.9;
+  }
+  .banner-block.moves .up{ color:var(--base); }
+  .banner-block.moves .down{ color:var(--bear); }
+
+  /* ===== CHART SECTION ===== */
+  .chart-section{
+    max-width:1200px;
+    margin:0 auto;
+    padding:56px 40px 20px;
+  }
+  .section-head{
+    display:flex;
+    align-items:baseline;
+    gap:14px;
+    margin-bottom:28px;
+  }
+  .section-head h2{
+    font-family:'DM Serif Display', serif;
+    font-weight:400;
+    font-size:26px;
+    color:var(--navy);
+    margin:0;
+  }
+  .section-head .tag{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+    letter-spacing:1px;
+  }
+  .chart-grid{
+    display:grid;
+    grid-template-columns:1.4fr 1fr 1.3fr;
+    gap:24px;
+  }
+  .chart-box{
+    border:1px solid var(--border);
+    padding:20px 20px 8px;
+    background:var(--white);
+  }
+  .chart-box .chart-title{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+    letter-spacing:0.5px;
+    margin-bottom:14px;
+    text-transform:uppercase;
+  }
+  .chart-box canvas{ max-height:260px; }
+  .chart-note{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+    padding:16px 40px 0;
+    max-width:1200px;
+    margin:0 auto;
+  }
+
+  /* ===== CARD GRID ===== */
+  .cards-section{
+    max-width:1200px;
+    margin:0 auto;
+    padding:56px 40px;
+  }
+  .card-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));
+    gap:20px;
+  }
+  .card{
+    position:relative;
+    border:1px solid var(--border);
+    padding:20px 20px 18px 22px;
+    background:var(--white);
+  }
+  .card::before{
+    content:"";
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width:3px;
+  }
+  .card.bar-bull::before{ background:var(--bull); }
+  .card.bar-base::before{ background:var(--base); }
+  .card.bar-new::before{ background:var(--new); }
+  .card.bar-neutral::before{ background:var(--neutral); }
+  .card.bar-bear::before{ background:var(--bear); }
+
+  .card-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    margin-bottom:2px;
+  }
+  .card-name{
+    font-family:'DM Serif Display', serif;
+    font-size:20px;
+    color:var(--ink);
+    line-height:1.3;
+    padding-right:8px;
+  }
+  .badge{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    font-weight:600;
+    padding:4px 9px;
+    white-space:nowrap;
+    letter-spacing:0.3px;
+  }
+  .badge-bull{ background:#eaf3de; color:var(--bull); }
+  .badge-up{ background:#e6f1fb; color:var(--base); }
+  .badge-new{ background:#eeedfe; color:var(--new); }
+  .badge-neutral{ background:#f1efea; color:var(--muted); }
+  .badge-bear{ background:#fcebeb; color:var(--bear); }
+
+  .card-broker{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    color:var(--muted);
+    margin-bottom:14px;
+  }
+  .card-tp{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    padding:12px 0;
+    border-top:1px solid var(--border);
+    border-bottom:1px solid var(--border);
+    margin-bottom:14px;
+    flex-wrap:wrap;
+  }
+  .card-tp .tp-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+  }
+  .card-tp .tp-value{
+    font-family:'JetBrains Mono', monospace;
+    font-size:17px;
+    font-weight:600;
+    color:var(--ink);
+  }
+  .card-tp .tp-change{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+  }
+  .tp-change.up{ color:var(--base); }
+  .tp-change.down{ color:var(--bear); }
+  .tp-change.flat{ color:var(--muted); }
+  .tp-change.newcov{ color:var(--new); }
+
+  .card-points{
+    list-style:none;
+    margin:0; padding:0;
+    font-family:'Noto Serif KR', serif;
+    font-weight:300;
+    font-size:13.5px;
+    line-height:1.75;
+    color:#333230;
+  }
+  .card-points li{
+    padding-left:14px;
+    position:relative;
+    margin-bottom:7px;
+  }
+  .card-points li::before{
+    content:"—";
+    position:absolute;
+    left:0;
+    color:var(--muted);
+  }
+  .card-points li:last-child{ margin-bottom:0; }
+
+  /* ===== EDITORIAL ===== */
+  .editorial-section{
+    max-width:1200px;
+    margin:0 auto;
+    padding:20px 40px 60px;
+  }
+  .editorial-block{
+    border-left:3px solid var(--border);
+    padding:6px 0 6px 28px;
+    margin-bottom:44px;
+  }
+  .editorial-block:last-child{ margin-bottom:0; }
+  .editorial-block:nth-child(1){ border-left-color:var(--bull); }
+  .editorial-block:nth-child(2){ border-left-color:var(--base); }
+  .editorial-block:nth-child(3){ border-left-color:var(--gold); }
+  .editorial-block:nth-child(4){ border-left-color:var(--bear); }
+  .ed-eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:10px;
+  }
+  .ed-title{
+    font-family:'DM Serif Display', serif;
+    font-size:24px;
+    color:var(--navy);
+    margin:0 0 14px;
+  }
+  .ed-body{
+    font-family:'Noto Serif KR', serif;
+    font-weight:400;
+    font-size:15px;
+    line-height:1.95;
+    color:#292826;
+  }
+  .ed-body strong{
+    font-weight:600;
+    color:var(--navy);
+  }
+
+  /* ===== FOOTER ===== */
+  footer.site{
+    background:var(--navy);
+    padding:26px 40px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  footer.site .brand{
+    font-family:'DM Serif Display', serif;
+    font-size:20px;
+    color:var(--gold-bright);
+  }
+  footer.site .foot-meta{
+    text-align:right;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:rgba(255,255,255,0.55);
+    line-height:1.7;
+  }
+
+  @media (max-width:860px){
+    header.site, .title-band, .banner, .chart-section, .cards-section, .editorial-section, footer.site{
+      padding-left:20px; padding-right:20px;
+    }
+    .banner-inner{ grid-template-columns:1fr 1fr; }
+    .chart-grid{ grid-template-columns:1fr; }
+    h1{ font-size:32px; }
+  }
+</style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="brand">TNBfolio</div>
+  <div class="meta">MARKET INTELLIGENCE · KRX · 2026.08.03</div>
+</header>
+
+<section class="title-band">
+  <div class="eyebrow">Broker Report Digest</div>
+  <h1 class="display">외국계 증권사 리포트 요약</h1>
+  <div class="sub">2026년 8월 3일 · Goldman Sachs, Morgan Stanley, JP Morgan, Citi, UBS, HSBC, Macquarie — 24건</div>
+</section>
+
+<section class="banner">
+  <div class="banner-inner">
+    <div class="banner-block themes">
+      <div class="label">오늘의 핵심 테마</div>
+      <div class="value">전력기기·원전 슈퍼사이클 / AI 인프라 밸류체인 / 플랫폼 AI 수익화 / 코스피 밸류에이션 리셋</div>
+    </div>
+    <div class="banner-block bull">
+      <div class="label">매수 · 비중확대</div>
+      <div class="value count">10건</div>
+    </div>
+    <div class="banner-block neu">
+      <div class="label">중립</div>
+      <div class="value count">3건</div>
+    </div>
+    <div class="banner-block bear">
+      <div class="label">비중축소</div>
+      <div class="value count">2건</div>
+    </div>
+    <div class="banner-block moves">
+      <div class="label">투자의견 변경</div>
+      <div class="names">
+        <span class="up">▲ 상향 — NAVER, 호텔신라</span><br>
+        <span class="down">▼ 하향 — 에코프로비엠(JP모건)</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="chart-section">
+  <div class="section-head">
+    <h2 class="display">목표주가 비교</h2>
+    <span class="tag">TARGET PRICE · 단위 만원</span>
+  </div>
+  <div class="chart-grid">
+    <div class="chart-box">
+      <div class="chart-title">대형주 · 100만원 이상</div>
+      <canvas id="chartLarge"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">중형 · 10만원 ~ 40만원</div>
+      <canvas id="chartMid"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">소형 · 10만원 미만</div>
+      <canvas id="chartSmall"></canvas>
+    </div>
+  </div>
+</section>
+<div class="chart-note">※ 효성중공업·한화에어로스페이스는 절대 목표주가 규모 차이(10배 이상)로 인해 별도 차트로 분리 표기함. 삼성전자(골드만삭스 컨빅션리스트 신규편입)는 구체적 목표주가 미공개로 차트에서 제외함.</div>
+
+<section class="cards-section">
+  <div class="section-head">
+    <h2 class="display">종목별 투자의견</h2>
+    <span class="tag">15 CARDS</span>
+  </div>
+  <div class="card-grid">
+
+    <!-- 1. 한화에어로스페이스 GS -->
+    <div class="card bar-bull">
+      <div class="card-top">
+        <div class="card-name">한화에어로스페이스</div>
+        <div class="badge badge-bull">매수</div>
+      </div>
+      <div class="card-broker">Goldman Sachs</div>
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">₩1,810,000</span>
+        <span class="tp-change flat">유지</span>
+      </div>
+      <ul class="card-points">
+        <li>2분기 영업이익 1.37조원, 컨센서스 대비 42.3% 상회하는 대형 서프라이즈</li>
+        <li>지상방산 영업이익 5,330억원, 예상 대비 30% 이상 상회하며 수출 마진 약 39% 유지</li>
+        <li>하반기 K9 완제품 출하 본격화로 영업이익률 36%→38%까지 개선 전망</li>
+        <li>방산 수주잔고 38.3조원, 최근 주가 급락은 펀더멘털 훼손 아닌 것으로 판단</li>
+      </ul>
+    </div>
+
+    <!-- 2. 효성중공업 HSBC -->
+    <div class="card bar-bull">
+      <div class="card-top">
+        <div class="card-name">효성중공업</div>
+        <div class="badge badge-bull">매수</div>
+      </div>
+      <div class="card-broker">HSBC</div>
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">₩4,000,000</span>
+        <span class="tp-change flat">유지</span>
+      </div>
+      <ul class="card-points">
+        <li>2분기 신규 수주 3.3조원, HSBC 예상치 2.5조원 대폭 상회</li>
+        <li>연간 수주 가이던스 8.4조원→12조원으로 상향, 매출 성장률 15%→25%로 상향</li>
+        <li>수주잔고 사상 최대 17.5조원, 전년 대비 63% 증가</li>
+        <li>목표주가 상승여력 약 66%, 장기 성장성 시장 과소평가로 판단</li>
+      </ul>
+    </div>
+
+    <!-- 3. 효성중공업 JP모건 -->
+    <div class="card bar-bull">
+      <div class="card-top">
+        <div class="card-name">효성중공업</div>
+        <div class="badge badge-bull">비중확대</div>
+      </div>
+      <div class="card-broker">JP Morgan</div>
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">₩4,100,000</span>
+        <span class="tp-change flat">유지</span>
+      </div>
+      <ul class="card-points">
+        <li>2분기 영업이익률 20.2%, 전력기기 부문은 19%→23%로 개선</li>
+        <li>매출 성장률 가이던스 15%→25% 상향은 하반기 약 35% 성장을 의미</li>
+        <li>미국향 매출 비중 38%까지 확대, 마진 개선 여지 추가 존재</li>
+        <li>현재 주가는 향후 1년 예상 PER 20배 미만으로 매력적이라 평가</li>
+      </ul>
+    </div>
+
+    <!-- 4. 효성중공업 UBS -->
+    <div class="card bar-bull">
+      <div class="card-top">
+        <div class="card-name">효성중공업</div>
+        <div class="badge badge-bull">매수</div>
+      </div>
+      <div class="card-broker">UBS</div>
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">₩3,800,000</span>
+        <span class="tp-change down">↓ ₩4,400,000 → ₩3,800,000</span>
+      </div>
+      <ul class="card-points">
+        <li>AI·데이터센터 투자 우려 반영해 적용 PER 39배→31배로 하향</li>
+        <li>중공업 영업이익률 시장 전망(19%)보다 높은 20.5%로 예상</li>
+        <li>3분기 영업이익 3,490억원, 전년 대비 59% 증가 전망</li>
+        <li>최근 주가 조정은 오히려 비중확대 기회라고 판단</li>
+      </ul>
+    </div>
+
+    <!-- 5. 효성중공업 맥쿼리 -->
+    <div class="card bar-bull">
+      <div class="card-top">
+        <div class="card-name">효성중공업</div>
+        <div class="badge badge-bull">최우선추천</div>
+      </div>
+      <div class="card-broker">Macquarie</div>
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">₩5,100,000</span>
+        <span class="tp-change up">↑ ₩4,700,000 → ₩5,100,000</span>
+      </div>
+      <ul class="card-points">
+        <li>신규 수주 3.3조원, 맥쿼리 예상치 2.2조원 크게 상회</li>
+        <li>미국이 전체 신규 수주 63% 차지, 수주잔고 내 미국 비중 57%까지 확대</li>
+        <li>2026~2028년 EPS 전망 각 2%, 11%, 10% 상향 조정</li>
+        <li>Quanta Services 합작법인 통해 2030년 미국 GCB 점유율 25% 목표</li>
+      </ul>
+    </div>
+
+    <!-- 6. 효성중공업 Citi -->
+    <div class="card bar-bull">
+      <div class="card-top">
+        <div class="card-name">효성중공업</div>
+        <div class="badge badge-bull">최선호</div>
+      </div>
+      <div class="card-broker">Citi</div>
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">₩3,500,000</span>
+        <span class="tp-change down">↓ (추정)₩4,545,000 → ₩3,500,000</span>
+      </div>
+      <ul class="card-points">
+        <li>DCF 목표주가 23% 하향에도 상반기 누적 수주 78.3% 증가로 펀더멘털은 견조</li>
+        <li>Quanta Services와 미국 펜실베이니아 차단기 합작법인 설립, 10월 생산 개시</li>
+        <li>2027년 예상 EPS 연평균 성장률 34%, ROE 31.7% 전망</li>
+        <li>한국·아시아 전력기기 업종 내 최선호 종목 지위 유지</li>
+      </ul>
+    </div>
+
+    <!-- 7. 현대건설 JP모건 -->
+    <div class="card bar-bull">
+      <div class="card-top">
+        <div class="card-name">현대건설</div>
+        <div class="badge badge-bull">비중확대</div>
+      </div>
+      <div class="card-broker">JP Morgan</div>
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">₩170,000</span>
+        <span class="tp-change flat">유지</span>
+      </div>
+      <ul class="card-points">
+        <li>2분기 영업이익 2,620억원, 컨센서스 상회하며 주택·현대엔지니어링 수익성 개선</li>
+        <li>신규 수주 23조원, 연간 목표 33조원의 68% 이미 확보</li>
+        <li>원전은 EPC 전체 계약 대신 부분 계약 방식으로 전환, 미국·불가리아 진행 중</li>
+        <li>텍사스 LNG 발전소 등 데이터센터·발전 파이프라인이 추가 수주 모멘텀</li>
+      </ul>
+    </div>
+
+    <!-- 8. 삼성전자 GS -->
+    <div class="card bar-new">
+      <div class="card-top">
+        <div class="card-name">삼성전자</div>
+        <div class="badge badge-new">컨빅션 신규편입</div>
+      </div>
+      <div class="card-broker">Goldman Sachs</div>
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">비공개</span>
+        <span class="tp-change newcov">아태 컨빅션리스트 신규 편입</span>
+      </div>
+      <ul class="card-points">
+        <li>메모리 수급 격차 2027년 확대, 2028년까지 지속 전망</li>
+        <li>최근 주가 40% 하락으로 2027년 PER 3.1배, PBR 1.2배 수준까지 하락</li>
+        <li>2026~2028년 영업이익 379조원→562조원→650조원 전망, ROE 50% 근접</li>
+        <li>생산능력 60~70% 장기공급계약 확보로 하방 위험 제한적</li>
+      </ul>
+    </div>
+
+    <!-- 9. NAVER 맥쿼리 -->
+    <div class="card bar-base">
+      <div class="card-top">
+        <div class="card-name">NAVER</div>
+        <div class="badge badge-up">상향 · 시장수익률상회</div>
+      </div>
+      <div class="card-broker">Macquarie</div>
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">₩300,000</span>
+        <span class="tp-change up">↑ (추정)₩256,000 → ₩300,000 (+17%)</span>
+      </div>
+      <ul class="card-points">
+        <li>AI 데이터센터 매출 2027년 7,000억원→2032년 21조원, 매출 비중 5%→49% 전망</li>
+        <li>영업이익률 7%→13% 개선, 2027~2032년 매출·이익 연평균 23%·21% 성장</li>
+        <li>N배송 확대로 이커머스 시장점유율 2028년 26%까지 상승 전망</li>
+        <li>인터넷 업종 최선호주로 제시, 국내 AI 데이터센터 경쟁력 최상위 평가</li>
+      </ul>
+    </div>
+
+    <!-- 10. 카카오 맥쿼리 -->
+    <div class="card bar-bull">
+      <div class="card-top">
+        <div class="card-name">카카오</div>
+        <div class="badge badge-bull">시장수익률상회</div>
+      </div>
+      <div class="card-broker">Macquarie</div>
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">₩42,000</span>
+        <span class="tp-change down">↓ ₩83,000 → ₩42,000</span>
+      </div>
+      <ul class="card-points">
+        <li>AI 수익화 속도 지연·자회사 지분구조 변화 반영해 TP 대폭 하향, 부정 요인은 대부분 주가 반영</li>
+        <li>톡비즈 광고·커머스 수익성 15~20% 유지, 2025~2028년 매출 연평균 12% 성장 전망</li>
+        <li>AI 에이전트 카나나 2026년 하반기 카카오톡 도입, 2027년부터 본격 수익화 전망</li>
+        <li>카카오게임즈 연결 제외 등 포트폴리오 단순화로 2026년 영업이익률 11.4% 전망</li>
+      </ul>
+    </div>
+
+    <!-- 11. SOOP JP모건 -->
+    <div class="card bar-neutral">
+      <div class="card-top">
+        <div class="card-name">SOOP</div>
+        <div class="badge badge-neutral">보유</div>
+      </div>
+      <div class="card-broker">JP Morgan</div>
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">₩53,000</span>
+        <span class="tp-change down">↓ ₩58,000 → ₩53,000</span>
+      </div>
+      <ul class="card-points">
+        <li>2분기 영업이익 130억원, 컨센서스 51% 하회하는 실적 충격</li>
+        <li>치지직의 자본력 기반 e스포츠 중계권 확보로 플랫폼 경쟁력 약화 우려</li>
+        <li>2026~2028년 영업이익 전망 각 25%, 10%, 6% 하향 조정</li>
+        <li>PER 6.6배로 역사적 저점, 배당수익률 3~6% 제시로 하락 폭은 일부 제한</li>
+      </ul>
+    </div>
+
+    <!-- 12. 호텔신라 UBS -->
+    <div class="card bar-base">
+      <div class="card-top">
+        <div class="card-name">호텔신라</div>
+        <div class="badge badge-up">상향 · 중립</div>
+      </div>
+      <div class="card-broker">UBS</div>
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">₩49,000</span>
+        <span class="tp-change up">↑ ₩30,000 → ₩49,000</span>
+      </div>
+      <ul class="card-points">
+        <li>매도에서 중립으로 상향, DF1 철수 이후 면세점 수익성 예상보다 빠르게 개선</li>
+        <li>2분기 영업이익 610억원, 컨센서스 530억원 상회, 영업이익률 5.5%p 개선</li>
+        <li>호텔 부문 객실 가동률 75%→84%로 회복, 매출 전년 대비 14% 증가</li>
+        <li>2026·2027년 영업이익 전망 각 44%, 39% 상향, PER 14배로 밸류 매력 부각</li>
+      </ul>
+    </div>
+
+    <!-- 13. 에코프로비엠 UBS -->
+    <div class="card bar-bear">
+      <div class="card-top">
+        <div class="card-name">에코프로비엠</div>
+        <div class="badge badge-bear">매도</div>
+      </div>
+      <div class="card-broker">UBS</div>
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">₩76,000</span>
+        <span class="tp-change flat">유지</span>
+      </div>
+      <ul class="card-points">
+        <li>2분기 영업이익 180억원, 컨센서스 하회하며 지배주주순이익 적자 전환</li>
+        <li>2026~2028년 판매량 전망 29~44% 하향, 2026년 순이익 흑자→적자로 변경</li>
+        <li>ESS 매출 전분기 대비 54% 급감, 헝가리 공장 고정비 부담 지속</li>
+        <li>PER 방식→PBR 방식 평가 전환, 2027년 예상 PBR 4.5배 적용</li>
+      </ul>
+    </div>
+
+    <!-- 14. 에코프로비엠 JP모건 -->
+    <div class="card bar-bear">
+      <div class="card-top">
+        <div class="card-name">에코프로비엠</div>
+        <div class="badge badge-bear">하향 · 비중축소</div>
+      </div>
+      <div class="card-broker">JP Morgan</div>
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">₩62,000</span>
+        <span class="tp-change down">↓ ₩120,000 → ₩62,000 (-48%)</span>
+      </div>
+      <ul class="card-points">
+        <li>중립에서 비중축소로 하향, 핵심 시장 축소 속 경쟁 심화를 근거로 제시</li>
+        <li>삼성SDI ESS 이원화 조달로 매출 전분기 대비 54% 급감, 원통형만 28% 증가</li>
+        <li>헝가리 공장 연 1만톤 판매 목표 달성 가능성 보수적으로 평가</li>
+        <li>목표 밸류에이션 EV/EBITDA 40배→25배로 하향</li>
+      </ul>
+    </div>
+
+    <!-- 15. 현대제철 UBS -->
+    <div class="card bar-neutral">
+      <div class="card-top">
+        <div class="card-name">현대제철</div>
+        <div class="badge badge-neutral">중립</div>
+      </div>
+      <div class="card-broker">UBS</div>
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">₩28,500</span>
+        <span class="tp-change down">↓ ₩36,000 → ₩28,500</span>
+      </div>
+      <ul class="card-points">
+        <li>글로벌 공급과잉·보호무역으로 2027년 가동률 62% 수준, 해소까지 최대 10년 전망</li>
+        <li>포스코와 미국 루이지애나 58억달러 전기로 합작, 그룹 차원엔 긍정적이나 자체 수익성 효과는 제한적</li>
+        <li>2분기 영업이익 650억원 전망, 컨센서스 760억원 하회 예상</li>
+        <li>2027년 예상 PBR 0.17배로 역사적 저점 근접, 추가 하락 여력은 제한적</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<section class="editorial-section">
+
+  <div class="editorial-block">
+    <div class="ed-eyebrow">Theme 01 · 전력기기 · 원전</div>
+    <h3 class="ed-title display">수주잔고가 증명하는 슈퍼사이클</h3>
+    <div class="ed-body">
+      효성중공업을 커버하는 다섯 개 하우스가 일제히 2분기 실적을 확인했다. 수주잔고 <strong>17.5조원</strong>은 전년 대비 <strong>63%</strong> 증가한 사상 최대 수준이고, 회사 스스로도 연간 수주 목표를 <strong>8.4조원에서 12조원</strong>으로, 매출 성장률 가이던스를 <strong>15%에서 25%</strong>로 끌어올렸다. 다만 브로커 간 목표주가 방향은 갈린다. 맥쿼리는 <strong>470만원에서 510만원</strong>으로 상향하며 최우선추천을 유지했지만, UBS와 Citi는 AI 데이터센터 밸류에이션 부담을 반영해 각각 <strong>380만원, 350만원</strong>으로 낮췄다. 방향이 다른 이유는 실적이 아니라 적용 배수의 눈높이 차이에 있다. 실적 성장 자체에 대한 의심은 어느 리포트에서도 발견되지 않는다.
+      <br><br>
+      현대건설은 원전 계약 구조가 전체 EPC에서 부분 계약으로 옮겨가는 과도기에 있다. 미국 팰리세이즈, 불가리아, Fermi America 모두 자금조달·정부 협상 절차가 남아 있어 대형 계약 체결이 지연되고 있지만, JP모건은 이를 수요 후퇴가 아닌 절차상의 시차로 판단하고 목표주가 <strong>17만원</strong>을 유지했다. 데이터센터·발전 파이프라인이 원전 공백을 상당 부분 메우고 있다는 점도 확인된다.
+    </div>
+  </div>
+
+  <div class="editorial-block">
+    <div class="ed-eyebrow">Theme 02 · AI 인프라 밸류체인</div>
+    <h3 class="ed-title display">공급 부족이 가격결정력으로 번진다</h3>
+    <div class="ed-body">
+      MLCC 시장은 횡보에서 점진적 성장 국면으로 전환되고 있다. 6월 일본 수출금액은 <strong>18.2%</strong> 증가했고 평균판매가격도 <strong>11.0%</strong> 상승했다. AI 서버용 생산 우선 배정으로 범용·중급 제품 공급이 7월부터 9월까지 더 타이트해질 전망이며, 2027년 연간 계약 협상에서 유통업체 대상 가격 인상 통보가 이미 확대되고 있다. 가격 인상이 정착되면 수동소자를 넘어 다른 전자부품 업종까지 협상력이 확산될 수 있다는 관측이다.
+      <br><br>
+      같은 흐름은 하이퍼스케일러 CAPEX 발표에서도 반복된다. 마이크로소프트 잔여계약은 <strong>6,780억달러</strong>로 전년 대비 <strong>84%</strong> 증가했고, 구글 클라우드 수주잔고도 <strong>5,140억달러</strong>까지 늘었다. 시장은 현금흐름 부담에 주목했지만, 수요가 공급을 웃도는 구조 자체는 오히려 강화되고 있다는 것이 맥쿼리의 판단이다. 골드만삭스는 이 흐름의 최대 수혜주로 삼성전자를 아태 컨빅션리스트에 새로 편입했다. 최근 주가가 40% 빠지며 2027년 PER이 <strong>3.1배</strong>까지 내려온 가운데, 메모리 수급 격차가 2028년까지 이어질 것이라는 전망이 편입 근거다.
+    </div>
+  </div>
+
+  <div class="editorial-block">
+    <div class="ed-eyebrow">Theme 03 · 플랫폼 AI 수익화</div>
+    <h3 class="ed-title display">이용자 증가에서 효율 개선으로</h3>
+    <div class="ed-body">
+      맥쿼리는 국내 인터넷 업종의 성장 방식이 바뀌고 있다고 진단한다. 이커머스·광고 시장이 성숙 단계에 접어들면서 앞으로는 AI를 활용한 효율 개선이 성장의 핵심이 된다는 것이다. 올해 업종 주가가 평균 <strong>31%</strong> 하락한 가운데, NAVER는 GPUaaS를 새로운 기업가치 재평가 요인으로 인정받아 투자의견이 중립에서 시장수익률상회로 상향됐다. AI 데이터센터 매출은 2027년 <strong>7,000억원</strong>에서 2032년 <strong>21조원</strong>으로, 전체 매출 비중은 <strong>49%</strong>까지 확대될 것으로 전망된다.
+      <br><br>
+      카카오는 반대로 AI 수익화 속도가 기대에 못 미친다는 평가와 함께 목표주가가 <strong>8.3만원에서 4.2만원</strong>으로 크게 낮아졌다. 다만 부정적 요인이 이미 주가에 상당 부분 반영됐다는 점에서 투자의견 자체는 시장수익률상회로 유지됐다. SOOP는 별풍선·광고 매출이 모두 부진하며 영업이익이 컨센서스를 <strong>51%</strong> 밑도는 충격을 기록했다. 치지직의 자본력 기반 콘텐츠 확장이 SOOP의 강점이던 e스포츠 영역까지 잠식하고 있다는 점이 구조적 부담으로 지적된다.
+    </div>
+  </div>
+
+  <div class="editorial-block">
+    <div class="ed-eyebrow">Theme 04 · 밸류에이션 리셋과 구조 재편</div>
+    <h3 class="ed-title display">낙폭이 만든 비대칭적 기회</h3>
+    <div class="ed-body">
+      코스피는 사상 최대 외국인 순매수로 역대급 일간 상승률을 기록했지만 월간으로는 금융위기 이후 최악의 성과를 냈다. 골드만삭스는 12개월 선행 PER이 <strong>4.7배</strong>까지 내려와 2001년 이후 최저 수준이라는 점을 근거로, 이 정도 낙폭 이후에는 중장기 기대수익률이 높았던 과거 사례를 제시하며 위험 대비 보상이 비대칭적으로 우수하다고 평가했다.
+      <br><br>
+      개별 종목 단에서는 구조조정과 실적 부진이 뒤섞인다. 두산은 SK실트론 지분 <strong>70.61%</strong>를 <strong>2.3조원</strong>에 인수하기로 하며 반도체 중심 포트폴리오 전환에 속도를 냈다. 씨티는 업계 평균 대비 <strong>36%</strong> 할인된 가격이라는 점에서 긍정적으로 평가했다. 반면 에코프로비엠은 ESS 이원화 조달과 북미 수요 부진이 겹치며 JP모건으로부터 투자의견 하향을 받았고, 현대제철은 글로벌 공급과잉 해소까지 최대 10년이 걸릴 수 있다는 평가와 함께 목표주가가 낮아졌다. 호텔신라는 Citi가 실적 전망 하향에도 단기 주가 반등 가능성을 제시했고, 녹십자는 독감백신·알리글로 매출이 하반기로 이연된 일시적 부진으로, 엘앤씨바이오는 유상증자에 따른 희석 부담이 각각의 단기 변수로 남아 있다.
+    </div>
+  </div>
+
+</section>
+
+<footer class="site">
+  <div class="brand">TNBfolio</div>
+  <div class="foot-meta">
+    2026.08.03 · KRX BROKER DIGEST<br>
+    본 자료는 투자 참고용이며 투자 권유가 아닙니다
+  </div>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const BULL = '#2E7D52', BASE = '#1A5C9E', NEUTRAL = '#888780', BEAR = '#C8392B', NEW = '#534AB7';
+  const alpha = (hex) => hex + '33';
+
+  function fmtWon(v){
+    return '₩' + Math.round(v * 10000).toLocaleString('ko-KR');
+  }
+
+  function makeChart(id, labels, values, colors){
+    const ctx = document.getElementById(id).getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: values,
+          backgroundColor: colors.map(alpha),
+          borderColor: colors,
+          borderWidth: 1.5,
+          borderRadius: 2,
+          maxBarThickness: 46
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1B2A4A',
+            titleFont: { family: 'JetBrains Mono', size: 11 },
+            bodyFont: { family: 'JetBrains Mono', size: 12 },
+            padding: 10,
+            callbacks: {
+              label: function(ctx){
+                return '목표주가 ' + fmtWon(ctx.parsed.y);
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { font: { family: 'JetBrains Mono', size: 10 }, color: '#5f5e5a' },
+            grid: { display: false }
+          },
+          y: {
+            beginAtZero: true,
+            ticks: {
+              font: { family: 'JetBrains Mono', size: 10 },
+              color: '#5f5e5a',
+              callback: function(v){ return v + '만원'; }
+            },
+            grid: { color: '#e8e6e0' }
+          }
+        }
+      }
+    });
+  }
+
+  makeChart(
+    'chartLarge',
+    ['한화에어로\n(GS)', '효성중공업\n(HSBC)', '효성중공업\n(JP모건)', '효성중공업\n(UBS)', '효성중공업\n(맥쿼리)', '효성중공업\n(Citi)'],
+    [181, 400, 410, 380, 510, 350],
+    [BULL, BULL, BULL, BULL, BULL, BULL]
+  );
+
+  makeChart(
+    'chartMid',
+    ['현대건설\n(JP모건)', 'NAVER\n(맥쿼리)'],
+    [17, 30],
+    [BULL, BASE]
+  );
+
+  makeChart(
+    'chartSmall',
+    ['에코프로비엠\n(UBS)', '에코프로비엠\n(JP모건)', '현대제철\n(UBS)', '카카오\n(맥쿼리)', '호텔신라\n(UBS)', 'SOOP\n(JP모건)'],
+    [7.6, 6.2, 2.85, 4.2, 4.9, 5.3],
+    [BEAR, BEAR, NEUTRAL, BULL, BASE, NEUTRAL]
+  );
+});
+</script>
+
+</body>
+</html>
