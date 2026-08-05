@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SK텔레콤 2Q26 컨퍼런스 콜 시각화 리포트</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@400;600;700&family=Noto+Serif+KR:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --pentagon-blue: #1B2A4A;
+            --gold: #9A7B2F;
+            --bear-red: #C8392B;
+            --base-blue: #1A5C9E;
+            --bull-green: #2E7D52;
+            --bg-white: #ffffff;
+            --bg-light: #f8f9fa;
+            --bg-card: #f1f3f5;
+            --text-dark: #111111;
+            --text-muted: #555555;
+            --border-color: #e9ecef;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-white);
+            color: var(--text-dark);
+            font-family: 'Noto Serif KR', serif;
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* typography & components */
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .serif-head {
+            font-family: 'DM Serif Display', 'Noto Serif KR', serif;
+        }
+
+        .section-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--gold);
+            letter-spacing: 1.5px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .section-title {
+            font-size: 1.6rem;
+            color: var(--pentagon-blue);
+            margin-bottom: 24px;
+            font-weight: 700;
+            border-bottom: 2px solid var(--pentagon-blue);
+            padding-bottom: 8px;
+        }
+
+        section {
+            margin-bottom: 50px;
+        }
+
+        /* masthead */
+        .masthead {
+            border-bottom: 3px double var(--pentagon-blue);
+            padding-bottom: 28px;
+            margin-bottom: 40px;
+        }
+
+        .eyebrow {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--base-blue);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+        }
+
+        .headline {
+            font-size: 2.2rem;
+            color: var(--pentagon-blue);
+            line-height: 1.3;
+            margin-bottom: 16px;
+            word-break: keep-all;
+        }
+
+        .subhead {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            word-break: keep-all;
+        }
+
+        .meta-strip {
+            display: flex;
+            gap: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        /* kpi cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .kpi-card {
+            background-color: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-top: 4px solid var(--pentagon-blue);
+            padding: 20px;
+            border-radius: 4px;
+        }
+
+        .kpi-title {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .kpi-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--pentagon-blue);
+            margin-bottom: 8px;
+        }
+
+        .kpi-change {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .change-up { color: var(--bull-green); }
+        .change-down { color: var(--bear-red); }
+
+        /* svg chart */
+        .chart-container {
+            background-color: var(--bg-light);
+            border: 1px solid var(--border-color);
+            padding: 24px;
+            border-radius: 4px;
+        }
+
+        /* 2-column cards */
+        .grid-2col {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background-color: var(--bg-light);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: 4px;
+        }
+
+        .card-header {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--pentagon-blue);
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            background-color: var(--pentagon-blue);
+            color: var(--bg-white);
+            padding: 2px 8px;
+            border-radius: 2px;
+        }
+
+        /* table */
+        .custom-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        .custom-table th {
+            background-color: var(--pentagon-blue);
+            color: var(--bg-white);
+            text-align: left;
+            padding: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        .custom-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .custom-table tr:nth-child(even) {
+            background-color: var(--bg-light);
+        }
+
+        .arrow {
+            color: var(--gold);
+            font-weight: bold;
+            margin: 0 8px;
+        }
+
+        /* timeline */
+        .timeline {
+            position: relative;
+            padding-left: 20px;
+            border-left: 2px solid var(--pentagon-blue);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 24px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -26px;
+            top: 6px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--gold);
+            border: 2px solid var(--pentagon-blue);
+        }
+
+        .timeline-date {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--base-blue);
+            margin-bottom: 4px;
+        }
+
+        .timeline-content {
+            font-size: 0.95rem;
+            color: var(--text-dark);
+        }
+
+        /* quote block */
+        .quote-speaker-block {
+            margin-bottom: 30px;
+            background-color: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .speaker-header {
+            background-color: var(--pentagon-blue);
+            color: var(--bg-white);
+            padding: 10px 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .speaker-title {
+            font-size: 0.85rem;
+            color: var(--gold);
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 400;
+        }
+
+        .quote-list {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .quote-item {
+            position: relative;
+            padding-left: 20px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text-dark);
+            border-left: 3px solid var(--gold);
+            background-color: var(--bg-white);
+            padding: 12px 16px;
+        }
+
+        /* footer */
+        .footer {
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .footer span {
+            color: var(--gold);
+            font-weight: 700;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2col {
+                grid-template-columns: 1fr;
+            }
+            .headline {
+                font-size: 1.6rem;
+            }
+        }
+    </style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- 1. 마스트헤드 -->
+    <header class="masthead">
+        <div class="eyebrow">earning conference call report</div>
+        <h1 class="headline serif-head">"선(先) 고객 확보, 후(後) 구축 원칙… AI 데이터센터 5GW 확장 추진"</h1>
+        <p class="subhead">SK텔레콤, 2026년 2분기 영업이익 5,660억 원 기록(YoY +67.3%). AIDC 사업 전담 법인 'SK하이퍼' 설립 및 외부 투자 유치를 통한 재무 리스크 최소화 방침 발표.</p>
+        <div class="meta-strip">
+            <span>DATE: 2026.08.05</span>
+            <span>ISSUE: 2Q26 EARNINGS</span>
+        </div>
+    </header>
+
+    <!-- 2. 핵심 실적 KPI 카드 -->
+    <section>
+        <span class="section-label">01. Key Performance Indicators</span>
+        <h2 class="section-title">2Q26 핵심 실적 요약</h2>
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-title">연결 매출액</div>
+                <div class="kpi-value">4조 3,591억</div>
+                <div class="kpi-change change-up">YoY +0.5% | QoQ -0.8%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">연결 영업이익</div>
+                <div class="kpi-value">5,660억</div>
+                <div class="kpi-change change-up">YoY +67.3% | QoQ +5.3%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">당기순이익</div>
+                <div class="kpi-value">4,660억</div>
+                <div class="kpi-change change-up">YoY +459.8%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">AI DC 매출</div>
+                <div class="kpi-value">1,362억</div>
+                <div class="kpi-change change-up">YoY +92.5%</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. 추이 차트 -->
+    <section>
+        <span class="section-label">02. Financial Trend</span>
+        <h2 class="section-title">최근 주요 실적 추이</h2>
+        <div class="chart-container">
+            <svg viewBox="0 0 800 260" width="100%" height="100%" style="overflow: visible;">
+                <!-- Grid Lines -->
+                <line x1="60" y1="40" x2="760" y2="40" stroke="#e9ecef" stroke-width="1" />
+                <line x1="60" y1="100" x2="760" y2="100" stroke="#e9ecef" stroke-width="1" />
+                <line x1="60" y1="160" x2="760" y2="160" stroke="#e9ecef" stroke-width="1" />
+                <line x1="60" y1="220" x2="760" y2="220" stroke="#1B2A4A" stroke-width="1.5" />
+
+                <!-- Y-Axis Labels -->
+                <text x="50" y="45" font-family="JetBrains Mono" font-size="10" fill="#555555" text-anchor="end">6,000억</text>
+                <text x="50" y="105" font-family="JetBrains Mono" font-size="10" fill="#555555" text-anchor="end">4,000억</text>
+                <text x="50" y="165" font-family="JetBrains Mono" font-size="10" fill="#555555" text-anchor="end">2,000억</text>
+                <text x="50" y="225" font-family="JetBrains Mono" font-size="10" fill="#555555" text-anchor="end">0</text>
+
+                <!-- Bars: 2Q25 (3,383억) -->
+                <rect x="140" y="118.5" width="60" height="101.5" fill="#1A5C9E" rx="3" />
+                <text x="170" y="110" font-family="JetBrains Mono" font-size="11" font-weight="bold" fill="#1B2A4A" text-anchor="middle">3,383억</text>
+                <text x="170" y="240" font-family="JetBrains Mono" font-size="12" fill="#1B2A4A" text-anchor="middle">2Q25</text>
+
+                <!-- Bars: 1Q26 (5,376억) -->
+                <rect x="370" y="58.7" width="60" height="161.3" fill="#1A5C9E" rx="3" />
+                <text x="400" y="50" font-family="JetBrains Mono" font-size="11" font-weight="bold" fill="#1B2A4A" text-anchor="middle">5,376억</text>
+                <text x="400" y="240" font-family="JetBrains Mono" font-size="12" fill="#1B2A4A" text-anchor="middle">1Q26</text>
+
+                <!-- Bars: 2Q26 (5,660억) -->
+                <rect x="600" y="50.2" width="60" height="169.8" fill="#9A7B2F" rx="3" />
+                <text x="630" y="42" font-family="JetBrains Mono" font-size="11" font-weight="bold" fill="#9A7B2F" text-anchor="middle">5,660억</text>
+                <text x="630" y="240" font-family="JetBrains Mono" font-size="12" font-weight="bold" fill="#1B2A4A" text-anchor="middle">2Q26</text>
+            </svg>
+        </div>
+    </section>
+
+    <!-- 4. 실적 동력 섹션 -->
+    <section>
+        <span class="section-label">03. Business Performance Drivers</span>
+        <h2 class="section-title">사업 부문별 주요 성과 및 요인 분석</h2>
+        <div class="grid-2col">
+            <div class="card">
+                <div class="card-header">
+                    <span>AI 데이터센터 & B2B/B2C</span>
+                    <span class="card-tag">HIGH GROWTH</span>
+                </div>
+                <p>AI DC 매출은 데이터센터 가동 확대 및 해저케이블 매출 반영으로 전년 동기 대비 92.5% 급증한 1,362억 원을 기록했다. AI 클라우드, AICC, 에이닷 등 AI B2B/B2C 매출도 클라우드 수주 확대 영향으로 전년 동기 대비 24.5% 증가한 613억 원을 달성했다.</p>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <span>무선 및 유선통신 사업</span>
+                    <span class="card-tag">STABLE BASE</span>
+                </div>
+                <p>이동통신 매출은 2조 5,634억 원으로 전년 대비 1.9% 감소했으나 5G 보급률이 82%까지 상승했다. 유선 부문은 초고속 가입자 및 기가급 회선 비중 확대에 힘입어 전년 대비 3.8% 성장하며 견조한 기저 수익원 역할을 유지했다.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. 증설·투자 계획 테이블 -->
+    <section>
+        <span class="section-label">04. Investment & Infrastructure Plan</span>
+        <h2 class="section-title">AIDC 확장 및 법인 출자 계획</h2>
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>구분</th>
+                    <th>현재 / 초기 단계</th>
+                    <th>중장기 목표</th>
+                    <th>비고 및 자금 조달 전략</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>AI 데이터센터 용량</strong></td>
+                    <td>137MW <span class="arrow">→</span> 5GW (2029년)</td>
+                    <td>15GW (2035년)</td>
+                    <td>선(先) 고객 확보 후 구축 원칙 적용</td>
+                </tr>
+                <tr>
+                    <td><strong>SK하이퍼 출자액</strong></td>
+                    <td>3,300억 원 (2026년)</td>
+                    <td>7,500억 원 이상 (2030년)</td>
+                    <td>FCF 범위 내 집행, 잔여금 분할 출자</td>
+                </tr>
+                <tr>
+                    <td><strong>사업 개발 구조</strong></td>
+                    <td>SKT 직접 투자 부담</td>
+                    <td>외부 투자 유치 (SI, FI, PF)</td>
+                    <td>주도권 유지 및 레버리지 활용</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- 6. 주요 변수 타임라인 -->
+    <section>
+        <span class="section-label">05. Roadmap & Timeline</span>
+        <h2 class="section-title">AIDC 및 인프라 구축 타임라인</h2>
+        <div class="timeline">
+            <div class="timeline-item">
+                <div class="timeline-date">2026년 7월</div>
+                <div class="timeline-content">AIDC 사업개발 전담 독립법인 'SK하이퍼' 설립 완료 (100% 자회사).</div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-date">2026년 연내</div>
+                <div class="timeline-content">SK하이퍼 대상 3,300억 원 우선 투입. 울산 등 주요 지역 부지 확보 및 변전 설비 구축 착수.</div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-date">2029년</div>
+                <div class="timeline-content">AIDC 1단계 목표 5GW 인프라 구축 완료 및 E2A 해저케이블(12,500km) 개통.</div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-date">2035년</div>
+                <div class="timeline-content">AIDC 2단계 목표 총 15GW 확장 가동 추진.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 7. 주주환원 정책 -->
+    <section>
+        <span class="section-label">06. Shareholder Return Policy</span>
+        <h2 class="section-title">주주환원 정책 및 분기 배당</h2>
+        <div class="card" style="border-left: 4px solid var(--bull-green);">
+            <div class="card-header">
+                <span>2Q26 분기 배당금: 주당 830원</span>
+                <span class="card-tag" style="background-color: var(--bull-green);">MAINTAINED</span>
+            </div>
+            <p>SK텔레콤은 대규모 AIDC 투자 발표에도 불구하고 자본 배분의 근본적인 방향성은 변하지 않는다고 밝혔다. 직접 투자는 재무 건전성과 안정적인 배당을 유지하는 수준에서 집행하며, 1분기에 이어 2분기에도 주당 830원의 배당을 결정했다. (배당기준일: 8월 31일, 지급일: 9월 17일)</p>
+        </div>
+    </section>
+
+    <!-- 8. 경영진 발언 섹션 -->
+    <section>
+        <span class="section-label">07. Executive Remarks</span>
+        <h2 class="section-title">경영진 주요 발언 원문</h2>
+
+        <div class="quote-speaker-block">
+            <div class="speaker-header">
+                <span>이재신</span>
+                <span class="speaker-title">SK텔레콤 AI사업개발담당 부사장</span>
+            </div>
+            <div class="quote-list">
+                <div class="quote-item">"최근 AI 인프라 수요 증가에 대해 일시적인 현상이 아닌 추론 시장 성장과 공공·산업 전반의 확장으로 인한 구조적 변화라 평가했다."</div>
+                <div class="quote-item">"중장기적으로 관련 수요가 지속 확대될 것으로 전망했다."</div>
+                <div class="quote-item">"전력, 커넥티비티, 용수 공급을 동시에 갖춘 입지는 전 세계에서 제한적이다."</div>
+                <div class="quote-item">"이러한 측면에서 한국은 글로벌 빅테크의 AI 인프라 투자 수요를 유치할 수 있는 강력한 경쟁력을 갖추고 있다고 강조했다."</div>
+                <div class="quote-item">"현재 SK텔레콤은 글로벌 빅테크들과 구체적인 AI 인프라 수요를 논의 중이다."</div>
+                <div class="quote-item">"2029년까지 목표로 하는 5GW 규모의 인프라는 고객 수요에 맞춰 유연하고 순차적으로 구축해 나갈 것이고, SK하이퍼에 대한 출자금도 상황에 따라 증가할 수 있다."</div>
+                <div class="quote-item">"SK텔레콤이 전체 사업비를 모두 짊어지는 형태가 아니라, 프로젝트를 직접 리드하며 외부 투자를 최대한 유치하는 구조다."</div>
+                <div class="quote-item">"직접적인 투자 규모는 제한적인 수준으로 유지될 것이다."</div>
+                <div class="quote-item">"올해 3300억원을 우선 투입해 초기 인프라 구축에 속도를 내고, 나머지 잔여금은 내년 이후 순차적으로 분할 출자할 계획이다."</div>
+                <div class="quote-item">"재무적 건전성을 유지하는 동시에 외부 레버리지를 적극 활용해 AI 데이터센터 사업의 승인 및 개발 효율성을 극대화하겠다."</div>
+                <div class="quote-item">"부지를 먼저 매입하고 건물을 지은 뒤 고객을 찾는 방식이 아니라, 고객 수요를 먼저 확정 짓고 인프라를 구축하는 것을 사업의 가장 우선 원칙으로 삼고 있다."</div>
+                <div class="quote-item">"고객 수요가 확정된 상태에서 재무적투자자(FI)를 통해 인프라 구축 재원을 확보하는 전략을 취할 것이다."</div>
+                <div class="quote-item">"SK그룹은 AI 인프라 풀스택 자산을 바탕으로 고객 요구, 요건에 대응할 수 있는 역량을 갖추고 있다."</div>
+                <div class="quote-item">"SK텔레콤은 AI 데이터센터 운영 경험과 네트워크 인프라 경쟁력, AI 풀스택 역량을 바탕으로 고객의 요구를 충족할 능력을 갖췄다."</div>
+                <div class="quote-item">"부지와 전력 확보가 용이하고 유연한 사업구조를 갖추기 위해 AIDC 개발을 전담하는 법인을 세운 것이다."</div>
+                <div class="quote-item">"SK하이퍼가 유치와 사업개발을 주도하게 될 것이다."</div>
+                <div class="quote-item">"7500억원을 출자해 울산을 비롯한 수 기가와트급 데이터센터에 투자할 계획이며, 사업 투자의 주도권은 SK텔레콤이 갖되 직접 투자는 최소화하는 방향이다."</div>
+                <div class="quote-item">"올해는 3300억원을 투자하고 잔여 금액은 내년에 분할 출자할 예정이다."</div>
+                <div class="quote-item">"우선 부지 확보와 변전설비 구축 등 초기 사업을 추진하고 있다."</div>
+                <div class="quote-item">"현재도 글로벌 빅테크를 중심으로 AI 인프라 수요와 관련한 협의를 지속적으로 진행하고 있다."</div>
+                <div class="quote-item">"5기가와트 확장은 고객 수요를 바탕으로 유연하게 대응하면서 순차적으로 추진할 것이다."</div>
+            </div>
+        </div>
+
+        <div class="quote-speaker-block">
+            <div class="speaker-header">
+                <span>박종석</span>
+                <span class="speaker-title">SK텔레콤 최고재무책임자 (CFO)</span>
+            </div>
+            <div class="quote-list">
+                <div class="quote-item">"지난달 설립을 발표한 AI DC 사업개발 전담 SK하이퍼에 대한 7500억원 규모 출자 약정은 확정됐으며 5GW 확장을 고려하면 향후 출자 규모가 이보다 늘어날 수 있다."</div>
+                <div class="quote-item">"올해 출자액은 3300억원으로 회사에 무리가 되는 수준은 아니며, 나머지 금액은 내년 이후 분할 출자할 예정이다."</div>
+                <div class="quote-item">"구체적인 투자 계획은 고객사 요구 조건과 사업모델, 일정에 따라 달라질 수 있어 현시점에서 언급하기 이르다."</div>
+                <div class="quote-item">"기가와트급 AI 데이터센터 확장 과정에서는 직접 투자 비중을 최소화할 방침이다."</div>
+                <div class="quote-item">"사업 주도권은 SK텔레콤이 유지하되 실제 구축·운영에 필요한 재원은 고객 확보 이후 전략적 투자자와 재무적 투자자 등 외부 투자 유치를 통해 조달할 계획이다."</div>
+                <div class="quote-item">"AI 데이터센터 사업은 상당한 규모의 투자를 수반하기 때문에 계획된 투자비 전부를 당사가 직접 부담하는 데에는 한계가 있다."</div>
+                <div class="quote-item">"외부 투자를 최대한 활용하고 직접 투자는 재무 건전성과 안정적인 배당을 유지할 수 있는 수준에서 집행하겠다."</div>
+                <div class="quote-item">"기가와트 규모 AI 데이터센터 투자 발표로 자본 배분의 근본적인 방향이 바뀌는 것 아니냐는 우려가 있을 수 있지만 주주환원 기조에는 변화가 없다."</div>
+                <div class="quote-item">"5GW급 AI 데이터센터 사업 추진에 따른 투자 부담에 대한 시장의 우려를 이해하고 있으며 이를 고려해 다양한 방안을 검토하고 있다."</div>
+                <div class="quote-item">"최우선 원칙은 데이터센터를 먼저 구축한 뒤 수요를 확보하는 것이 아니라 고객을 확보한 이후 AI 데이터센터를 구축하는 것이다."</div>
+                <div class="quote-item">"구축에 필요한 재원도 고객 확보 이후 재무적 투자자 유치를 통해 조달할 계획이다."</div>
+                <div class="quote-item">"AI데이터센터 자산을 확보하고 자금을 유연하게 유치하기 위해 SK하이퍼를 설립했다."</div>
+                <div class="quote-item">"SK하이퍼가 AIDC 사업개발을 주도하게 될 것이다."</div>
+                <div class="quote-item">"SK텔레콤은 7500억 원을 출자하기로 했지만 5기가와트 규모로 확장하면 투자금은 늘어날 것이다."</div>
+                <div class="quote-item">"구체적 규모를 언급하기에는 이른 감이 있다."</div>
+                <div class="quote-item">"사업 추진에 필요한 자금은 다양한 외부 투자를 활용해 조달할 예정이다."</div>
+                <div class="quote-item">"SK텔레콤의 직접 투자는 재무 건전성과 배당을 안정적으로 유지할 수 있는 수준에서 이뤄질 것이다."</div>
+                <div class="quote-item">"AI데이터센터 투자와 배당 안정성 사이에서 균형을 유지하겠다."</div>
+                <div class="quote-item">"초기 투자 이후 실제 AI데이터센터를 운영하는 데 필요한 자금도 투자 유치를 통해 확보하겠다."</div>
+                <div class="quote-item">"국내 1등 AI 인프라 사업자가 되겠다."</div>
+                <div class="quote-item">"상반기에는 통신사업의 내실을 다지는 한편 AI 데이터센터 사업이 빠르게 확장할 수 있는 기틀을 마련했다."</div>
+                <div class="quote-item">"한국이 아시아의 AI 인프라 허브로 도약하는 데 SK텔레콤이 주도적 역할을 하도록 최선을 다할 것이다."</div>
+                <div class="quote-item">"SK하이퍼는 SK브로드밴드가 추진 중인 기존 데이터센터 사업과는 별개로 15GW AI DC 사업 추진을 위해 신설한 독립법인으로서 이미 별도의 인력과 조직을 갖추고 있다."</div>
+                <div class="quote-item">"향후 사업 추진 과정에서 SK텔레콤의 글로벌 고객 네트워크와 사업 개발 역량, SK브로드밴드의 데이터 센터 구축, 운영 전문성을 적극 활용하는 등 그룹 차원의 역량을 밀접 결합하여 사업 시너지를 만들어갈 계획이다."</div>
+                <div class="quote-item">"SK텔레콤은 이제 대한민국 1등 통신사업자를 넘어 대한민국을 대표하는 1등 AI 인프라 사업자로 진화하고자 한다."</div>
+                <div class="quote-item">"통신사업의 안정적인 수익을 기반으로 내실을 다지고 대한민국이 아시아 AI 인프라 허브로 도약하는데 SK텔레콤이 주도적인 역할을 하겠다."</div>
+                <div class="quote-item">"1분기에 이어 2분기에도 예년 수준인 주당 830원의 분기배당을 결정했으며 앞으로도 투자와 주주환원의 균형을 유지하겠다."</div>
+                <div class="quote-item">"AI 데이터센터 사업의 중요한 선행 요건 가운데 하나는 부지와 전력 확보다."</div>
+                <div class="quote-item">"당사는 이러한 핵심 자산을 선제적으로 확보하는 동시에 외부 자금을 적극 활용할 수 있는 유연한 사업 구조를 마련하기 위해 SK하이퍼를 설립했다."</div>
+                <div class="quote-item">"SK하이퍼는 AI 데이터센터 사업 개발을 전담하는 회사다."</div>
+                <div class="quote-item">"확보한 부지와 전력을 기반으로 고객을 유치하고 사업 개발을 주도하는 역할을 수행할 예정이다."</div>
+                <div class="quote-item">"당사는 SK하이퍼에 7500억원을 출자하기로 약정했다."</div>
+                <div class="quote-item">"해당 자금으로 울산을 비롯한 사업 부지를 확보하고 기가와트급 AI 데이터센터에 필요한 변전설비를 구축하는 등 초기 사업 개발을 추진할 계획이다."</div>
+                <div class="quote-item">"AI 데이터센터 사업은 상당한 규모의 투자가 수반되는 사업이다."</div>
+                <div class="quote-item">"계획한 전체 규모를 당사가 직접 투자하는 것은 현실적으로 한계가 있다."</div>
+                <div class="quote-item">"사업 추진에 필요한 투자금은 전략적 파트너의 투자와 프로젝트파이낸싱 등 다양한 외부 투자 방식을 최대한 활용해 조달할 계획이다."</div>
+                <div class="quote-item">"기가와트급 사업에서는 기존 데이터센터 투자 방식과 달리 사업의 주도권은 당사가 확보하되 직접 투자는 최소화하는 방향을 갖고 있다."</div>
+                <div class="quote-item">"SK하이퍼에 약정한 7500억원 가운데 올해 투자하는 금액은 3300억원이다."</div>
+                <div class="quote-item">"당사의 잉여현금흐름(FCF)을 고려하면 무리가 되는 수준은 아니다."</div>
+                <div class="quote-item">"나머지 금액은 내년 이후 분할 출자할 계획이다."</div>
+                <div class="quote-item">"기가와트급 AI 데이터센터 투자 발표로 자본 배분 방향성이 근본적으로 바뀌는 것이 아니냐는 우려가 있을 수 있다."</div>
+                <div class="quote-item">"다만 향후 투자에는 외부 자금을 최대한 확보하고 직접 투자는 재무구조의 건전성과 안정적인 배당을 유지할 수 있는 수준에서 진행하겠다."</div>
+                <div class="quote-item">"5기가와트 사업 추진에 따른 SK텔레콤의 투자 규모를 둘러싼 시장의 우려를 충분히 이해하고 있다."</div>
+                <div class="quote-item">"회사는 이러한 우려를 고려해 다양한 선택지를 검토하고 있다."</div>
+                <div class="quote-item">"다만 회사의 최우선 원칙은 데이터센터를 먼저 구축하고 이후 수요를 확보하는 것이 아니다."</div>
+                <div class="quote-item">"고객을 먼저 확보한 뒤 데이터센터를 구축한다는 원칙을 견지할 계획이다."</div>
+                <div class="quote-item">"데이터센터 구축에 필요한 재원도 고객을 확보한 이후 재무적 투자자 유치 등을 통해 마련할 예정이다."</div>
+            </div>
+        </div>
+
+        <div class="quote-speaker-block">
+            <div class="speaker-header">
+                <span>최동희</span>
+                <span class="speaker-title">SK텔레콤 AI전략기획실장</span>
+            </div>
+            <div class="quote-list">
+                <div class="quote-item">"SK텔레콤은 그동안 핵심 기술 확보와 신규 사업 기회 창출을 위해 전략적 투자를 지속해왔다."</div>
+                <div class="quote-item">"SK하이닉스 AI 투자법인(AI Co.)에 참여하는 것이 당사의 AI 데이터센터 사업 경쟁력을 더욱 강화하는 데 효과적이라고 판단해 출자를 결정했다."</div>
+                <div class="quote-item">"출자 방식은 출자금 납입 요청에 따른 분할 납부 구조로 SK텔레콤의 재무 부담은 최소화했다."</div>
+                <div class="quote-item">"향후 AI 투자 법인을 통해서 AI 데이터센터 핵심 기술과 글로벌 파트너십을 적시에 확보할 계획이다."</div>
+                <div class="quote-item">"이사회 참여를 통해서 AI 사업 경쟁력 강화에 필요한 역량과 네트워킹을 지속 확보하는 등 시너지를 만들어 갈 계획이다."</div>
+                <div class="quote-item">"AI 사업을 확대하는 과정에서 핵심 기술과 신규 사업 기회를 확보하기 위해 다양한 전략적 투자를 실행해 왔다."</div>
+                <div class="quote-item">"최근 AI 생태계가 빠르게 발전하면서 관련 기업들의 가치가 급상승하고 있다."</div>
+                <div class="quote-item">"유망한 투자 기회를 확보하기 위한 글로벌 경쟁도 심화하고 있다."</div>
+                <div class="quote-item">"이러한 상황에서 글로벌 시장의 입지를 기반으로 AI 혁신기업에 투자하고 AI 인프라 가치사슬의 핵심 역량 확보를 추진하는 SK하이닉스의 AI 투자법인에 참여하는 것이 당사의 AI 데이터센터 사업 경쟁력을 강화하는 데 효과적이라고 판단했다."</div>
+                <div class="quote-item">"현재 AI 투자법인은 경영진 구성을 진행하고 있다."</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 9. 푸터 -->
+    <footer class="footer">
+        <p><span>by TNBfolio</span> | SK텔레콤 2Q26 컨퍼런스 콜 시각화 리포트</p>
+    </footer>
+
+</div>
+
+</body>
+</html>
