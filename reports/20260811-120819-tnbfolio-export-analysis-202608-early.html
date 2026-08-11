@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TNBfolio 수출데이터 분석 | 2026년 8월 (1~10일 조기 잠정치)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --green:#0e8f5e; --green-bg:#e8f6f0;
+    --blue:#1d5fd6;  --blue-bg:#eaf1fd;
+    --yellow:#b9880a; --yellow-bg:#fbf3e0;
+    --orange:#c15b1a; --orange-bg:#fdefe4;
+    --red:#c02b3c; --red-bg:#fbeaec;
+    --ink:#16181d; --sub:#5b6270; --line:#e6e8ec;
+    --bg:#ffffff; --panel:#fafafb;
+    --mono:'JetBrains Mono', 'D2Coding', monospace;
+    --sans:'Noto Sans KR', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.5;}
+  .wrap{max-width:1180px; margin:0 auto; padding:28px 20px 80px;}
+
+  /* Header */
+  header.top{border-bottom:3px solid var(--ink); padding-bottom:18px; margin-bottom:18px;}
+  .eyebrow{font-family:var(--mono); font-size:12px; letter-spacing:.12em; color:var(--sub); text-transform:uppercase;}
+  h1{font-size:28px; font-weight:900; margin:6px 0 4px; letter-spacing:-0.01em;}
+  .subline{color:var(--sub); font-size:14px; margin-bottom:14px;}
+  .badges{display:flex; gap:8px; flex-wrap:wrap;}
+  .badge{font-family:var(--mono); font-size:12px; font-weight:700; padding:5px 11px; border-radius:20px; border:1px solid var(--line);}
+  .badge.sb{background:var(--green-bg); color:var(--green); border-color:var(--green);}
+  .badge.b{background:var(--blue-bg); color:var(--blue); border-color:var(--blue);}
+  .badge.h{background:var(--yellow-bg); color:var(--yellow); border-color:var(--yellow);}
+  .badge.rs{background:var(--red-bg); color:var(--red); border-color:var(--red);}
+  .badge.upd{background:var(--ink); color:#fff; border-color:var(--ink);}
+
+  /* Methodology bar */
+  .method{background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--ink); border-radius:6px; padding:14px 16px; margin-bottom:22px; font-size:13px; color:var(--sub);}
+  .method b{color:var(--ink);}
+  .method .warn{color:var(--orange); font-weight:700;}
+
+  /* Update note */
+  .update-note{background:#fff8e8; border:1px solid #e8c877; border-radius:6px; padding:12px 16px; margin-bottom:22px; font-size:13px;}
+  .update-note b{color:var(--yellow);}
+
+  /* Section headers */
+  h2.sec{font-size:16px; font-weight:900; margin:38px 0 14px; padding-bottom:8px; border-bottom:2px solid var(--ink); display:flex; align-items:center; gap:8px;}
+  h2.sec .tag{font-family:var(--mono); font-size:11px; padding:2px 8px; border-radius:4px; color:#fff;}
+  .tag.sb{background:var(--green);} .tag.b{background:var(--blue);} .tag.h{background:var(--yellow);} .tag.rs{background:var(--red);}
+
+  /* Insight box */
+  .insights{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:8px;}
+  .insight{border-radius:8px; padding:14px 16px; font-size:13px;}
+  .insight.pos{background:var(--green-bg); border-left:4px solid var(--green);}
+  .insight.neu{background:var(--yellow-bg); border-left:4px solid var(--yellow);}
+  .insight.neg{background:var(--red-bg); border-left:4px solid var(--red);}
+  .insight b{display:block; font-size:13px; margin-bottom:4px;}
+
+  /* Grid of cards */
+  .grid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px;}
+  .card{position:relative; border:1px solid var(--line); border-radius:8px; padding:16px 16px 14px 18px; background:#fff; overflow:hidden;}
+  .card::before{content:''; position:absolute; left:0; top:0; bottom:0; width:5px;}
+  .card.sb::before{background:var(--green);}
+  .card.b::before{background:var(--blue);}
+  .card.rs::before{background:var(--red);}
+  .card .co{font-size:14px; font-weight:700;}
+  .card .item{font-family:var(--mono); font-size:11px; color:var(--sub); margin-bottom:8px;}
+  .metrics{display:flex; gap:14px; margin:10px 0 8px; font-family:var(--mono);}
+  .metrics .m .v{font-size:16px; font-weight:700;}
+  .metrics .m .l{font-size:10px; color:var(--sub);}
+  .v.pos{color:var(--green);} .v.neg{color:var(--red);}
+  .spark{display:flex; align-items:flex-end; gap:3px; height:34px; margin:8px 0;}
+  .spark div{flex:1; background:var(--line); border-radius:1px;}
+  .spark div.hi{background:var(--ink);}
+  .note{font-size:12px; color:var(--sub); border-top:1px dashed var(--line); padding-top:8px; margin-top:6px;}
+  .flag{display:inline-block; font-size:10px; font-family:var(--mono); background:var(--yellow-bg); color:var(--yellow); padding:2px 6px; border-radius:4px; margin-top:6px;}
+
+  /* Hold table */
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  table.hold th{text-align:left; font-family:var(--mono); font-size:11px; color:var(--sub); border-bottom:2px solid var(--ink); padding:8px 10px;}
+  table.hold td{padding:8px 10px; border-bottom:1px solid var(--line);}
+  table.hold td.num{font-family:var(--mono); text-align:right;}
+
+  /* Surprise/warning */
+  .sw{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:14px;}
+  .sw-box{border-radius:8px; padding:16px; font-size:13px;}
+  .sw-box.surprise{background:var(--blue-bg); border:1px solid var(--blue);}
+  .sw-box.warning{background:var(--red-bg); border:1px solid var(--red);}
+  .sw-box h3{margin:0 0 10px; font-size:14px;}
+  .sw-box ul{margin:0; padding-left:18px;}
+  .sw-box li{margin-bottom:8px;}
+
+  /* Ranking table */
+  table.rank{width:100%; border-collapse:collapse; font-size:12.5px;}
+  table.rank th{font-family:var(--mono); font-size:10.5px; text-transform:uppercase; color:var(--sub); text-align:left; padding:8px; border-bottom:2px solid var(--ink); position:sticky; top:0; background:#fff;}
+  table.rank td{padding:7px 8px; border-bottom:1px solid var(--line);}
+  table.rank td.num{font-family:var(--mono); text-align:right;}
+  table.rank tr:hover{background:var(--panel);}
+  .rating-chip{font-family:var(--mono); font-size:10px; font-weight:700; padding:2px 7px; border-radius:10px;}
+  .rating-chip.sb{background:var(--green-bg); color:var(--green);}
+  .rating-chip.b{background:var(--blue-bg); color:var(--blue);}
+  .rating-chip.h{background:var(--yellow-bg); color:var(--yellow);}
+  .rating-chip.rs{background:var(--red-bg); color:var(--red);}
+
+  footer{margin-top:50px; padding-top:18px; border-top:1px solid var(--line); font-size:11.5px; color:var(--sub);}
+  footer .brand{font-weight:900; color:var(--ink); font-family:var(--mono);}
+
+  @media (max-width: 900px){
+    .grid, .insights{grid-template-columns:1fr;}
+    .sw{grid-template-columns:1fr;}
+  }
+</style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="eyebrow">TNBfolio · Export Customs Data Signal</div>
+    <h1>2026년 8월 조기 잠정치 분석 (1~10일, x3 환산)</h1>
+    <div class="subline">분석 기준일: 2026-08-11 · 데이터 구간: 26년 8월 1일~10일 통관 잠정치 (역일 10/31일, 32.3%) · <b>해저케이블 6개 품목 업데이트 반영</b></div>
+    <div class="badges">
+      <span class="badge sb">⭐⭐ Strong Buy 5</span>
+      <span class="badge b">⭐ Buy 9</span>
+      <span class="badge h">➡️ Hold 다수</span>
+      <span class="badge rs">🔽❌ Reduce/Sell 5</span>
+      <span class="badge upd">UPDATE · 해저케이블 반영</span>
+    </div>
+  </header>
+
+  <div class="update-note">
+    <b>⚠️ 업데이트 노트</b> — 최초 요약에서 대한전선(001440)·LS(006260) 관련 <b>해저케이블 6개 HS Code</b>가 누락되어 있었습니다. 전량 재검토 후 Buy 섹션에 반영했습니다. 6개 코드 모두 대한전선·LS 공동 매핑이라 개별 기업 비중 분리는 현재 데이터로 불가합니다.
+  </div>
+
+  <div class="method">
+    <b>분석 기준</b> — 26년 8월 1~10일 통관 잠정치를 x3 환산(월간 추정)한 조기 지표입니다. 10일치는 역일 기준 전체의 32.3%에 불과해 20일 잠정치보다 오차가 크며, 특히 <b class="warn">선박·D램모듈·SSD·자동차·건설기계·해저케이블처럼 월말 인도가 집중되는 품목</b>은 초순 진도율이 구조적으로 낮게 나타납니다. 등급 판정은 ①7월 확정 YoY ②최근 3개월 절대금액 추세 ③8월 초순 환산 진도율(정상 기준선 ≈32%) 3가지를 종합했으며, 진도율만으로 애매한 경우 Strong Buy/Buy 승격은 20일·월말 확정 데이터로 유보했습니다.
+  </div>
+
+  <h2 class="sec">📌 이번 주 핵심 인사이트</h2>
+  <div class="insights">
+    <div class="insight pos"><b>🟢 반도체 메모리 슈퍼사이클 가속</b>낸드플래시는 8월 초순 진도율 127%로 이미 7월 전체를 넘어서는 페이스. D램도 YoY +527.9% 초고성장 유지 중.</div>
+    <div class="insight pos"><b>🟢 K-뷰티, YoY·페이스 동반 가속</b>기초화장품(아모레/LG생건/한국콜마) YoY 24.8→45.0%로 우상향하며 8월 진도율도 107%로 가속.</div>
+    <div class="insight neu"><b>🟡 해저케이블 구조적 우상향, 초순 데이터는 과소평가</b>대한전선·LS 관련 10kV~100kV 코드가 3개월 연속 절대금액 상승 중이나, 프로젝트성 인도 특성상 8월 진도율(20.8%)은 낮게 잡힘.</div>
+    <div class="insight neg"><b>🔴 HBM 코드 첫 마이너스 전환</b>Monolithic IC(HBM, 8542311000) 7월 YoY -8.5%로 반전. D램·낸드 코드에 HBM이 혼재됐을 가능성 있어 단정은 유보.</div>
+    <div class="insight neg"><b>🔴 자일렌·변압기 일부 소형 품목 부진 지속</b>롯데케미칼 등 자일렌은 6개월 연속 두자릿수 마이너스, 제룡전기 소형변압기도 3개월 연속 역성장.</div>
+  </div>
+
+  <!-- STRONG BUY -->
+  <h2 class="sec"><span class="tag sb">STRONG BUY</span> 5개 품목</h2>
+  <div class="grid">
+
+    <div class="card sb">
+      <div class="co">삼성전자·SK하이닉스 — 낸드플래시</div>
+      <div class="item">HS 8542321030</div>
+      <div class="metrics">
+        <div class="m"><div class="v pos">+325.2%</div><div class="l">7월 YoY</div></div>
+        <div class="m"><div class="v">127%</div><div class="l">8월 진도율</div></div>
+        <div class="m"><div class="v">26,919억</div><div class="l">7월 실적</div></div>
+      </div>
+      <div class="spark"><div style="height:40%"></div><div style="height:50%"></div><div style="height:38%"></div><div style="height:70%"></div><div style="height:55%"></div><div class="hi" style="height:100%"></div></div>
+      <div class="note">최근 3개월(3→2월 저점 후) 연속 급증, 8월 초순이 이미 7월 전체 대비 앞서는 유일한 반도체 코드.</div>
+    </div>
+
+    <div class="card sb">
+      <div class="co">아모레퍼시픽·LG생활건강·한국콜마 — 기초화장품</div>
+      <div class="item">HS 3304991000</div>
+      <div class="metrics">
+        <div class="m"><div class="v pos">+45.0%</div><div class="l">7월 YoY</div></div>
+        <div class="m"><div class="v">107%</div><div class="l">8월 진도율</div></div>
+        <div class="m"><div class="v">7,990억</div><div class="l">7월 실적</div></div>
+      </div>
+      <div class="spark"><div style="height:60%"></div><div style="height:68%"></div><div style="height:80%"></div><div style="height:90%"></div><div style="height:97%"></div><div class="hi" style="height:100%"></div></div>
+      <div class="note">YoY 24.8→34.6→33.6→45.0% 4개월 연속 가속. K-뷰티 섹터 내 가장 뚜렷한 이중 확인 신호.</div>
+    </div>
+
+    <div class="card sb">
+      <div class="co">삼성전자·SK하이닉스 — D램</div>
+      <div class="item">HS 8542321010</div>
+      <div class="metrics">
+        <div class="m"><div class="v pos">+527.9%</div><div class="l">7월 YoY</div></div>
+        <div class="m"><div class="v">98%</div><div class="l">8월 진도율</div></div>
+        <div class="m"><div class="v">205,568억</div><div class="l">7월 실적</div></div>
+      </div>
+      <div class="spark"><div style="height:35%"></div><div style="height:45%"></div><div style="height:57%"></div><div style="height:68%"></div><div style="height:83%"></div><div class="hi" style="height:100%"></div></div>
+      <div class="note">6개월 연속 절대금액 신고가 경신. 이미 워낙 높은 베이스에서 진도율 98%(사실상 유지)만으로도 강세로 판단.</div>
+    </div>
+
+    <div class="card sb">
+      <div class="co">아모레퍼시픽·LG생활건강 — 피부세척용 계면활성제품</div>
+      <div class="item">HS 3401300000</div>
+      <div class="metrics">
+        <div class="m"><div class="v pos">+50.8%</div><div class="l">7월 YoY</div></div>
+        <div class="m"><div class="v">93%</div><div class="l">8월 진도율</div></div>
+        <div class="m"><div class="v">1,005억</div><div class="l">7월 실적</div></div>
+      </div>
+      <div class="spark"><div style="height:50%"></div><div style="height:63%"></div><div style="height:71%"></div><div style="height:82%"></div><div style="height:75%"></div><div class="hi" style="height:100%"></div></div>
+      <div class="note">K-뷰티 저변 확산 신호. YoY 7.3→17.7→39.1→50.8% 지속 가속.</div>
+    </div>
+
+    <div class="card sb">
+      <div class="co">에코프로비엠 — 양극재 NCA</div>
+      <div class="item">HS 2841909030</div>
+      <div class="metrics">
+        <div class="m"><div class="v pos">+120.0%</div><div class="l">7월 YoY</div></div>
+        <div class="m"><div class="v">96%</div><div class="l">8월 진도율</div></div>
+        <div class="m"><div class="v">2,132억</div><div class="l">7월 실적</div></div>
+      </div>
+      <div class="spark"><div style="height:78%"></div><div style="height:88%"></div><div style="height:100%"></div><div style="height:75%"></div><div style="height:98%"></div><div class="hi" style="height:96%"></div></div>
+      <div class="note">2차전지 소재 반등 확인. 25년 저점 이후 뚜렷한 레벨 상향.</div>
+    </div>
+
+  </div>
+
+  <!-- BUY -->
+  <h2 class="sec"><span class="tag b">BUY</span> 9개 품목</h2>
+  <div class="grid">
+
+    <div class="card b">
+      <div class="co">대한전선·LS — 해저 매설용 케이블 10kV~100kV</div>
+      <div class="item">HS 8544602010</div>
+      <div class="metrics">
+        <div class="m"><div class="v pos">-3.5%</div><div class="l">7월 YoY</div></div>
+        <div class="m"><div class="v">21%</div><div class="l">8월 진도율</div></div>
+        <div class="m"><div class="v">718억</div><div class="l">7월 실적</div></div>
+      </div>
+      <div class="spark"><div style="height:30%"></div><div style="height:45%"></div><div style="height:38%"></div><div style="height:62%"></div><div style="height:80%"></div><div class="hi" style="height:100%"></div></div>
+      <div class="note">절대금액 433→618→718억, <b>3개월 연속 상승</b>. YoY는 일시 마이너스지만 레벨 상향이 뚜렷.</div>
+      <div class="flag">⚠️ 월말 인도 집중 — 초순 진도율 저평가 가능성</div>
+    </div>
+
+    <div class="card b">
+      <div class="co">대한전선·LS — 해저 매설용 케이블 10kV~100kV(플라스틱제외)</div>
+      <div class="item">HS 8544602090</div>
+      <div class="metrics">
+        <div class="m"><div class="v pos">+630.4%</div><div class="l">7월 YoY</div></div>
+        <div class="m"><div class="v">32%</div><div class="l">8월 진도율</div></div>
+        <div class="m"><div class="v">37억</div><div class="l">7월 실적</div></div>
+      </div>
+      <div class="spark"><div style="height:20%"></div><div style="height:15%"></div><div style="height:10%"></div><div style="height:12%"></div><div style="height:55%"></div><div class="hi" style="height:100%"></div></div>
+      <div class="note">소액 코드지만 3개월 연속(3→14→37억) 절대금액 급증. 저베이스 급등 구간.</div>
+    </div>
+
+    <div class="card b">
+      <div class="co">대한전선·LS — 해저 매설용 케이블 100kV 초과</div>
+      <div class="item">HS 8544603010</div>
+      <div class="metrics">
+        <div class="m"><div class="v pos">+37.7%</div><div class="l">7월 YoY</div></div>
+        <div class="m"><div class="v">24%</div><div class="l">8월 진도율</div></div>
+        <div class="m"><div class="v">790억</div><div class="l">7월 실적</div></div>
+      </div>
+      <div class="spark"><div style="height:35%"></div><div style="height:100%"></div><div style="height:39%"></div><div style="height:39%"></div><div style="height:90%"></div><div class="hi" style="height:49%"></div></div>
+      <div class="note">해저케이블 섹터 내 최대 비중 코드. 초고압 송전·해상풍력 연계 투자 확대와 연동된 구조적 성장이나 월별 변동성 큼.</div>
+    </div>
+
+    <div class="card b">
+      <div class="co">삼성전기 — MLCC</div>
+      <div class="item">HS 8532240000</div>
+      <div class="metrics">
+        <div class="m"><div class="v pos">+36.4%</div><div class="l">7월 YoY</div></div>
+        <div class="m"><div class="v">23%</div><div class="l">8월 진도율</div></div>
+        <div class="m"><div class="v">2,338억</div><div class="l">7월 실적</div></div>
+      </div>
+      <div class="spark"><div style="height:60%"></div><div style="height:65%"></div><div style="height:78%"></div><div style="height:82%"></div><div style="height:95%"></div><div class="hi" style="height:100%"></div></div>
+      <div class="note">YoY -0.8→15.5→20.3→36.4% 4개월 연속 가속. 대형 우량주 중 가장 안정적인 우상향.</div>
+    </div>
+
+    <div class="card b">
+      <div class="co">와이지-원 — 엔드밀</div>
+      <div class="item">HS 8207702000</div>
+      <div class="metrics">
+        <div class="m"><div class="v pos">+59.7%</div><div class="l">7월 YoY</div></div>
+        <div class="m"><div class="v">15%</div><div class="l">8월 진도율</div></div>
+        <div class="m"><div class="v">345억</div><div class="l">7월 실적</div></div>
+      </div>
+      <div class="spark"><div style="height:40%"></div><div style="height:55%"></div><div style="height:62%"></div><div style="height:70%"></div><div style="height:82%"></div><div class="hi" style="height:100%"></div></div>
+      <div class="note">YoY 14.9→18.6→38.2→43.1→59.7% 5개월 연속 가속. 8월 초순 진도율은 약하나 추세 자체는 뚜렷.</div>
+    </div>
+
+    <div class="card b">
+      <div class="co">율촌화학 — 전도성 접합 필름</div>
+      <div class="item">HS 3921902000</div>
+      <div class="metrics">
+        <div class="m"><div class="v pos">+102.7%</div><div class="l">7월 YoY</div></div>
+        <div class="m"><div class="v">13%</div><div class="l">8월 진도율</div></div>
+        <div class="m"><div class="v">296억</div><div class="l">7월 실적</div></div>
+      </div>
+      <div class="spark"><div style="height:35%"></div><div style="height:45%"></div><div style="height:55%"></div><div style="height:60%"></div><div style="height:78%"></div><div class="hi" style="height:100%"></div></div>
+      <div class="note">YoY 41→56→50→56→69→102.7% 지속 가속. 반도체 패키징 수요 연동 소재.</div>
+    </div>
+
+    <div class="card b">
+      <div class="co">대한유화 — 초고분자량폴리에틸렌</div>
+      <div class="item">HS 3901109000</div>
+      <div class="metrics">
+        <div class="m"><div class="v pos">+70.8%</div><div class="l">7월 YoY</div></div>
+        <div class="m"><div class="v">21%</div><div class="l">8월 진도율</div></div>
+        <div class="m"><div class="v">1,287억</div><div class="l">7월 실적</div></div>
+      </div>
+      <div class="spark"><div style="height:38%"></div><div style="height:48%"></div><div style="height:65%"></div><div style="height:72%"></div><div style="height:90%"></div><div class="hi" style="height:100%"></div></div>
+      <div class="note">YoY 15.9→28.0→47.4→66.4→70.8% 5개월 연속 가속.</div>
+    </div>
+
+    <div class="card b">
+      <div class="co">티에스이·리노공업·isc — 반도체 소켓</div>
+      <div class="item">HS 8536909090</div>
+      <div class="metrics">
+        <div class="m"><div class="v pos">+46.5%</div><div class="l">7월 YoY</div></div>
+        <div class="m"><div class="v">15%</div><div class="l">8월 진도율</div></div>
+        <div class="m"><div class="v">1,750억</div><div class="l">7월 실적</div></div>
+      </div>
+      <div class="spark"><div style="height:55%"></div><div style="height:58%"></div><div style="height:65%"></div><div style="height:75%"></div><div style="height:88%"></div><div class="hi" style="height:100%"></div></div>
+      <div class="note">반도체 테스트 장비 수요 확대와 함께 절대금액 사상 최고 수준 유지.</div>
+    </div>
+
+    <div class="card b">
+      <div class="co">TCC스틸 — 니켈도금강판</div>
+      <div class="item">HS 7212501000</div>
+      <div class="metrics">
+        <div class="m"><div class="v pos">+98.3%</div><div class="l">7월 YoY</div></div>
+        <div class="m"><div class="v">12%</div><div class="l">8월 진도율</div></div>
+        <div class="m"><div class="v">157억</div><div class="l">7월 실적</div></div>
+      </div>
+      <div class="spark"><div style="height:30%"></div><div style="height:38%"></div><div style="height:52%"></div><div style="height:60%"></div><div style="height:88%"></div><div class="hi" style="height:100%"></div></div>
+      <div class="note">3개월 연속 절대금액 상승(91→140→157억), YoY도 계속 확대.</div>
+    </div>
+
+  </div>
+
+  <!-- HOLD -->
+  <h2 class="sec"><span class="tag h">HOLD</span> — 방향성 혼조 · 진도율 정상 범위</h2>
+  <table class="hold">
+    <thead><tr><th>품목 (기업)</th><th style="text-align:right">7월 YoY</th><th style="text-align:right">8월 진도율</th><th>코멘트</th></tr></thead>
+    <tbody>
+      <tr><td>Epoxy (금호석유·국도화학)</td><td class="num">+1.8%</td><td class="num">24%</td><td>3개월 내 등락 반복, 방향성 불명확</td></tr>
+      <tr><td>ABS (LG화학)</td><td class="num">+18.2%</td><td class="num">20%</td><td>YoY 개선 중이나 8월 초순은 정상 범위</td></tr>
+      <tr><td>자동차용 핫스탬핑 (현대제철)</td><td class="num">+2.5%</td><td class="num">13%</td><td>3개월 연속 플랫, 뚜렷한 방향성 없음</td></tr>
+      <tr><td>극초대형컨테이너선 (한화오션·삼성중공업)</td><td class="num">+2.8%</td><td class="num">7%</td><td>월별 변동성 극심 — 인도 스케줄 의존</td></tr>
+      <tr><td>PCB (대덕전자·심텍·샘씨엔에스)</td><td class="num">+34.0%</td><td class="num">24%</td><td>완만한 우상향, 8월 진도율 정상선 근접</td></tr>
+      <tr><td>GDDR기판·FPCB (심텍·비에이치)</td><td class="num">+10.1%</td><td class="num">29%</td><td>안정적 유지, 뚜렷한 가속 신호는 아님</td></tr>
+      <tr><td>알루미늄판·시트2 (삼아알미늄)</td><td class="num">+44.5%</td><td class="num">31%</td><td>YoY 견조, 진도율은 정상 범위</td></tr>
+      <tr><td>임플란트 (오스템임플란트·덴티움·디오)</td><td class="num">+5.3%</td><td class="num">20%</td><td>월별 변동 큼, 추세 판단 보류</td></tr>
+      <tr><td>냉온수관용 PP (효성화학)</td><td class="num">+16.4%</td><td class="num">24%</td><td>완만한 회복세, 확정 대기</td></tr>
+      <tr><td>태양전지용 EVA (한화솔루션)</td><td class="num">+31.0%</td><td class="num">21%</td><td>레벨 상향이나 8월 초순 페이스는 보통</td></tr>
+    </tbody>
+  </table>
+
+  <!-- REDUCE/SELL -->
+  <h2 class="sec"><span class="tag rs">REDUCE / SELL</span> 5개 품목</h2>
+  <div class="grid">
+
+    <div class="card rs">
+      <div class="co">롯데케미칼·LG화학·대한유화 — 자일렌</div>
+      <div class="item">HS 2707300000</div>
+      <div class="metrics">
+        <div class="m"><div class="v neg">-0.9%</div><div class="l">7월 YoY</div></div>
+        <div class="m"><div class="v">22%</div><div class="l">8월 진도율</div></div>
+        <div class="m"><div class="v">778억</div><div class="l">7월 실적</div></div>
+      </div>
+      <div class="spark"><div style="height:70%"></div><div style="height:38%"></div><div style="height:95%"></div><div style="height:37%"></div><div style="height:63%"></div><div class="hi" style="height:100%"></div></div>
+      <div class="note">6개월 연속 두 자릿수 마이너스 지속(-59.7%~-75%), 절대금액도 25년 대비 뚜렷한 레벨 하락.</div>
+    </div>
+
+    <div class="card rs">
+      <div class="co">덕산네오룩스 — OLED 유기재료</div>
+      <div class="item">HS 3204901010</div>
+      <div class="metrics">
+        <div class="m"><div class="v neg">-13.2%</div><div class="l">최근월 YoY</div></div>
+        <div class="m"><div class="v">16%</div><div class="l">8월 진도율</div></div>
+        <div class="m"><div class="v">254억</div><div class="l">7월 실적</div></div>
+      </div>
+      <div class="spark"><div style="height:65%"></div><div style="height:55%"></div><div style="height:48%"></div><div style="height:50%"></div><div style="height:40%"></div><div class="hi" style="height:100%"></div></div>
+      <div class="note">최근 3개월 연속 YoY 역성장(-23.8→-33.4→-23.1→-14.7→-18.6→-13.2%).</div>
+    </div>
+
+    <div class="card rs">
+      <div class="co">제룡전기 — 소형변압기1</div>
+      <div class="item">HS 8504219010</div>
+      <div class="metrics">
+        <div class="m"><div class="v neg">-33.1%</div><div class="l">7월 YoY</div></div>
+        <div class="m"><div class="v">11%</div><div class="l">8월 진도율</div></div>
+        <div class="m"><div class="v">178억</div><div class="l">7월 실적</div></div>
+      </div>
+      <div class="spark"><div style="height:80%"></div><div style="height:60%"></div><div style="height:55%"></div><div style="height:50%"></div><div style="height:100%"></div><div class="hi" style="height:57%"></div></div>
+      <div class="note">3개월 연속 YoY 마이너스, 절대금액도 25년 대비 낮은 레벨.</div>
+    </div>
+
+    <div class="card rs">
+      <div class="co">효성중공업·현대일렉트릭 — 대형변압기6</div>
+      <div class="item">HS 8504229020</div>
+      <div class="metrics">
+        <div class="m"><div class="v neg">-31.0%</div><div class="l">7월 YoY</div></div>
+        <div class="m"><div class="v">16%</div><div class="l">8월 진도율</div></div>
+        <div class="m"><div class="v">495억</div><div class="l">7월 실적</div></div>
+      </div>
+      <div class="spark"><div style="height:70%"></div><div style="height:80%"></div><div style="height:65%"></div><div style="height:60%"></div><div style="height:75%"></div><div class="hi" style="height:100%"></div></div>
+      <div class="note">3개월 연속 YoY 역성장. 다른 변압기 코드(대형1,3,5)는 견조해 코드별 편차 존재.</div>
+    </div>
+
+    <div class="card rs">
+      <div class="co">삼성전자·SK하이닉스 — Monolithic IC (HBM)</div>
+      <div class="item">HS 8542311000</div>
+      <div class="metrics">
+        <div class="m"><div class="v neg">-8.5%</div><div class="l">7월 YoY</div></div>
+        <div class="m"><div class="v">84%</div><div class="l">8월 진도율</div></div>
+        <div class="m"><div class="v">36,674억</div><div class="l">7월 실적</div></div>
+      </div>
+      <div class="spark"><div style="height:75%"></div><div style="height:78%"></div><div style="height:80%"></div><div style="height:76%"></div><div style="height:85%"></div><div class="hi" style="height:100%"></div></div>
+      <div class="note">7월 YoY 첫 마이너스 전환. 절대금액 자체는 3만억대 유지 중이나 성장 둔화 신호로 주시 필요.</div>
+    </div>
+
+  </div>
+
+  <!-- SURPRISE / WARNING -->
+  <h2 class="sec">🔎 이번 달 서프라이즈 / 경고</h2>
+  <div class="sw">
+    <div class="sw-box surprise">
+      <h3>💡 서프라이즈</h3>
+      <ul>
+        <li><b>진공차단기용 세라믹(KCC)</b> 7월 YoY <b>+2,496.3%</b>(1,134억) — 평소 20~50억대 코드에서 이례적 급증. 대형 일회성 계약 인식 가능성이 높아 데이터 이상치 여부 재확인 필요.</li>
+        <li><b>해저케이블(대한전선·LS) 10kV~100kV 플라스틱제외</b> 7월 YoY +630.4% — 저베이스 구간에서 절대금액 3개월 연속 급증.</li>
+        <li><b>낸드플래시</b> 8월 초순 진도율 127% — 조기 데이터 중 유일하게 전월 전체를 초과하는 페이스.</li>
+      </ul>
+    </div>
+    <div class="sw-box warning">
+      <h3>⚠️ 경고</h3>
+      <ul>
+        <li><b>HBM 코드(8542311000)</b> 7월 YoY 첫 마이너스(-8.5%) 전환. D램·낸드 코드와의 품목 혼재 가능성이 있어 해석에 주의.</li>
+        <li><b>두산에너빌리티 원자로용기·증기발생기</b> 코드는 수개월 0억 반복 후 특정월 급등하는 패턴으로, 정상적 트렌드 분석 대상이 아님(초대형 프로젝트 인도 시점 집중).</li>
+        <li><b>자일렌(석유화학 3사)</b> 6개월 연속 두 자릿수 마이너스로 유가·중국 공급과잉 영향 지속 중.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- RANKING -->
+  <h2 class="sec">📊 종목 랭킹 (7월 확정 YoY 기준, 주요 품목 발췌)</h2>
+  <table class="rank">
+    <thead>
+      <tr><th>순위</th><th>품목</th><th>관련기업</th><th style="text-align:right">7월 실적</th><th style="text-align:right">YoY</th><th>등급</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>진공차단기용 세라믹</td><td>KCC</td><td class="num">1,134억</td><td class="num" style="color:var(--green)">+2,496.3%</td><td><span class="rating-chip h">Hold*</span></td></tr>
+      <tr><td>2</td><td>SSD1</td><td>삼성전자·SK하이닉스</td><td class="num">67,946억</td><td class="num" style="color:var(--green)">+559.1%</td><td><span class="rating-chip h">Hold*</span></td></tr>
+      <tr><td>3</td><td>D램</td><td>삼성전자·SK하이닉스</td><td class="num">205,568억</td><td class="num" style="color:var(--green)">+527.9%</td><td><span class="rating-chip sb">Strong Buy</span></td></tr>
+      <tr><td>4</td><td>D램모듈</td><td>삼성전자·SK하이닉스</td><td class="num">115,333억</td><td class="num" style="color:var(--green)">+340.5%</td><td><span class="rating-chip h">Hold*</span></td></tr>
+      <tr><td>5</td><td>낸드플래시</td><td>삼성전자·SK하이닉스</td><td class="num">26,919억</td><td class="num" style="color:var(--green)">+325.2%</td><td><span class="rating-chip sb">Strong Buy</span></td></tr>
+      <tr><td>6</td><td>혈액분획물</td><td>녹십자</td><td class="num">639억</td><td class="num" style="color:var(--green)">+234.5%</td><td><span class="rating-chip h">Hold*</span></td></tr>
+      <tr><td>7</td><td>Wet Station</td><td>케이씨텍</td><td class="num">598억</td><td class="num" style="color:var(--green)">+187.5%</td><td><span class="rating-chip h">Hold*</span></td></tr>
+      <tr><td>8</td><td>MCP</td><td>삼성전자·SK하이닉스</td><td class="num">152,183억</td><td class="num" style="color:var(--green)">+163.8%</td><td><span class="rating-chip h">Hold*</span></td></tr>
+      <tr><td>9</td><td>화장품 기타3</td><td>아모레·LG생건·애경산업</td><td class="num">770억</td><td class="num" style="color:var(--green)">+135.4%</td><td><span class="rating-chip h">Hold*</span></td></tr>
+      <tr><td>10</td><td>양극재 NCA</td><td>에코프로비엠</td><td class="num">2,132억</td><td class="num" style="color:var(--green)">+120.0%</td><td><span class="rating-chip sb">Strong Buy</span></td></tr>
+      <tr><td>11</td><td>인터페이스보드</td><td>티에스이</td><td class="num">1,430억</td><td class="num" style="color:var(--green)">+108.9%</td><td><span class="rating-chip h">Hold*</span></td></tr>
+      <tr><td>12</td><td>셔틀탱커</td><td>한화오션·삼성중공업</td><td class="num">37,263억</td><td class="num" style="color:var(--green)">+100.1%</td><td><span class="rating-chip h">Hold*</span></td></tr>
+      <tr><td>13</td><td>해저케이블 10kV~100kV(플라스틱제외)</td><td>대한전선·LS</td><td class="num">37억</td><td class="num" style="color:var(--green)">+630.4%</td><td><span class="rating-chip b">Buy</span></td></tr>
+      <tr><td>14</td><td>필러</td><td>휴젤·케어젠·파마리서치</td><td class="num">6,392억</td><td class="num" style="color:var(--green)">+92.3%</td><td><span class="rating-chip h">Hold*</span></td></tr>
+      <tr><td>15</td><td>보톡스</td><td>메디톡스·휴젤</td><td class="num">950억</td><td class="num" style="color:var(--green)">+88.0%</td><td><span class="rating-chip h">Hold*</span></td></tr>
+      <tr style="border-top:2px solid var(--ink);"><td>…</td><td colspan="5" style="color:var(--sub); font-size:12px;">중간 구간(YoY -10%~+80%대) 다수 품목 생략 — Hold 섹션 표 참고</td></tr>
+      <tr><td>-5</td><td>인간크기 휴머노이드로봇 플랫폼</td><td>로보티즈</td><td class="num">1,048억</td><td class="num" style="color:var(--red)">-16.6%</td><td><span class="rating-chip h">Hold</span></td></tr>
+      <tr><td>-4</td><td>기타 산업용 로봇</td><td>에스피지·로보티즈·로보스타</td><td class="num">259억</td><td class="num" style="color:var(--red)">-18.3%</td><td><span class="rating-chip h">Hold</span></td></tr>
+      <tr><td>-3</td><td>대형변압기6</td><td>효성중공업·현대일렉트릭</td><td class="num">495억</td><td class="num" style="color:var(--red)">-31.0%</td><td><span class="rating-chip rs">Reduce</span></td></tr>
+      <tr><td>-2</td><td>소형변압기1</td><td>제룡전기</td><td class="num">178억</td><td class="num" style="color:var(--red)">-33.1%</td><td><span class="rating-chip rs">Reduce</span></td></tr>
+      <tr><td>-1</td><td>승용차 신차(하이브리드2)</td><td>현대차·기아·KG모빌리티</td><td class="num">1,049억</td><td class="num" style="color:var(--red)">-48.1%</td><td><span class="rating-chip h">Hold</span></td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:11px; color:var(--sub); margin-top:8px;">* Hold 표기 종목은 YoY 자체는 높으나 기저효과(전년 저베이스) 또는 8월 초순 진도율 판단 근거 부족으로 Strong Buy/Buy 승격을 20일·월말 확정 데이터로 유보한 케이스입니다.</p>
+
+  <footer>
+    <p><b>투자 유의사항</b> — 본 자료는 관세청 수출 통관 잠정치(2026년 8월 1~10일, x3 환산)를 기반으로 한 조기 참고 자료이며, 확정치 대비 오차가 클 수 있습니다. 특히 선박·D램모듈·SSD·자동차·건설기계·해저케이블 등 월말 인도 집중 품목은 초순 데이터의 진도율을 액면 그대로 해석하지 않는 것을 권장합니다. 본 내용은 투자 판단의 참고 자료이며, 투자 권유 또는 매매 추천이 아닙니다. 수출 데이터 기반 신호는 기업의 전체 재무 실적과 다를 수 있습니다.</p>
+    <p class="brand">TNBfolio</p>
+  </footer>
+
+</div>
+</body>
+</html>
