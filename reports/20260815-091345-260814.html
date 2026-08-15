@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<title>뉴욕증시 주도섹터 분석</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  @media print {
+    -webkit-print-color-adjust: exact;
+    body { background-color: #ffffff !important; }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background-color: #ffffff;
+    font-family: 'Noto Sans KR', sans-serif;
+    color: #2b2b2b;
+    line-height: 1.6;
+    display: flex;
+    justify-content: center;
+    padding: 40px 0;
+  }
+  .report-container {
+    width: 1100px;
+    padding: 0 60px;
+  }
+  
+  /* Header */
+  .header-section {
+    border-bottom: 2px solid #1a1814;
+    padding-bottom: 20px;
+    margin-bottom: 25px;
+  }
+  .header-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    color: #777;
+    margin-bottom: 6px;
+  }
+  .header-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: #1a1814;
+    margin-bottom: 16px;
+  }
+  .badge-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    background: #f0eeeb;
+    color: #333;
+    border: 1px solid #e0dcd4;
+  }
+  .badge.red {
+    background: #fdf2f2;
+    color: #d13b2e;
+    border-color: #f8c4c0;
+  }
+  .badge .val {
+    font-family: 'DM Mono', monospace;
+    font-weight: 700;
+  }
+
+  /* Section Title */
+  .sec-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1814;
+    margin: 30px 0 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  /* Macro Summary Card */
+  .macro-card {
+    background-color: #1a1814;
+    color: #ffffff;
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 30px;
+  }
+  .macro-card h3 {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 19px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 8px;
+  }
+  .macro-card p {
+    font-size: 13.5px;
+    color: #dcdcdc;
+    margin-bottom: 8px;
+    line-height: 1.65;
+  }
+  .macro-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-top: 18px;
+    border-top: 1px solid #333;
+    padding-top: 16px;
+  }
+  .macro-item {
+    background: #25221d;
+    padding: 12px;
+    border-radius: 6px;
+  }
+  .macro-label {
+    font-size: 12px;
+    color: #aaa;
+    margin-bottom: 4px;
+  }
+  .macro-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .down-val { color: #f08070; }
+  .up-val { color: #6ed99a; }
+
+  /* Sector Chart */
+  .chart-card {
+    background: #f8f7f5;
+    border: 1px solid #e0dcd4;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+  }
+  .chart-row {
+    display: grid;
+    grid-template-columns: 190px 1fr 70px;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .chart-name {
+    font-weight: 500;
+    color: #333;
+  }
+  .bar-container {
+    height: 16px;
+    display: flex;
+    align-items: center;
+    background: #eeeae4;
+    border-radius: 3px;
+    position: relative;
+  }
+  .center-line {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: #999;
+    z-index: 2;
+  }
+  .bar-wrapper {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    display: flex;
+  }
+  .bar-pos {
+    left: 50%;
+    background: #1d8a4e;
+    border-radius: 0 3px 3px 0;
+  }
+  .bar-neg {
+    right: 50%;
+    background: #d13b2e;
+    border-radius: 3px 0 0 3px;
+  }
+  .bar-sp {
+    right: 50%;
+    background: #d4840a;
+    border-radius: 3px 0 0 3px;
+  }
+  .chart-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: right;
+  }
+  .pos-txt { color: #1d8a4e; }
+  .neg-txt { color: #d13b2e; }
+  .sp-txt { color: #d4840a; }
+
+  /* 2-Column Sector Deep Dive */
+  .sector-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+  .sector-card {
+    background: #ffffff;
+    border: 1px solid #e0dcd4;
+    border-radius: 6px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .sector-card.pos-border { border-top: 3px solid #1d8a4e; }
+  .sector-card.neg-border { border-top: 3px solid #d13b2e; }
+  
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #f0eeeb;
+    padding-bottom: 8px;
+  }
+  .card-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1814;
+  }
+  .card-perf {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .card-body-text {
+    font-size: 13px;
+    color: #444;
+    line-height: 1.6;
+    margin-bottom: 14px;
+  }
+  .card-body-text strong {
+    color: #1a1814;
+  }
+
+  .stock-box {
+    background: #f8f7f5;
+    border: 1px solid #e0dcd4;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 12px;
+  }
+  .stock-box-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #666;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+  .stock-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+  .stock-row:last-child { margin-bottom: 0; }
+  .stock-name {
+    font-weight: 500;
+    color: #222;
+  }
+  .stock-metrics {
+    font-family: 'DM Mono', monospace;
+    color: #555;
+  }
+
+  .risk-box {
+    background: #fdf2f2;
+    border-left: 3px solid #d13b2e;
+    padding: 8px 10px;
+    font-size: 12px;
+    color: #721c24;
+    border-radius: 0 4px 4px 0;
+  }
+  .risk-label {
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  /* Geopolitical Alert */
+  .geo-card {
+    background-color: #fdf6e3;
+    border: 1px solid #e8d89a;
+    border-left: 4px solid #b8860b;
+    border-radius: 6px;
+    padding: 18px 20px;
+    margin-bottom: 30px;
+  }
+  .geo-badge {
+    display: inline-block;
+    background: #b8860b;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-bottom: 8px;
+  }
+  .geo-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #5c4308;
+    margin-bottom: 6px;
+  }
+  .geo-body {
+    font-size: 13px;
+    color: #4a3b10;
+    line-height: 1.6;
+  }
+
+  /* Asset Performance Grid */
+  .asset-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 30px;
+  }
+  .asset-card {
+    background: #f0eeeb;
+    border: 1px solid #e0dcd4;
+    border-radius: 6px;
+    padding: 14px;
+  }
+  .asset-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 4px;
+  }
+  .asset-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1814;
+    margin-bottom: 4px;
+  }
+  .asset-desc {
+    font-size: 12px;
+    color: #555;
+    line-height: 1.4;
+  }
+
+  /* Insight Section */
+  .insight-card {
+    background: #fdf2f2;
+    border: 1px solid #f8c4c0;
+    border-left: 4px solid #d13b2e;
+    border-radius: 6px;
+    padding: 18px 20px;
+    margin-bottom: 30px;
+  }
+  .insight-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #901b12;
+    margin-bottom: 8px;
+  }
+  .insight-body {
+    font-size: 13px;
+    color: #5a140e;
+    line-height: 1.65;
+  }
+
+  /* Footer */
+  .footer-section {
+    border-top: 1px solid #e0dcd4;
+    padding-top: 16px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #888;
+  }
+</style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+
+<div class="report-container">
+
+  <!-- ① 헤더 -->
+  <div class="header-section">
+    <div class="header-date">2026.08.14 (금) 뉴욕증시 마감</div>
+    <div class="header-title">뉴욕증시 주도섹터 분석</div>
+    <div class="badge-container">
+      <div class="badge red">S&P 500 <span class="val">-0.22% (7,783.45)</span></div>
+      <div class="badge red">나스닥 100 <span class="val">-0.34% (26,711.34)</span></div>
+      <div class="badge red">다우 30 <span class="val">-0.25% (53,702.81)</span></div>
+      <div class="badge">미국 7월 소매판매 <span class="val">-0.6% MoM</span></div>
+      <div class="badge">WTI 유가 <span class="val">$82.40 (+1.42%)</span></div>
+      <div class="badge">9월 금리인상 확률 <span class="val">&lt; 40%</span></div>
+    </div>
+  </div>
+
+  <!-- ② Macro Summary -->
+  <div class="macro-card">
+    <h3>소비 둔화 충격과 중동 리스크 부각 속 뉴욕증시 약보합 마감</h3>
+    <p>미국 7월 소매판매가 전월 대비 0.6% 감소하며 시장 예상치를 대폭 밑돌았고, 소비 심리 악화가 겹치며 연착륙 기대에 제동이 걸렸다.</p>
+    <p>트럼프 행정부의 대이란 초강경 경제 제재 경고와 호르무즈 해협 통제 선언으로 인해 지정학적 긴장이 고조되며 유가는 상승세를 나타냈다.</p>
+    <p>단기 금리 동결 및 인하 베팅이 강화되었으나 국채 금리 하락에도 불구하고 빅테크 차익실현 및 경기 둔화 우려로 주요 지수는 장 후반 하락 반전했다.</p>
+    <div class="macro-grid">
+      <div class="macro-item">
+        <div class="macro-label">S&P 500</div>
+        <div class="macro-val down-val">7,783.45 (-0.22%)</div>
+      </div>
+      <div class="macro-item">
+        <div class="macro-label">나스닥 종합</div>
+        <div class="macro-val down-val">26,711.34 (-0.34%)</div>
+      </div>
+      <div class="macro-item">
+        <div class="macro-label">미국 2Y 국채금리</div>
+        <div class="macro-val down-val">4.14% (-3bp)</div>
+      </div>
+      <div class="macro-item">
+        <div class="macro-label">WTI 원유 선물</div>
+        <div class="macro-val up-val">$82.40 (+1.42%)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ 섹터별 등락률 차트 -->
+  <div class="sec-title">📊 Sector Performance of USA (Day's Change %)</div>
+  <div class="chart-card">
+    <!-- Max absolute value is 1.34%, scale: width = (|val| / 1.34) * 50% -->
+    <div class="chart-row">
+      <div class="chart-name">Energy</div>
+      <div class="bar-container">
+        <div class="center-line"></div>
+        <div class="bar-wrapper bar-pos" style="width: 50.0%;"></div>
+      </div>
+      <div class="chart-val pos-txt">+1.34%</div>
+    </div>
+
+    <div class="chart-row">
+      <div class="chart-name">Utilities</div>
+      <div class="bar-container">
+        <div class="center-line"></div>
+        <div class="bar-wrapper bar-pos" style="width: 25.37%;"></div>
+      </div>
+      <div class="chart-val pos-txt">+0.68%</div>
+    </div>
+
+    <div class="chart-row">
+      <div class="chart-name">Basic Materials</div>
+      <div class="bar-container">
+        <div class="center-line"></div>
+        <div class="bar-wrapper bar-pos" style="width: 16.79%;"></div>
+      </div>
+      <div class="chart-val pos-txt">+0.45%</div>
+    </div>
+
+    <div class="chart-row">
+      <div class="chart-name">Industrials</div>
+      <div class="bar-container">
+        <div class="center-line"></div>
+        <div class="bar-wrapper bar-pos" style="width: 13.43%;"></div>
+      </div>
+      <div class="chart-val pos-txt">+0.36%</div>
+    </div>
+
+    <div class="chart-row">
+      <div class="chart-name">Communication Services</div>
+      <div class="bar-container">
+        <div class="center-line"></div>
+        <div class="bar-wrapper bar-pos" style="width: 11.94%;"></div>
+      </div>
+      <div class="chart-val pos-txt">+0.32%</div>
+    </div>
+
+    <div class="chart-row">
+      <div class="chart-name">Real Estate</div>
+      <div class="bar-container">
+        <div class="center-line"></div>
+        <div class="bar-wrapper bar-pos" style="width: 10.82%;"></div>
+      </div>
+      <div class="chart-val pos-txt">+0.29%</div>
+    </div>
+
+    <div class="chart-row">
+      <div class="chart-name">Consumer Defensive</div>
+      <div class="bar-container">
+        <div class="center-line"></div>
+        <div class="bar-wrapper bar-pos" style="width: 4.10%;"></div>
+      </div>
+      <div class="chart-val pos-txt">+0.11%</div>
+    </div>
+
+    <div class="chart-row">
+      <div class="chart-name">Consumer Cyclical</div>
+      <div class="bar-container">
+        <div class="center-line"></div>
+        <div class="bar-wrapper bar-neg" style="width: 2.99%;"></div>
+      </div>
+      <div class="chart-val neg-txt">-0.08%</div>
+    </div>
+
+    <div class="chart-row">
+      <div class="chart-name">Financial</div>
+      <div class="bar-container">
+        <div class="center-line"></div>
+        <div class="bar-wrapper bar-neg" style="width: 3.36%;"></div>
+      </div>
+      <div class="chart-val neg-txt">-0.09%</div>
+    </div>
+
+    <div class="chart-row">
+      <div class="chart-name">S&P 500</div>
+      <div class="bar-container">
+        <div class="center-line"></div>
+        <div class="bar-wrapper bar-sp" style="width: 8.21%;"></div>
+      </div>
+      <div class="chart-val sp-txt">-0.22%</div>
+    </div>
+
+    <div class="chart-row">
+      <div class="chart-name">Technology</div>
+      <div class="bar-container">
+        <div class="center-line"></div>
+        <div class="bar-wrapper bar-neg" style="width: 20.52%;"></div>
+      </div>
+      <div class="chart-val neg-txt">-0.55%</div>
+    </div>
+
+    <div class="chart-row">
+      <div class="chart-name">Healthcare</div>
+      <div class="bar-container">
+        <div class="center-line"></div>
+        <div class="bar-wrapper bar-neg" style="width: 22.01%;"></div>
+      </div>
+      <div class="chart-val neg-txt">-0.59%</div>
+    </div>
+  </div>
+
+  <!-- ④ 주도 섹터 심층 분석 카드 (6개 섹터) -->
+  <div class="sec-title">📌 주도 섹터 심층 분석</div>
+  <div class="sector-grid">
+
+    <!-- 1. Industrials -->
+    <div class="sector-card pos-border">
+      <div>
+        <div class="card-top">
+          <div class="card-title">⚙️ Industrials (산업재)</div>
+          <div class="card-perf pos-txt">+0.36%</div>
+        </div>
+        <div class="card-body-text">
+          미국 백악관의 <strong>해군 조선업 투자 강화(핀란드 모델 도입)</strong> 및 <strong>국방부 미사일 부품 생산 계약 체결</strong> 소식이 섹터 전반의 수혜로 이어졌다. 항공 방산 유지보수 및 해운 방산주가 견고한 흐름을 유지했다.
+        </div>
+        <div class="stock-box">
+          <div class="stock-box-title">Featured Stocks</div>
+          <div class="stock-row">
+            <span class="stock-name">HEICO Corp (HEI)</span>
+            <span class="stock-metrics">$375.54 (+1.1%) | 52.14B</span>
+          </div>
+          <div class="stock-row">
+            <span class="stock-name">VSE Corp (VSEC)</span>
+            <span class="stock-metrics">$241.42 (+4.6%) | 6.81B</span>
+          </div>
+          <div class="stock-row">
+            <span class="stock-name">Frontline Plc (FRO)</span>
+            <span class="stock-metrics">$41.23 (+1.8%) | 8.81B</span>
+          </div>
+        </div>
+      </div>
+      <div class="risk-box">
+        <div class="risk-label">Risk Factor</div>
+        항공모함 사출기 방식 재변경 등 방위 산업 설계 변경에 따른 막대한 비용 부담 리스크 상존.
+      </div>
+    </div>
+
+    <!-- 2. Financial -->
+    <div class="sector-card neg-border">
+      <div>
+        <div class="card-top">
+          <div class="card-title">💳 Financial (금융)</div>
+          <div class="card-perf neg-txt">-0.09%</div>
+        </div>
+        <div class="card-body-text">
+          국채금리 하락으로 인한 순이자마진(NIM) 축소 우려와 <strong>JP모건의 폴리마켓 계좌 차단</strong> 등 암호화폐/예측시장 규제 불확실성이 확대되며 소폭 하락 마감했다. 다만 소비자 금융 및 핀테크 개별 종목은 선별적 강세를 기록했다.
+        </div>
+        <div class="stock-box">
+          <div class="stock-box-title">Featured Stocks</div>
+          <div class="stock-row">
+            <span class="stock-name">Capital One (COF)</span>
+            <span class="stock-metrics">$227.51 (+1.6%) | 136.46B</span>
+          </div>
+          <div class="stock-row">
+            <span class="stock-name">Oscar Health (OSCR)</span>
+            <span class="stock-metrics">$32.83 (+6.7%) | 9.14B</span>
+          </div>
+          <div class="stock-row">
+            <span class="stock-name">Virtu Financial (VIRT)</span>
+            <span class="stock-metrics">$59.69 (+4.4%) | 5.04B</span>
+          </div>
+        </div>
+      </div>
+      <div class="risk-box">
+        <div class="risk-label">Risk Factor</div>
+        소비 지출 급랭에 따른 카드사 및 대출 기관의 연체율 상승 가능성 주시.
+      </div>
+    </div>
+
+    <!-- 3. Communication Services -->
+    <div class="sector-card pos-border">
+      <div>
+        <div class="card-top">
+          <div class="card-title">📡 Communication Services (통신서비스)</div>
+          <div class="card-perf pos-txt">+0.32%</div>
+        </div>
+        <div class="card-body-text">
+          <strong>레딧(Reddit)의 S&P 500 신규 편입</strong> 소식과 함께 온라인 플랫폼 및 게이밍 소프트웨어 종목으로 자금이 유입되며 지수 대비 강세를 보였다. 디지털 광고 수익성 개선 기대가 하방을 지지했다.
+        </div>
+        <div class="stock-box">
+          <div class="stock-box-title">Featured Stocks</div>
+          <div class="stock-row">
+            <span class="stock-name">DraftKings (DKNG)</span>
+            <span class="stock-metrics">$26.03 (+2.4%) | 12.66B</span>
+          </div>
+          <div class="stock-row">
+            <span class="stock-name">Unity Software (U)</span>
+            <span class="stock-metrics">$46.29 (+1.1%) | 19.60B</span>
+          </div>
+        </div>
+      </div>
+      <div class="risk-box">
+        <div class="risk-label">Risk Factor</div>
+        유럽 및 프랑스의 청소년 SNS 규제 법안 재추진 가능성 및 플랫폼 규제 변동성.
+      </div>
+    </div>
+
+    <!-- 4. Basic Materials -->
+    <div class="sector-card pos-border">
+      <div>
+        <div class="card-top">
+          <div class="card-title">⛏️ Basic Materials (소재)</div>
+          <div class="card-perf pos-txt">+0.45%</div>
+        </div>
+        <div class="card-body-text">
+          LME 구리 재고가 42일 연속 감소세를 나타내며 <strong>공급 부족(Supply Squeeze)</strong> 압력이 심화되었고, 특수 화학 및 산업용 소재 수요 증가 기대감에 힘입어 상승 마감했다.
+        </div>
+        <div class="stock-box">
+          <div class="stock-box-title">Featured Stocks</div>
+          <div class="stock-row">
+            <span class="stock-name">NewMarket (NEU)</span>
+            <span class="stock-metrics">$959.51 (+1.2%) | 8.59B</span>
+          </div>
+        </div>
+      </div>
+      <div class="risk-box">
+        <div class="risk-label">Risk Factor</div>
+        원자재 관세 부과 우려 및 중국 제련소 생산 조정에 따른 단기 가격 변동성 확대.
+      </div>
+    </div>
+
+    <!-- 5. Energy -->
+    <div class="sector-card pos-border">
+      <div>
+        <div class="card-top">
+          <div class="card-title">🛢️ Energy (에너지)</div>
+          <div class="card-perf pos-txt">+1.34%</div>
+        </div>
+        <div class="card-body-text">
+          이란 드론 공격으로 인한 유조선 피격 및 <strong>트럼프의 호르무즈 해협 전면 봉쇄 경고</strong>로 공급 차질 불안감이 급증하며 섹터 전체가 시장 상승률 1위를 주도했다.
+        </div>
+        <div class="stock-box">
+          <div class="stock-box-title">Featured Stocks</div>
+          <div class="stock-row">
+            <span class="stock-name">Oneok, Inc. (OKE)</span>
+            <span class="stock-metrics">$95.03 (+2.6%) | 58.29B</span>
+          </div>
+        </div>
+      </div>
+      <div class="risk-box">
+        <div class="risk-label">Risk Factor</div>
+        미국 원유 시추 굴착장비 수(593기) 증가에 따른 증산 압력 및 지정학적 협상 시 유가 급락 위험.
+      </div>
+    </div>
+
+    <!-- 6. Technology -->
+    <div class="sector-card neg-border">
+      <div>
+        <div class="card-top">
+          <div class="card-title">💻 Technology (기술주)</div>
+          <div class="card-perf neg-txt">-0.55%</div>
+        </div>
+        <div class="card-body-text">
+          어플라이드 머티어리얼즈의 실적 발표 후 급락(-6%)과 <strong>엔비디아의 OpenAI 데이터센터 보증 축소</strong> 소식이 전해지며 AI 인프라 고평가 논란으로 빅테크 중심의 차익 매물이 출회되었다.
+        </div>
+        <div class="stock-box">
+          <div class="stock-box-title">Featured Stocks</div>
+          <div class="stock-row">
+            <span class="stock-name">Super Micro (SMCI)</span>
+            <span class="stock-metrics">$39.79 (+1.6%) | 24.33B</span>
+          </div>
+          <div class="stock-row">
+            <span class="stock-name">Aurora Innov. (AUR)</span>
+            <span class="stock-metrics">$7.08 (+3.4%) | 13.47B</span>
+          </div>
+          <div class="stock-row">
+            <span class="stock-name">D-Wave Quantum (QBTS)</span>
+            <span class="stock-metrics">$21.25 (+1.7%) | 7.72B</span>
+          </div>
+        </div>
+      </div>
+      <div class="risk-box">
+        <div class="risk-label">Risk Factor</div>
+        빅테크 기업들의 AI 설비투자 차입 확대에 따른 신용 시장 부담 및 수익성 검증 압박.
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ⑤ 지정학적 리스크 섹션 -->
+  <div class="geo-card">
+    <div class="geo-badge">Geopolitical Alert</div>
+    <div class="geo-title">중동 호르무즈 해협 긴장 격화 및 드론 무역 관세 발효</div>
+    <div class="geo-body">
+      트럼프 대통령은 호르무즈 해협을 통과하는 유조선 공격에 대응하여 이란에 대한 전례 없는 경제적 고립 조치를 경고했다. 동시에 안보상 민감한 드론에 100%, 기타 드론 부품에 최대 25%의 관세를 부과하는 행정명령에 서명하며 글로벌 방산 및 항공 공급망 재편이 본격화되었다.
+    </div>
+  </div>
+
+  <!-- ⑥ 주요 자산군 성과 -->
+  <div class="sec-title">🌐 주요 자산군 성과 요약</div>
+  <div class="asset-grid">
+    <div class="asset-card">
+      <div class="asset-name">WTI CRUDE OIL</div>
+      <div class="asset-val">$82.40 <span style="font-size:13px; color:#1d8a4e;">(+1.42%)</span></div>
+      <div class="asset-desc">호르무즈 해협 유조선 피격 및 공급 우려로 반등.</div>
+    </div>
+    <div class="asset-card">
+      <div class="asset-name">US 2Y YIELD</div>
+      <div class="asset-val">4.14% <span style="font-size:13px; color:#d13b2e;">(-3.0bp)</span></div>
+      <div class="asset-desc">소매판매 부진으로 연준 긴축 우려 완화 반영.</div>
+    </div>
+    <div class="asset-card">
+      <div class="asset-name">FED RATE HIKE ODDS</div>
+      <div class="asset-val">&lt; 40%</div>
+      <div class="asset-desc">9월 금리 인상 확률이 급격히 낮아지며 채권 랠리 유도.</div>
+    </div>
+    <div class="asset-card">
+      <div class="asset-name">LME COPPER SPREAD</div>
+      <div class="asset-val">&gt; $260</div>
+      <div class="asset-desc">42일 연속 재고 감소로 2021년 이후 최대 스퀴즈 발생.</div>
+    </div>
+    <div class="asset-card">
+      <div class="asset-name">GOLD SPOT</div>
+      <div class="asset-val">100-DMA Test</div>
+      <div class="asset-desc">금리 하락에도 불구하고 단기 차익 매물로 횡보 흐름.</div>
+    </div>
+    <div class="asset-card">
+      <div class="asset-name">US RIG COUNT</div>
+      <div class="asset-val">593기 (+5)</div>
+      <div class="asset-desc">2025년 3월 이후 최고치 기록, 에너지 투자 지속.</div>
+    </div>
+  </div>
+
+  <!-- ⑦ 인사이트 요약 섹션 -->
+  <div class="insight-card">
+    <div class="insight-title">💡 당일 시장 핵심 테마 및 투자 인사이트</div>
+    <div class="insight-body">
+      7월 소매판매 급감은 미국 소비 여력 둔화 신호로 해석되며 채권 금리 하락을 견인했다. 그러나 금리 인하 기대감이 기술주 밸류에이션을 무조건 지지해주지 못하는 국면에 진입했다. 기술주와 헬스케어에서 빠져나온 자금이 지정학적 수혜를 받는 에너지와 방산 중심의 산업재로 이동하는 명확한 섹터 로테이션 흐름이 확인되었다.
+    </div>
+  </div>
+
+  <!-- ⑧ 푸터 -->
+  <div class="footer-section">
+    <div>NYSE Sector Analysis · 2026.08.14 · by TNBFolio</div>
+    <div>본 자료는 투자 참고 목적이며, 투자 권유가 아닙니다.</div>
+  </div>
+
+</div>
+
+</body>
+</html>
