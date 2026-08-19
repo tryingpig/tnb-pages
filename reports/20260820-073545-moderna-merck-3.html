@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TNBfolio_BIO042_ModernaMerck_v2.html</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif+KR:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #ffffff;
+      color: #1a1a1a;
+      font-family: 'Noto Serif KR', serif;
+      font-size: 14px;
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+    .report-container { max-width: 900px; margin: 0 auto; background: #ffffff; }
+    .header-meta {
+      display: flex; justify-content: space-between; align-items: flex-end;
+      padding-bottom: 12px; border-bottom: 2.5px solid #1a1a1a; margin-bottom: 24px;
+    }
+    .brand-logo { font-family: 'DM Serif Display', serif; font-size: 22px; color: #1a1a1a; text-decoration: none; }
+    .brand-logo span { color: #1A5C9E; }
+    .meta-text { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #888888; text-align: right; letter-spacing: 0.05em; }
+    .report-label {
+      font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.16em;
+      text-transform: uppercase; color: #1A5C9E; font-weight: 700; margin-bottom: 8px; display: inline-block;
+    }
+    .report-title { font-family: 'DM Serif Display', serif; font-size: 34px; line-height: 1.25; color: #1a1a1a; margin-bottom: 14px; word-break: keep-all; }
+    .report-subtitle { font-size: 14px; color: #444444; line-height: 1.6; margin-bottom: 12px; word-break: keep-all; }
+    .byline { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #888888; margin-bottom: 28px; }
+    .divider { border: none; border-top: 0.5px solid #ccc; margin: 32px 0; }
+    .section-eyebrow {
+      font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.16em;
+      text-transform: uppercase; color: #1A5C9E; font-weight: 700; margin-bottom: 12px;
+    }
+    .section-note { font-size: 12px; color: #666666; margin: -6px 0 16px 0; word-break: keep-all; line-height: 1.6; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    .kpi-card { background: #f8f8f8; border: 1px solid #e0e0e0; padding: 14px 12px; display: flex; flex-direction: column; justify-content: space-between; }
+    .kpi-card.base { border-top: 3px solid #1A5C9E; }
+    .kpi-card.bull { border-top: 3px solid #2E7D52; }
+    .kpi-card.neutral { border-top: 3px solid #888888; }
+    .kpi-card.bear { border-top: 3px solid #C8392B; }
+    .kpi-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #888888; text-transform: uppercase; margin-bottom: 6px; }
+    .kpi-value { font-family: 'DM Serif Display', serif; font-size: 24px; color: #1a1a1a; line-height: 1.1; margin-bottom: 4px; }
+    .kpi-desc { font-size: 11px; color: #444444; line-height: 1.4; word-break: keep-all; }
+    .table-responsive { width: 100%; overflow-x: auto; margin-bottom: 32px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; }
+    th, td { padding: 10px 12px; border: 1px solid #e0e0e0; word-break: keep-all; vertical-align: top; }
+    th { background: #f8f8f8; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #444444; text-transform: uppercase; }
+    .badge { display: inline-block; padding: 2px 6px; font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700; border-radius: 2px; }
+    .badge.high { background: #fdf0ef; color: #C8392B; }
+    .badge.mid { background: #fff8ee; color: #b56a00; }
+    .badge.low { background: #eef5f1; color: #2E7D52; }
+    .badge.base { background: #eef3fa; color: #1A5C9E; }
+    .badge.bull { background: #eef5f1; color: #2E7D52; }
+    .badge.bear { background: #fdf0ef; color: #C8392B; }
+    .badge.neutral { background: #f0f0f0; color: #666666; }
+    .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 32px; }
+    .chart-card { background: #ffffff; border: 1px solid #e0e0e0; padding: 16px; }
+    .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .chart-title { font-family: 'DM Serif Display', serif; font-size: 14px; color: #1a1a1a; }
+    .chart-legend { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #888888; }
+    .canvas-wrapper { position: relative; height: 200px; width: 100%; }
+    .scenario-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }
+    .scenario-card { background: #f8f8f8; border: 1px solid #e0e0e0; padding: 16px; }
+    .scenario-card .badge { margin-bottom: 8px; }
+    .scenario-title { font-family: 'DM Serif Display', serif; font-size: 15px; color: #1a1a1a; margin-bottom: 8px; }
+    .scenario-desc { font-size: 12px; color: #444444; line-height: 1.5; word-break: keep-all; }
+    .timeline-list { list-style: none; position: relative; margin-bottom: 32px; padding-left: 20px; }
+    .timeline-list::before { content: ''; position: absolute; left: 4px; top: 6px; bottom: 6px; width: 1px; background: #e0e0e0; }
+    .timeline-item { position: relative; margin-bottom: 18px; }
+    .timeline-item:last-child { margin-bottom: 0; }
+    .timeline-dot { position: absolute; left: -20px; top: 5px; width: 9px; height: 9px; border-radius: 50%; background: #cccccc; }
+    .timeline-dot.completed { background: #1A5C9E; }
+    .timeline-dot.pending { background: #cccccc; }
+    .timeline-dot.risk { background: #C8392B; }
+    .timeline-date { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #888888; margin-bottom: 2px; }
+    .timeline-title { font-family: 'DM Serif Display', serif; font-size: 14px; color: #1a1a1a; margin-bottom: 4px; }
+    .timeline-desc { font-size: 12px; color: #444444; line-height: 1.5; word-break: keep-all; }
+    .step-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px; }
+    .step-card { background: #ffffff; border: 1px solid #e0e0e0; border-top: 3px solid #1A5C9E; padding: 14px; position: relative; }
+    .step-num { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #1A5C9E; font-weight: 700; margin-bottom: 6px; }
+    .step-title { font-family: 'DM Serif Display', serif; font-size: 14px; color: #1a1a1a; margin-bottom: 6px; word-break: keep-all; }
+    .step-desc { font-size: 11.5px; color: #444444; line-height: 1.5; word-break: keep-all; }
+    .callout-box { background: #eef3fa; border-left: 3px solid #1A5C9E; padding: 14px 16px; margin-bottom: 24px; font-size: 12px; color: #1a1a1a; line-height: 1.6; word-break: keep-all; }
+    .callout-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: #1A5C9E; font-weight: 700; margin-bottom: 6px; }
+    .verdict-box { background: #f8f8f8; border: 1px solid #1a1a1a; padding: 20px; margin-bottom: 32px; }
+    .verdict-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: #1A5C9E; font-weight: 700; margin-bottom: 8px; }
+    .verdict-title { font-family: 'DM Serif Display', serif; font-size: 18px; color: #1a1a1a; margin-bottom: 10px; word-break: keep-all; }
+    .verdict-content { font-size: 12px; color: #1a1a1a; line-height: 1.6; word-break: keep-all; }
+    .footer { border-top: 1.5px solid #1a1a1a; padding-top: 16px; display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #888888; line-height: 1.5; }
+    .footer-left { max-width: 70%; }
+    @media (max-width: 768px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .chart-grid { grid-template-columns: 1fr; }
+      .scenario-grid { grid-template-columns: 1fr; }
+      .step-grid { grid-template-columns: 1fr; }
+      .footer { flex-direction: column; gap: 8px; }
+      .footer-left { max-width: 100%; }
+    }
+  </style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+  <div class="report-container">
+    <header class="header-meta">
+      <div>
+        <a href="#" class="brand-logo">TNB<span>folio</span></a>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #888888; margin-top: 4px;">Financial Market Intelligence · Korean & U.S. Markets</div>
+      </div>
+      <div class="meta-text">
+        ONCOLOGY & BIOTECH | 2026.08.20 | Issue #BIO-042 (v2 · Deep-Dive)
+      </div>
+    </header>
+
+    <div class="report-label">Special Report — Oncology / Biotech · Deep-Dive Edition</div>
+    <h1 class="report-title">Moderna·Merck 맞춤형 암 백신 임상 3상 성공과 mRNA 항암 패러다임 전환</h1>
+    <p class="report-subtitle">
+      Moderna와 Merck가 공동 개발한 개별 맞춤형 신생항원 치료제(INT, Individualized Neoantigen Therapy)와 Keytruda 병용요법이 1,100명 이상의 흑색종 환자를 대상으로 한 3상 임상에서 재발·사망 위험을 유의하게 감소시켰다. 본 심층판은 제조 공정, 규제 트랙레코드, 파이프라인 다각화 전략까지 포함해 1차 리포트에서 다루지 않은 세부 구조를 추가 분석한다.
+    </p>
+    <div class="byline">2026.08.20 · TNBfolio 편집·분석 (Deep-Dive Update)</div>
+
+    <hr class="divider">
+
+    <div class="section-eyebrow">Key Metrics KPI</div>
+    <div class="kpi-grid">
+      <div class="kpi-card base">
+        <div class="kpi-label">MRK Market Cap</div>
+        <div class="kpi-value">$333B+</div>
+        <div class="kpi-desc">Keytruda 기반 지배력 확인, 발표 당일 주가 약 7.75% 상승</div>
+      </div>
+      <div class="kpi-card bull">
+        <div class="kpi-label">MRNA Stock Surge</div>
+        <div class="kpi-value">+63→74%</div>
+        <div class="kpi-desc">발표 직후 63% 급등, 장중 74%까지 확대. 주가 $102, 시총 $25B→$38~40B대</div>
+      </div>
+      <div class="kpi-card neutral">
+        <div class="kpi-label">Risk Reduction (P2)</div>
+        <div class="kpi-value">40~50%</div>
+        <div class="kpi-desc">2상 기준 재발·사망 위험 감소율. 5년 추적에서도 효과 지속 확인</div>
+      </div>
+      <div class="kpi-card bear">
+        <div class="kpi-label">Short Interest</div>
+        <div class="kpi-value">52M Shs</div>
+        <div class="kpi-desc">개별맞춤 치료 상용화 회의론에 기인한 공매도 잔고, 숏커버링 랠리 요인</div>
+      </div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-card base">
+        <div class="kpi-label">Trial Scale (P3)</div>
+        <div class="kpi-value">1,100+</div>
+        <div class="kpi-desc">흑색종 환자 대상 무작위 3상, Keytruda 단독요법 대비 병용군 비교</div>
+      </div>
+      <div class="kpi-card base">
+        <div class="kpi-label">R&D Timeline</div>
+        <div class="kpi-value">10 Yrs</div>
+        <div class="kpi-desc">Bancel 발언 기준 INT 플랫폼 개발에 투입된 기간</div>
+      </div>
+      <div class="kpi-card neutral">
+        <div class="kpi-label">Pipeline Breadth</div>
+        <div class="kpi-value">9 Indications</div>
+        <div class="kpi-desc">폐·방광·신장·위·췌장암 등 추가 2/3상 진행 중인 암종 수</div>
+      </div>
+      <div class="kpi-card bear">
+        <div class="kpi-label">Neoantigen Payload</div>
+        <div class="kpi-value">34 Mutations</div>
+        <div class="kpi-desc">환자별 종양에서 선별해 하나의 mRNA 분자로 합성하는 표적 돌연변이 수</div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="section-eyebrow">Competitive Landscape</div>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>기업명</th>
+            <th>핵심 플랫폼 및 파이프라인</th>
+            <th>기술적 특징 및 확장성</th>
+            <th>전략적 포지션</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Moderna</strong></td>
+            <td>mRNA 기반 개별 맞춤형 신생항원 요법 (INT)</td>
+            <td>환자 암세포 돌연변이 34개를 전자 시퀀싱하여 1개 분자로 합성</td>
+            <td><span class="badge bull">선도 기업</span></td>
+          </tr>
+          <tr>
+            <td><strong>Merck (MSD)</strong></td>
+            <td>Keytruda (면역관문억제제 병용)</td>
+            <td>20개 암종 승인 완료, 면역 T세포 활성화 잠금 해제 역할 수행</td>
+            <td><span class="badge base">시장 지배자</span></td>
+          </tr>
+          <tr>
+            <td><strong>BioNTech</strong></td>
+            <td>FixVac / iNeST mRNA 암 백신</td>
+            <td>Roche(Genentech)와 협업을 통한 다양한 고형암 표적 파이프라인 전개</td>
+            <td><span class="badge base">핵심 경쟁사</span></td>
+          </tr>
+          <tr>
+            <td><strong>CAR-T 개발사군</strong></td>
+            <td>자가 유래 세포 치료제 (Cell Therapy)</td>
+            <td>환자 세포 채취 및 체외 배양 필요로 제조 공정 복잡성 및 고비용 수반</td>
+            <td><span class="badge neutral">대체 접근법</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <hr class="divider">
+
+    <div class="section-eyebrow">Deep-Dive · 치료 메커니즘 &amp; 제조 공정</div>
+    <p class="section-note">
+      인터뷰 원문에서 Dean Li가 설명한 "사냥개(hound dog)" 비유를 기술적으로 재구성하면, Keytruda는 이미 몸속에 있는 면역세포를 풀어주는 '열쇠' 역할을 하고, INT는 그 면역세포에게 종양의 '냄새(신생항원 서명)'를 학습시키는 역할을 분담한다. 두 기전이 결합해야 완전한 치료 효과가 성립하는 구조다.
+    </p>
+    <div class="step-grid">
+      <div class="step-card">
+        <div class="step-num">STEP 01</div>
+        <div class="step-title">종양·정상세포 이중 시퀀싱</div>
+        <div class="step-desc">절제한 종양 조직과 환자 혈액(정상세포)의 DNA를 각각 시퀀싱하여 전자적으로 비교, 종양에만 존재하는 돌연변이 위치를 식별한다.</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">STEP 02</div>
+        <div class="step-title">34개 신생항원 알고리즘 선별</div>
+        <div class="step-desc">식별된 변이 중 면역원성이 가장 높을 것으로 예측되는 34개를 알고리즘으로 선별해 단일 mRNA 분자로 순차 결합(stitch)한다.</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">STEP 03</div>
+        <div class="step-title">효소 기반 화학 합성 (Non-Cell)</div>
+        <div class="step-desc">환자의 세포를 직접 배양하지 않고 효소를 이용한 화학적 합성 공정을 사용해 제조 기간과 비용을 CAR-T 대비 구조적으로 단축한다.</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">STEP 04</div>
+        <div class="step-title">Keytruda 병용 투여</div>
+        <div class="step-desc">체크포인트 억제제 Keytruda가 T세포의 활성 억제를 해제하고, 학습된 T세포가 개별화된 신생항원 서명을 인식해 종양을 공격한다.</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">STEP 05</div>
+        <div class="step-title">"개별화" ≠ "맞춤화" 구분</div>
+        <div class="step-desc">동일 돌연변이를 가진 환자군에 동일 약을 쓰는 personalized medicine과 달리, 환자마다 완전히 다른 분자 조성을 갖는 individualized 치료로 정의된다.</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">STEP 06</div>
+        <div class="step-title">가격 정책 미확정</div>
+        <div class="step-desc">데이터 발표 수일 전 결과가 나온 상태로 가격 결정은 아직 이뤄지지 않았으며, 세포치료제보다는 낮지만 범용 백신보다는 높은 가격대가 예상된다.</div>
+      </div>
+    </div>
+    <div class="callout-box">
+      <div class="callout-label">Manufacturing Comparison</div>
+      CAR-T는 환자의 면역세포를 직접 채취해 체외에서 배양·증식시키는 세포치료제 방식으로 제조 리드타임과 원가 부담이 크다. 반면 INT는 세포 배양 없이 시퀀싱 데이터를 기반으로 한 화학적 mRNA 합성 방식을 사용해, 개별 맞춤형임에도 불구하고 구조적으로 더 빠르고 저렴한 제조 경로를 확보했다는 것이 경영진의 핵심 논지다.
+    </div>
+
+    <hr class="divider">
+
+    <div class="section-eyebrow">Deep-Dive · 규제 승인 트랙레코드</div>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>단계</th>
+            <th>규제 당국 상호작용 내용</th>
+            <th>시사점</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1상 승인</strong></td>
+            <td>FDA가 인체 최초 투여 안전성을 검토·승인, 장기간에 걸쳐 기술 자체를 사전 검증</td>
+            <td><span class="badge base">누적 신뢰</span></td>
+          </tr>
+          <tr>
+            <td><strong>2상 검토</strong></td>
+            <td>FDA가 2상 설계 및 데이터를 지속적으로 리뷰, 5년 추적 데이터까지 축적</td>
+            <td><span class="badge base">플랫폼 이해도 확보</span></td>
+          </tr>
+          <tr>
+            <td><strong>3상 (현재)</strong></td>
+            <td>임상 데이터 외에 개별맞춤 제조 공정의 균일성·품질까지 별도로 정밀 심사 예정</td>
+            <td><span class="badge mid">신규 심사 부담</span></td>
+          </tr>
+          <tr>
+            <td><strong>참고 사례</strong></td>
+            <td>Merck가 최근 획득한 콜레스테롤 치료제 승인 사례를 근거로, FDA가 기술을 이해한 분야에서는 신속하게 움직인다고 경영진이 언급</td>
+            <td><span class="badge bull">우선심사 기대</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="section-note">
+      경영진은 규제 당국과 승인 시점에 대해 명시적으로 앞서가지 않겠다는 입장을 유지했다. 톱라인 결과만 공개된 상태이며, 세부 데이터는 가을 종양학회 발표와 학술지 게재 이후 규제 당국과의 공식 사전 논의가 시작될 예정이다. 즉 현재 주가 반응은 아직 검증되지 않은 세부 데이터에 대한 선반영分이 상당 부분 포함돼 있다는 점을 유의해야 한다.
+    </p>
+
+    <hr class="divider">
+
+    <div class="section-eyebrow">Deep-Dive · 9개 추가 적응증 확장 로드맵</div>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>암종</th>
+            <th>병용 전략</th>
+            <th>참고 근거</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>비소세포폐암(NSCLC)</td><td>Keytruda 병용, 2/3상 진행</td><td rowspan="5"><span class="badge base">Keytruda 확장 로드맵과 동일 경로</span><br><span style="font-size:11px;color:#666;">Keytruda 역시 흑색종에서 최초 승인된 뒤 순차적으로 적응증을 넓힌 전례가 있어, 경영진은 이를 "따라갈 로드맵이 이미 있다"고 표현했다</span></td></tr>
+          <tr><td>방광암</td><td>Keytruda 병용, 2/3상 진행</td></tr>
+          <tr><td>신장암</td><td>Keytruda 병용, 2/3상 진행</td></tr>
+          <tr><td>위암</td><td>Keytruda 병용, 2/3상 진행</td></tr>
+          <tr><td>췌장암</td><td>Keytruda 병용, 2/3상 진행</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="section-note">
+      경영진은 흑색종 3상에서 얻은 교훈(잘된 점과 개선 필요 지점)을 즉시 다른 암종 코호트에 반영하겠다고 밝혔다. 다만 종양변이부담(TMB)이 낮은 암종에서는 반응률이 낮아질 수 있다는 점이 핵심 관찰 포인트로 남아 있다.
+    </p>
+
+    <hr class="divider">
+
+    <div class="section-eyebrow">Deep-Dive · Moderna 플랫폼 다각화 &amp; 밸류에이션 사이클</div>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>시기</th>
+            <th>이벤트</th>
+            <th>전략적 의미</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>2018</td><td>나스닥 상장 (백신, INT, 희귀유전질환 등 다각화 파이프라인 보유)</td><td>플랫폼 기업으로 출발</td></tr>
+          <tr><td>2020~2021</td><td>COVID-19 대응에 회사 역량 총동원, 시총 한때 $150B 수준까지 급등</td><td>단일 제품 집중 전략(전략적 이탈)</td></tr>
+          <tr><td>2022~2024</td><td>COVID 매출 약 90% 감소, 시총 $25~28B 수준까지 하락</td><td>매출 절벽에 따른 리레이팅</td></tr>
+          <tr><td>2025 (직전 회계연도)</td><td>CMV 백신 임상 실패 발표</td><td>대형 베팅 전략의 리스크 노출 사례</td></tr>
+          <tr><td>2026.06</td><td>Science Day에서 자가면역질환 신규 파이프라인 진출 발표</td><td>플랫폼 재확장(오리지널 전략 복귀)</td></tr>
+          <tr><td>2026.08</td><td>흑색종 3상 성공, 시총 $38~40B대로 반등</td><td>온콜로지가 새로운 성장축으로 부상</td></tr>
+          <tr><td>2026 연말(예정)</td><td>희귀유전질환 3상 데이터 발표 예정</td><td>비-백신 플랫폼 상업성 판별 분기점</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout-box">
+      <div class="callout-label">Editorial Note</div>
+      Bancel은 "과학이 곧 과학이다(the science is the science)"라는 표현으로 주가 변동과 무관하게 대형 베팅 전략을 지속해왔다고 강조했다. CMV 백신 실패 사례는 이 전략이 항상 성공하지는 않는다는 것을 보여주는 반대 증거로, 온콜로지 성공 하나만으로 플랫폼 전체의 리스크가 해소된 것은 아니라는 점을 균형 있게 짚어야 한다.
+    </div>
+
+    <hr class="divider">
+
+    <div class="section-eyebrow">Data & Trend Analysis</div>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Moderna 시가총액 풀사이클 추이 ($B)</div>
+          <div class="chart-legend">2018 IPO → Current</div>
+        </div>
+        <div class="canvas-wrapper">
+          <canvas id="marketCapChart" role="img" aria-label="Moderna 시가총액 풀사이클 차트"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">mRNA INT 상용화 다차원 리스크 평가</div>
+          <div class="chart-legend">Risk Score (1-10)</div>
+        </div>
+        <div class="canvas-wrapper">
+          <canvas id="riskRadarChart" role="img" aria-label="mRNA INT 리스크 다차원 평가 차트"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="section-eyebrow">Scenario Analysis</div>
+    <div class="scenario-grid">
+      <div class="scenario-card">
+        <span class="badge bear">Bear Case</span>
+        <div class="scenario-title">규제 심사 지연 및 제조 원가 부담</div>
+        <div class="scenario-desc">
+          FDA의 개별 맞춤형 제조 공정 심사가 지연되고, 고형암 확장 임상에서 흑색종 대비 낮은 반응률이 관찰될 경우 밸류에이션 프리미엄이 축소된다. 세부 데이터가 톱라인 대비 약화될 경우 숏커버링 랠리가 되돌려질 수 있다.
+        </div>
+      </div>
+      <div class="scenario-card">
+        <span class="badge base">Base Case</span>
+        <div class="scenario-title">흑색종 3상 확정 및 신속 승인 진입</div>
+        <div class="scenario-desc">
+          가을 주요 종양학회에서 세부 데이터를 입증하고 FDA 우선심사 경로를 확보하여 2027년 내 흑색종 적응증 상용화에 진입한다. 가격 정책은 CAR-T 대비 낮은 수준에서 결정된다.
+        </div>
+      </div>
+      <div class="scenario-card">
+        <span class="badge bull">Bull Case</span>
+        <div class="scenario-title">비소세포폐암·췌장암 등 9개 적응증 확장</div>
+        <div class="scenario-desc">
+          폐암, 췌장암, 방광암 등 주요 9개 암종 병용 임상이 성공하며 Keytruda와 결합된 글로벌 범용 표준 치료 플랫폼으로 안착, 자가면역·희귀질환 파이프라인까지 재평가받는다.
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="section-eyebrow">Catalyst Timeline</div>
+    <ul class="timeline-list">
+      <li class="timeline-item">
+        <div class="timeline-dot completed"></div>
+        <div class="timeline-date">2026.06 - 08</div>
+        <div class="timeline-title">흑색종 3상 톱라인 확인 및 5년 추적 데이터 발표</div>
+        <div class="timeline-desc">무질병 생존율(DFS)의 장기 지속성을 검증하고 주요 임상 목표를 충족했다.</div>
+      </li>
+      <li class="timeline-item">
+        <div class="timeline-dot pending"></div>
+        <div class="timeline-date">2026.Q3 - Q4</div>
+        <div class="timeline-title">글로벌 종양학회 세부 임상 데이터 공개 및 저널 게재</div>
+        <div class="timeline-desc">톱라인 이후 처음으로 세부 수치가 공개되며, 이 시점부터 규제 당국과의 공식 사전 심사 논의가 개시된다.</div>
+      </li>
+      <li class="timeline-item">
+        <div class="timeline-dot risk"></div>
+        <div class="timeline-date">2026.YE</div>
+        <div class="timeline-title">희귀 유전질환 파이프라인 3상 데이터 도출</div>
+        <div class="timeline-desc">mRNA 플랫폼의 항암 외 파이프라인 확장성과 상업적 지속 가능성을 판별하는 계기가 된다.</div>
+      </li>
+      <li class="timeline-item">
+        <div class="timeline-dot pending"></div>
+        <div class="timeline-date">2027.H1</div>
+        <div class="timeline-title">폐암·신장암·방광암·위암·췌장암 등 2/3상 중간 결과 순차 확인</div>
+        <div class="timeline-desc">고형암 전반으로의 적응증 확대 가능성을 가늠할 수 있는 핵심 지표이자, TMB가 낮은 암종에서의 반응률 검증 구간이다.</div>
+      </li>
+      <li class="timeline-item">
+        <div class="timeline-dot pending"></div>
+        <div class="timeline-date">2027 이후</div>
+        <div class="timeline-title">약가·보험 급여 정책 확정 및 상업화 개시</div>
+        <div class="timeline-desc">CAR-T 대비 낮은 제조원가를 실제 약가에 어떻게 반영할지가 상업적 성패의 분수령이 될 전망이다.</div>
+      </li>
+    </ul>
+
+    <hr class="divider">
+
+    <div class="section-eyebrow">Risk Matrix</div>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>리스크 항목</th>
+            <th>상세 내용</th>
+            <th>등급</th>
+            <th>대응 및 모니터링 방안</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>개별 제조 공정 규제</strong></td>
+            <td>환자 맞춤형 mRNA 합성 품질 균일성에 대한 FDA의 정밀 실사</td>
+            <td><span class="badge high">HIGH</span></td>
+            <td>효소 기반 화학 합성 공정의 표준화 데이터 입증</td>
+          </tr>
+          <tr>
+            <td><strong>톱라인-세부 데이터 괴리</strong></td>
+            <td>현재 주가는 톱라인만 반영된 상태로, 가을 학회에서 공개될 세부 수치가 기대치에 못 미칠 가능성</td>
+            <td><span class="badge high">HIGH</span></td>
+            <td>2상 5년 추적 데이터와의 정합성, 대조군 대비 통계적 유의성 확인</td>
+          </tr>
+          <tr>
+            <td><strong>타 암종 임상 편차</strong></td>
+            <td>돌연변이 부담(TMB)이 낮은 암종에서의 반응률 저하 위험</td>
+            <td><span class="badge mid">MID</span></td>
+            <td>폐암, 췌장암 등 9개 확장 임상 코호트별 반응률 점검</td>
+          </tr>
+          <tr>
+            <td><strong>약가 및 보험 급여</strong></td>
+            <td>개별 맞춤 생산 비용에 따른 고가 약가 책정 논란, 가격 정책 아직 미결정</td>
+            <td><span class="badge mid">MID</span></td>
+            <td>세포 치료제(CAR-T) 대비 원가 절감 효과 및 약가 전략 검증</td>
+          </tr>
+          <tr>
+            <td><strong>R&D 자원 분산</strong></td>
+            <td>온콜로지·자가면역·희귀질환 파이프라인 동시 확장에 따른 자본·인력 배분 부담</td>
+            <td><span class="badge mid">MID</span></td>
+            <td>연말 희귀질환 3상 결과 및 자가면역 파이프라인 진행 속도 추적</td>
+          </tr>
+          <tr>
+            <td><strong>공매도 숏스퀴즈 변동성</strong></td>
+            <td>5,200만 주 공매도 잔고 청산에 따른 단기 주가 급등락</td>
+            <td><span class="badge low">LOW</span></td>
+            <td>학회 데이터 발표 전후 기관 수급 및 잔고 변화 추적</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <hr class="divider">
+
+    <div class="verdict-box">
+      <div class="verdict-label">Editorial Verdict</div>
+      <div class="verdict-title">mRNA 기술은 감염병을 넘어 온콜로지 주류 플랫폼으로 진입했다, 다만 검증은 이제 시작이다</div>
+      <div class="verdict-content">
+        Moderna와 Merck의 INT 병용 전략은 기존 면역관문억제제가 지닌 한계를 암세포 신생항원 정밀 타격으로 보완했다. 세포를 직접 다루지 않고 효소 기반 화학 합성으로 제조 기간과 원가를 획기적으로 단축한 점은 상업적 성공 가능성을 높인다. 다만 현재 시장 반응은 세부 데이터 없이 톱라인과 5년 추적 히스토리에만 근거한 선반영 성격이 강하며, 규제 당국의 제조 공정 실사와 가을 학회에서의 세부 수치 공개가 실제 검증 구간이다. 동시에 Moderna가 온콜로지·자가면역·희귀질환을 동시에 확장하는 다각화 전략을 취하고 있다는 점에서, 이번 성공이 회사 전체 밸류에이션 리레이팅으로 이어지려면 연말 희귀질환 데이터 등 후속 촉매가 함께 확인돼야 한다.
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div class="footer-left">
+        본 리포트는 신뢰할 수 있는 정보를 기반으로 작성되었으나 정보의 정확성이나 완전성을 보장하지 않는다. 본 자료는 투자 권유를 목적으로 하지 않으며, 투자에 대한 최종 판단과 책임은 투자자 본인에게 있다.
+      </div>
+      <div>
+        © 2026 TNBfolio. All Rights Reserved.
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const ctxLine = document.getElementById('marketCapChart').getContext('2d');
+      new Chart(ctxLine, {
+        type: 'line',
+        data: {
+          labels: ['2018 IPO', '2020-21 COVID Peak', '2023 Trough', '2026.06', 'Current (Post-P3)'],
+          datasets: [{
+            data: [8.0, 150.0, 25.0, 28.5, 40.0],
+            borderColor: '#1A5C9E',
+            backgroundColor: 'rgba(26, 92, 158, 0.08)',
+            fill: true,
+            tension: 0.35,
+            borderWidth: 2,
+            pointBackgroundColor: '#1A5C9E',
+            pointRadius: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { family: 'JetBrains Mono', size: 9 }, color: '#888888' } },
+            y: {
+              grid: { color: '#e0e0e0', strokeDashArray: [2, 2] },
+              ticks: { font: { family: 'JetBrains Mono', size: 9 }, color: '#888888', callback: (val) => '$' + val.toFixed(0) + 'B' }
+            }
+          }
+        }
+      });
+
+      const ctxRadar = document.getElementById('riskRadarChart').getContext('2d');
+      new Chart(ctxRadar, {
+        type: 'radar',
+        data: {
+          labels: ['규제 승인', '제조 확장성', '임상 확장성', '약가/급여', '경쟁 리스크', 'R&D 자원 분산'],
+          datasets: [{
+            data: [7.5, 6.0, 8.0, 6.5, 5.0, 6.0],
+            borderColor: '#C8392B',
+            backgroundColor: 'rgba(200, 57, 43, 0.08)',
+            borderWidth: 1.5,
+            pointBackgroundColor: '#C8392B',
+            pointRadius: 2.5
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            r: {
+              angleLines: { color: '#e0e0e0' },
+              grid: { color: '#e0e0e0' },
+              suggestedMin: 0,
+              suggestedMax: 10,
+              ticks: { display: false, stepSize: 2 },
+              pointLabels: { font: { family: 'JetBrains Mono', size: 9 }, color: '#444444' }
+            }
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>
