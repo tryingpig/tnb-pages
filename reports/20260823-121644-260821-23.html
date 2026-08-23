@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TNBfolio 해외 뉴스 대시보드 (2026.08.21~08.23)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&amp;family=DM+Serif+Display:ital@0;1&amp;display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #F7F6F2;
+  --surface: #FFFFFF;
+  --surface-sub: #F0EEE9;
+  --text-main: #1A1A18;
+  --text-muted: #6B6B67;
+  --text-light: #ABABAB;
+  --header-bg: #1A1A18;
+  
+  --c-green: #0B7A55;
+  --bg-green: #E1F5EE;
+  --c-red: #C93232;
+  --bg-red: #FAECEC;
+  --c-gold: #9A6E00;
+  --bg-gold: #FFF3D0;
+  --c-blue: #185FA5;
+  --bg-blue: #E6F1FB;
+  --c-purple: #3C3489;
+  --bg-purple: #EEEDFE;
+  --c-darkgreen: #3B6D11;
+  --bg-darkgreen: #EAF4E2;
+  --c-pink: #993556;
+  --bg-pink: #FCEEF3;
+  --c-gray: #5F5E5A;
+  --bg-gray: #EFEFEF;
+
+  --sec-industrial: #0B7A55;
+  --sec-utility: #3B6D11;
+  --sec-tech: #185FA5;
+  --sec-discretionary: #993556;
+  --sec-finance: #9A6E00;
+  --sec-energy: #0B7A55;
+  --sec-healthcare: #C93232;
+  --sec-politics: #3C3489;
+  --sec-macro: #5F5E5A;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg);
+  color: var(--text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-serif { font-family: 'DM Serif Display', Georgia, serif; }
+
+header {
+  background-color: var(--header-bg);
+  color: #FFFFFF;
+  padding: 32px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.header-left .eyebrow {
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin-bottom: 6px;
+}
+.header-left h1 {
+  font-size: 32px;
+  font-weight: 400;
+  color: #FFFFFF;
+  margin-bottom: 8px;
+}
+.header-left .subtext {
+  font-size: 14px;
+  color: #D1D1CD;
+}
+.btn-download {
+  background-color: var(--c-green);
+  color: #FFFFFF;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: opacity 0.2s;
+}
+.btn-download:hover { opacity: 0.9; }
+
+.kpi-strip {
+  background-color: var(--surface);
+  border-bottom: 1px solid var(--surface-sub);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+.kpi-cell {
+  padding: 24px 32px;
+  border-right: 1px solid var(--surface-sub);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.kpi-cell:last-child { border-right: none; }
+.kpi-num {
+  font-size: 32px;
+  line-height: 1;
+  color: var(--text-main);
+}
+.kpi-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.kpi-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  width: fit-content;
+  margin-top: 4px;
+}
+
+.main-container {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 32px 40px;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+aside.sidebar {
+  background-color: var(--surface);
+  border-radius: 8px;
+  padding: 24px;
+  border: 1px solid #EAE8E2;
+  position: sticky;
+  top: 24px;
+}
+.sidebar-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+.filter-btn {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-left: 3px solid transparent;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-main);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 0 4px 4px 0;
+  margin-bottom: 4px;
+  transition: all 0.15s;
+}
+.filter-btn:hover {
+  background-color: var(--surface-sub);
+}
+.filter-btn.active {
+  background-color: var(--bg-green);
+  border-left-color: var(--c-green);
+  color: var(--c-green);
+  font-weight: 700;
+}
+.filter-count {
+  font-size: 12px;
+  background-color: var(--surface-sub);
+  padding: 2px 6px;
+  border-radius: 10px;
+  color: var(--text-muted);
+}
+.filter-btn.active .filter-count {
+  background-color: var(--c-green);
+  color: #FFFFFF;
+}
+.sidebar-divider {
+  height: 1px;
+  background-color: var(--surface-sub);
+  margin: 16px 0;
+}
+
+.mini-chart-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mini-chart-row {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  gap: 8px;
+}
+.mini-chart-label { width: 65px; color: var(--text-muted); }
+.mini-chart-bar-bg { flex: 1; height: 6px; background-color: var(--surface-sub); border-radius: 3px; overflow: hidden; }
+.mini-chart-bar { height: 100%; border-radius: 3px; }
+.mini-chart-val { width: 18px; text-align: right; color: var(--text-muted); }
+
+.content-area {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.overview-charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.chart-card {
+  background-color: var(--surface);
+  border-radius: 8px;
+  padding: 24px;
+  border: 1px solid #EAE8E2;
+}
+.chart-card h3 {
+  font-size: 16px;
+  margin-bottom: 16px;
+  color: var(--text-main);
+}
+.bar-dist-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.bar-dist-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.bar-dist-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+.bar-dist-track {
+  height: 8px;
+  background-color: var(--surface-sub);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.bar-dist-fill { height: 100%; border-radius: 4px; }
+.chart-container-donut {
+  height: 220px;
+  position: relative;
+}
+
+.sector-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.sector-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--text-main);
+}
+.sector-header h2 {
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--text-main);
+}
+.sector-header .sec-count {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.news-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+.news-card {
+  background-color: var(--surface);
+  border-radius: 6px;
+  border: 1px solid #EAE8E2;
+  border-left-width: 4px;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  transition: all 0.2s ease;
+}
+.news-card:hover {
+  border-color: #BDBBB5;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.card-idx {
+  font-size: 22px;
+  line-height: 1;
+  color: var(--text-light);
+  min-width: 26px;
+}
+.card-title-wrap {
+  flex: 1;
+}
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+.card-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.card-summary {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 14px;
+  flex: 1;
+}
+.card-summary ul {
+  list-style: none;
+  padding-left: 0;
+}
+.card-summary li {
+  position: relative;
+  padding-left: 12px;
+  margin-bottom: 4px;
+}
+.card-summary li:last-child { margin-bottom: 0; }
+.card-summary li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--text-light);
+}
+
+.card-bottom {
+  border-top: 1px solid var(--surface-sub);
+  padding-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+.card-domain {
+  color: var(--text-light);
+  font-weight: 500;
+}
+.card-link {
+  color: var(--c-blue);
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.card-link:hover { text-decoration: underline; }
+
+.badge-ai { background-color: var(--bg-blue); color: var(--c-blue); }
+.badge-robot { background-color: var(--bg-green); color: var(--c-green); }
+.badge-semi { background-color: var(--bg-blue); color: var(--c-blue); }
+.badge-warning { background-color: var(--bg-red); color: var(--c-red); }
+.badge-ipo { background-color: var(--bg-gold); color: var(--c-gold); }
+.badge-invest { background-color: var(--bg-green); color: var(--c-green); }
+.badge-battery { background-color: var(--bg-green); color: var(--c-green); }
+.badge-geo { background-color: var(--bg-red); color: var(--c-red); }
+.badge-macro { background-color: var(--bg-gray); color: var(--c-gray); }
+.badge-default { background-color: var(--surface-sub); color: var(--text-muted); }
+
+footer {
+  background-color: var(--header-bg);
+  color: var(--text-light);
+  padding: 24px 40px;
+  margin-top: 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+@media (max-width: 992px) {
+  .main-container { grid-template-columns: 1fr; }
+  aside.sidebar { display: none; }
+  .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+  .kpi-cell { border-bottom: 1px solid var(--surface-sub); }
+  .overview-charts { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  header, .main-container, footer { padding: 20px; }
+  .kpi-strip { grid-template-columns: 1fr; }
+  .kpi-cell { border-right: none; }
+}
+</style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="eyebrow">@TNBfolio · Global News Digest</div>
+    <h1 class="font-serif">해외 뉴스 대시보드</h1>
+    <div class="subtext">2026.08.21 ~ 08.23 · 9개 섹터 · 총 70건</div>
+  </div>
+  <button class="btn-download" id="downloadBtn" onclick="downloadHTML()">
+    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"></path><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"></path></svg>
+    HTML 다운로드
+  </button>
+</header>
+
+<div class="kpi-strip">
+  <div class="kpi-cell">
+    <div class="kpi-num font-serif">70</div>
+    <div class="kpi-label">총 뉴스 건수</div>
+    <div class="kpi-badge" style="background:var(--bg-green); color:var(--c-green);">글로벌 마켓 모니터링</div>
+  </div>
+  <div class="kpi-cell">
+    <div class="kpi-num font-serif">9</div>
+    <div class="kpi-label">커버리지 섹터</div>
+    <div class="kpi-badge" style="background:var(--bg-blue); color:var(--c-blue);">광범위 밸류체인 분석</div>
+  </div>
+  <div class="kpi-cell">
+    <div class="kpi-num font-serif">기술주 25건</div>
+    <div class="kpi-label">최대 비중 섹터 (35.7%)</div>
+    <div class="kpi-badge" style="background:var(--bg-purple); color:var(--c-purple);">반도체 및 AI 주도</div>
+  </div>
+  <div class="kpi-cell">
+    <div class="kpi-num font-serif">27건</div>
+    <div class="kpi-label">AI 키워드 포함 뉴스</div>
+    <div class="kpi-badge" style="background:var(--bg-gold); color:var(--c-gold);">전체 38.6% 비중</div>
+  </div>
+</div>
+
+<div class="main-container">
+  <aside class="sidebar">
+    <div class="sidebar-title">섹터 필터</div>
+    <button class="filter-btn active" onclick="filterSector('all')">
+      전체 보기 <span class="filter-count">70</span>
+    </button>
+    <div class="sidebar-divider"></div>
+    <button class="filter-btn" onclick="filterSector('industrial')">
+      산업재 <span class="filter-count">6</span>
+    </button>
+    <button class="filter-btn" onclick="filterSector('utility')">
+      유틸리티 <span class="filter-count">3</span>
+    </button>
+    <button class="filter-btn" onclick="filterSector('tech')">
+      기술주 <span class="filter-count">25</span>
+    </button>
+    <button class="filter-btn" onclick="filterSector('discretionary')">
+      경기소비재 <span class="filter-count">2</span>
+    </button>
+    <button class="filter-btn" onclick="filterSector('finance')">
+      금융 <span class="filter-count">10</span>
+    </button>
+    <button class="filter-btn" onclick="filterSector('energy')">
+      에너지 <span class="filter-count">7</span>
+    </button>
+    <button class="filter-btn" onclick="filterSector('healthcare')">
+      헬스케어 <span class="filter-count">5</span>
+    </button>
+    <button class="filter-btn" onclick="filterSector('politics')">
+      정치 <span class="filter-count">6</span>
+    </button>
+    <button class="filter-btn" onclick="filterSector('macro')">
+      매크로 <span class="filter-count">6</span>
+    </button>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-title">섹터별 점유율</div>
+    <div class="mini-chart-box">
+      <div class="mini-chart-row">
+        <span class="mini-chart-label">기술주</span>
+        <div class="mini-chart-bar-bg"><div class="mini-chart-bar" style="width: 35.7%; background-color: var(--sec-tech);"></div></div>
+        <span class="mini-chart-val">25</span>
+      </div>
+      <div class="mini-chart-row">
+        <span class="mini-chart-label">금융</span>
+        <div class="mini-chart-bar-bg"><div class="mini-chart-bar" style="width: 14.3%; background-color: var(--sec-finance);"></div></div>
+        <span class="mini-chart-val">10</span>
+      </div>
+      <div class="mini-chart-row">
+        <span class="mini-chart-label">에너지</span>
+        <div class="mini-chart-bar-bg"><div class="mini-chart-bar" style="width: 10.0%; background-color: var(--sec-energy);"></div></div>
+        <span class="mini-chart-val">7</span>
+      </div>
+      <div class="mini-chart-row">
+        <span class="mini-chart-label">산업재</span>
+        <div class="mini-chart-bar-bg"><div class="mini-chart-bar" style="width: 8.6%; background-color: var(--sec-industrial);"></div></div>
+        <span class="mini-chart-val">6</span>
+      </div>
+      <div class="mini-chart-row">
+        <span class="mini-chart-label">정치</span>
+        <div class="mini-chart-bar-bg"><div class="mini-chart-bar" style="width: 8.6%; background-color: var(--sec-politics);"></div></div>
+        <span class="mini-chart-val">6</span>
+      </div>
+      <div class="mini-chart-row">
+        <span class="mini-chart-label">매크로</span>
+        <div class="mini-chart-bar-bg"><div class="mini-chart-bar" style="width: 8.6%; background-color: var(--sec-macro);"></div></div>
+        <span class="mini-chart-val">6</span>
+      </div>
+      <div class="mini-chart-row">
+        <span class="mini-chart-label">헬스케어</span>
+        <div class="mini-chart-bar-bg"><div class="mini-chart-bar" style="width: 7.1%; background-color: var(--sec-healthcare);"></div></div>
+        <span class="mini-chart-val">5</span>
+      </div>
+      <div class="mini-chart-row">
+        <span class="mini-chart-label">유틸리티</span>
+        <div class="mini-chart-bar-bg"><div class="mini-chart-bar" style="width: 4.3%; background-color: var(--sec-utility);"></div></div>
+        <span class="mini-chart-val">3</span>
+      </div>
+      <div class="mini-chart-row">
+        <span class="mini-chart-label">경기소비재</span>
+        <div class="mini-chart-bar-bg"><div class="mini-chart-bar" style="width: 2.8%; background-color: var(--sec-discretionary);"></div></div>
+        <span class="mini-chart-val">2</span>
+      </div>
+    </div>
+  </aside>
+
+  <main class="content-area">
+    <div class="overview-charts" id="overviewCharts">
+      <div class="chart-card">
+        <h3>섹터별 분포 현황</h3>
+        <div class="bar-dist-list">
+          <div class="bar-dist-item">
+            <div class="bar-dist-meta"><span>기술주 (Technology)</span><strong>25건 (35.7%)</strong></div>
+            <div class="bar-dist-track"><div class="bar-dist-fill" style="width: 35.7%; background: var(--sec-tech);"></div></div>
+          </div>
+          <div class="bar-dist-item">
+            <div class="bar-dist-meta"><span>금융 (Financials)</span><strong>10건 (14.3%)</strong></div>
+            <div class="bar-dist-track"><div class="bar-dist-fill" style="width: 14.3%; background: var(--sec-finance);"></div></div>
+          </div>
+          <div class="bar-dist-item">
+            <div class="bar-dist-meta"><span>에너지 (Energy)</span><strong>7건 (10.0%)</strong></div>
+            <div class="bar-dist-track"><div class="bar-dist-fill" style="width: 10.0%; background: var(--sec-energy);"></div></div>
+          </div>
+          <div class="bar-dist-item">
+            <div class="bar-dist-meta"><span>산업재 (Industrials)</span><strong>6건 (8.6%)</strong></div>
+            <div class="bar-dist-track"><div class="bar-dist-fill" style="width: 8.6%; background: var(--sec-industrial);"></div></div>
+          </div>
+          <div class="bar-dist-item">
+            <div class="bar-dist-meta"><span>정치 (Politics)</span><strong>6건 (8.6%)</strong></div>
+            <div class="bar-dist-track"><div class="bar-dist-fill" style="width: 8.6%; background: var(--sec-politics);"></div></div>
+          </div>
+          <div class="bar-dist-item">
+            <div class="bar-dist-meta"><span>매크로 (Macro)</span><strong>6건 (8.6%)</strong></div>
+            <div class="bar-dist-track"><div class="bar-dist-fill" style="width: 8.6%; background: var(--sec-macro);"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>최대 섹터(기술주) 세부 분류</h3>
+        <div class="chart-container-donut">
+          <canvas id="techDoughnutChart" width="554" height="220" style="display: block; box-sizing: border-box; height: 220px; width: 554px;"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- 산업재 섹션 -->
+    <section class="sector-section" data-sector="industrial">
+      <div class="sector-header">
+        <h2 class="font-serif">🏗️ 산업재</h2>
+        <span class="sec-count">6건</span>
+      </div>
+      <div class="news-grid">
+        <div class="news-card" style="border-left-color: var(--sec-industrial);">
+          <div class="card-top">
+            <div class="card-idx font-serif">01</div>
+            <div class="card-title-wrap">
+              <div class="card-title">중국 휴머노이드 로봇, 2026년 상반기 출하량 4만 대 돌파로 글로벌 점유율 97% 기록</div>
+              <span class="card-badge badge-robot">로봇</span>
+            </div>
+          </div>
+          <div class="card-summary">
+            <ul>
+              <li>2026년 상반기 4만 대 이상 출하하며 글로벌 점유율 97% 달성 및 역대 최고치 경신</li>
+              <li>칩, 부품, 완제품에 이르는 자체 공급망을 구축하고 인지·제어 기술을 급속 고도화</li>
+              <li>소규모 테스트 단계를 벗어나 산업·상업 현장의 일상적 배치 및 대규모 상용화 진입</li>
+            </ul>
+          </div>
+          <div class="card-bottom">
+            <span class="card-domain">digitimes.com</span>
+            <a href="https://www.digitimes.com/news/a20260820PD225/china-humanoid-robot-shipments-development-2026.html" target="_blank" class="card-link">원문 →</a>
+          </div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-industrial);">
+          <div class="card-top">
+            <div class="card-idx font-serif">02</div>
+            <div class="card-title-wrap">
+              <div class="card-title">Dexmal, 알리바바 지원 속 30억 달러 가치로 신규 자금 조달 추진</div>
+              <span class="card-badge badge-invest">투자</span>
+            </div>
+          </div>
+          <div class="card-summary">
+            <ul>
+              <li>실물 AI 혁신을 목표로 알리바바·NIO Capital 지원 속 30억 달러 가치 펀딩 진행</li>
+              <li>공장 및 가정용 휴머노이드 적용을 위한 임베디드 AI 두뇌 시스템 개발에 집중</li>
+              <li>연구 단계를 넘어 공장 현장에 연속 배치하는 상용화 능력이 향후 핵심 경쟁력</li>
+            </ul>
+          </div>
+          <div class="card-bottom">
+            <span class="card-domain">bloomberg.com</span>
+            <a href="https://www.bloomberg.com/news/articles/2026-08-21/alibaba-backed-robot-firm-seeks-3-billion-value-in-new-funding" target="_blank" class="card-link">원문 →</a>
+          </div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-industrial);">
+          <div class="card-top">
+            <div class="card-idx font-serif">03</div>
+            <div class="card-title-wrap">
+              <div class="card-title">산업재 기업, AI 데이터센터 붐 둔화 가능성에 대비해 사업 다각화 및 설비 관리 착수</div>
+              <span class="card-badge badge-ai">AI</span>
+            </div>
+          </div>
+          <div class="card-summary">
+            <ul>
+              <li>장비 제조사들이 데이터센터 수요 급증 속 AI 지출 거품 붕괴에 대비한 리스크 관리 착수</li>
+              <li>지멘스는 전력 장비 증설과 외주를 병행해 고정비 부담을 완화하는 유연성 확보</li>
+              <li>비만치료제 시설, 반도체 및 병원 인프라로 포트폴리오를 다각화하며 선별 수주 진행</li>
+            </ul>
+          </div>
+          <div class="card-bottom">
+            <span class="card-domain">bloomberg.com</span>
+            <a href="https://www.bloomberg.com/news/newsletters/2026-08-21/ai-suppliers-are-trying-to-prepare-for-the-data-center-bubble-to-burst" target="_blank" class="card-link">원문 →</a>
+          </div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-industrial);">
+          <div class="card-top">
+            <div class="card-idx font-serif">04</div>
+            <div class="card-title-wrap">
+              <div class="card-title">한세실업, 휴머노이드 로봇 의류 시장 선점을 위한 전용 컬렉션 공개</div>
+              <span class="card-badge badge-robot">로봇</span>
+            </div>
+          </div>
+          <div class="card-summary">
+            <ul>
+              <li>국내 최초 휴머노이드 로봇 전용 의류 전시회 'Wear the Future' 개최</li>
+              <li>배터리 발열 환기구, 센서 홀, 신축 관절 등 3D 및 AI 기술을 접목한 기능성 설계</li>
+              <li>반려 로봇 니트 및 산업용 워크웨어 라인업을 공개하며 로봇 패션 시장 선점 추진</li>
+            </ul>
+          </div>
+          <div class="card-bottom">
+            <span class="card-domain">wwd.com</span>
+            <a href="https://wwd.com/business-news/business-features/hansae-humanoid-robot-dressing-1239144466/" target="_blank" class="card-link">원문 →</a>
+          </div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-industrial);">
+          <div class="card-top">
+            <div class="card-idx font-serif">05</div>
+            <div class="card-title-wrap">
+              <div class="card-title">SpaceX, 반도체 제조 및 우주선 연료 수요 충당을 위해 천연가스 트레이딩팀 신설</div>
+              <span class="card-badge badge-invest">투자</span>
+            </div>
+          </div>
+          <div class="card-summary">
+            <ul>
+              <li>자체 반도체 공장 전력 발전 및 로켓 극저온 메탄 확보를 위해 가스 트레이딩팀 신설</li>
+              <li>물리적 현물과 파생상품을 거래하며 파이프라인 건설 및 가스전 시추까지 추진</li>
+              <li>빅테크 기업들이 에너지 인프라를 내재화하고 전력 트레이딩에 직접 진출하는 추세 확산</li>
+            </ul>
+          </div>
+          <div class="card-bottom">
+            <span class="card-domain">bloomberg.com</span>
+            <a href="https://www.bloomberg.com/news/articles/2026-08-21/spacex-is-hiring-for-natural-gas-trading-to-support-energy-needs" target="_blank" class="card-link">원문 →</a>
+          </div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-industrial);">
+          <div class="card-top">
+            <div class="card-idx font-serif">06</div>
+            <div class="card-title-wrap">
+              <div class="card-title">가스터빈 공급 부족, AI 데이터센터 확장의 최대 걸림돌로 부상</div>
+              <span class="card-badge badge-ai">AI</span>
+            </div>
+          </div>
+          <div class="card-summary">
+            <ul>
+              <li>미국 데이터센터 전력 수요 급증 대비 중대형 가스터빈 주문 잔고가 2030년대까지 마감</li>
+              <li>연간 신규 터빈 수요가 글로벌 연간 생산역량(60~70GW)을 위협하며 심각한 병목 발생</li>
+              <li>PJM 경매가 상한 도달 및 인허가 지연으로 주 정부들이 데이터센터 연결 재검토 착수</li>
+            </ul>
+          </div>
+          <div class="card-bottom">
+            <span class="card-domain">oilprice.com</span>
+            <a href="https://oilprice.com/Energy/Energy-General/The-Gas-Turbine-Shortage-Just-Became-AIs-Biggest-Constraint.html" target="_blank" class="card-link">원문 →</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 유틸리티 섹션 -->
+    <section class="sector-section" data-sector="utility">
+      <div class="sector-header">
+        <h2 class="font-serif">⚡ 유틸리티</h2>
+        <span class="sec-count">3건</span>
+      </div>
+      <div class="news-grid">
+        <div class="news-card" style="border-left-color: var(--sec-utility);">
+          <div class="card-top">
+            <div class="card-idx font-serif">01</div>
+            <div class="card-title-wrap">
+              <div class="card-title">서부 텍사스 석유 업계, 데이터센터 유입으로 전력 수요 폭증 직면</div>
+              <span class="card-badge badge-warning">경고</span>
+            </div>
+          </div>
+          <div class="card-summary">
+            <ul>
+              <li>퍼미안 분지의 장비 전동화와 데이터센터 유입으로 향후 10년간 전력 수요 2배 급증 전망</li>
+              <li>전력망 연계 대기 시간이 평균 950일에 달해 내년 여름 순환 정전 위험 대두</li>
+              <li>생산업체들은 전력난 극복을 위해 자체 마이크로그리드 구축 및 가스 발전 활용 확대</li>
+            </ul>
+          </div>
+          <div class="card-bottom">
+            <span class="card-domain">bloomberg.com</span>
+            <a href="https://www.bloomberg.com/news/articles/2026-08-20/west-texas-oil-producers-pushing-power-demand-through-the-roof" target="_blank" class="card-link">원문 →</a>
+          </div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-utility);">
+          <div class="card-top">
+            <div class="card-idx font-serif">02</div>
+            <div class="card-title-wrap">
+              <div class="card-title">AI 데이터센터의 800VDC 전력 구조 도입, 차세대 전력 반도체 수요 대규모 재편</div>
+              <span class="card-badge badge-semi">반도체</span>
+            </div>
+          </div>
+          <div class="card-summary">
+            <ul>
+              <li>차세대 AI 데이터센터가 800VDC 아키텍처를 도입하며 전력 반도체 생태계 급변</li>
+              <li>변환 손실을 최소화하기 위해 1GW 센터당 약 20만 개의 SiC 전력 모듈 채택 예상</li>
+              <li>인피니언, ST마이크로, 온세미 등 주요 제조사들의 GaN 및 SiC 양산 라인 증설 가속</li>
+            </ul>
+          </div>
+          <div class="card-bottom">
+            <span class="card-domain">digitimes.com</span>
+            <a href="https://www.digitimes.com/news/a20260821PD204/data-gan-demand-adoption-sic.html" target="_blank" class="card-link">원문 →</a>
+          </div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-utility);">
+          <div class="card-top">
+            <div class="card-idx font-serif">03</div>
+            <div class="card-title-wrap">
+              <div class="card-title">하이퍼스케일러, 자체 전력망 구축에 따른 기술적 결함과 가동 중단 위험 직면</div>
+              <span class="card-badge badge-warning">경고</span>
+            </div>
+          </div>
+          <div class="card-summary">
+            <ul>
+              <li>오프그리드 데이터센터 4곳 중 3곳에서 급격한 연산 부하 변동으로 터빈 결함 발생</li>
+              <li>xAI Colossus 등 주요 시설에서 장비 고장으로 인한 가동 중단 및 비상 발전 전환 기록</li>
+              <li>발전 프로젝트 대형화 속에 기계적 결함이 대규모 금융 손실로 직결될 위험 확대</li>
+            </ul>
+          </div>
+          <div class="card-bottom">
+            <span class="card-domain">wsj.com</span>
+            <a href="https://www.wsj.com/business/energy-oil/hyperscalers-off-grid-power-push-comes-with-risks-b1dca338?mod=rss_markets_main" target="_blank" class="card-link">원문 →</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 기술주 섹션 -->
+    <section class="sector-section" data-sector="tech">
+      <div class="sector-header">
+        <h2 class="font-serif">💻 기술주</h2>
+        <span class="sec-count">25건</span>
+      </div>
+      <div class="news-grid">
+        <div class="news-card" style="border-left-color: var(--sec-tech);">
+          <div class="card-top"><div class="card-idx font-serif">01</div><div class="card-title-wrap"><div class="card-title">Broadcom, Anthropic 등을 지원하기 위한 600억 달러 이상 규모 AI 부채 조달 추진</div><span class="card-badge badge-ai">AI</span></div></div>
+          <div class="card-summary"><ul><li>Anthropic AI 칩 자금 조달을 위해 최대 1,000억 달러 규모의 부채 조달 협상 진행</li><li>Blackstone 및 Apollo와 협력해 특수목적법인을 통한 후순위 채권 발행 검토</li><li>2028년까지 주요 AI 연구소에 20GW 이상의 대규모 연산 능력을 지원할 계획</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">finance.yahoo.com</span><a href="https://finance.yahoo.com/technology/ai/articles/broadcom-seeks-more-60-billion-203818587.html" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-tech);">
+          <div class="card-top"><div class="card-idx font-serif">02</div><div class="card-title-wrap"><div class="card-title">AI 하드웨어 공급망, 생산 차원을 넘어 금융 여신 한도 병목 현상 직면</div><span class="card-badge badge-warning">경고</span></div></div>
+          <div class="card-summary"><ul><li>서버 랙 가격 급등으로 부품 조립 및 재고 유지를 위한 운전자본 조달 압박 심화</li><li>대만 대형 제조사들의 대출 급증으로 금융권의 특정 기업군 여신 노출 한도 포화</li><li>신용 배분 및 금융 리스크 관리가 AI 하드웨어 공급망 확장의 핵심 변수로 대두</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">digitimes.com</span><a href="https://www.digitimes.com/news/a20260820PD222/ai-hardware-supply-chain.html" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-tech);">
+          <div class="card-top"><div class="card-idx font-serif">03</div><div class="card-title-wrap"><div class="card-title">Samsung, High-NA EUV 양산 적용 시점을 1nm 공정으로 연기</div><span class="card-badge badge-semi">반도체</span></div></div>
+          <div class="card-summary"><ul><li>High-NA EUV 노광 장비 양산 적용 목표를 2030년경 1nm급 공정으로 공식 조정</li><li>1.4nm 및 1nm에서도 기존 0.33-NA 멀티 패터닝을 주력으로 선별적 병행 방침</li><li>인텔의 선제 도입, TSMC의 기존 장비 수명 연장 등 파운드리 3사 전략 차별화</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">digitimes.com</span><a href="https://www.digitimes.com/news/a20260820VL217/samsung-high-na-euv-production-1nm-high-na.html?chid=10" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-tech);">
+          <div class="card-top"><div class="card-idx font-serif">04</div><div class="card-title-wrap"><div class="card-title">Nvidia, 한국 AI 칩 스타트업 Rebellions와 기술 제휴 및 투자 등 협력 논의</div><span class="card-badge badge-invest">투자</span></div></div>
+          <div class="card-summary"><ul><li>Nvidia 젠슨 황 CEO와 리벨리온 경영진이 만나 기술 제휴 및 잠재적 지분 투자 논의</li><li>리벨리온은 데이터센터 추론 특화 NPU 설계 전문으로 최근 23억 달러 가치 인정</li><li>양사 협력 시 시장 지배력 및 한국 정부의 핵심 반도체 자산 심사가 주요 변수</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">bloomberg.com</span><a href="https://www.bloomberg.com/news/articles/2026-08-21/nvidia-in-talks-with-chip-startup-rebellions-for-potential-deal" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-tech);">
+          <div class="card-top"><div class="card-idx font-serif">05</div><div class="card-title-wrap"><div class="card-title">메모리 반도체 주식, 거시경제 우려 및 스마트 머니 이동으로 상승세 둔화</div><span class="card-badge badge-semi">메모리</span></div></div>
+          <div class="card-summary"><ul><li>SanDisk, 마이크론, 웨스턴디지털 등 주요 메모리주가 차익 실현 매물로 조정세</li><li>금리 상승 부담과 AI 인프라 채권 발행 급증에 따른 시장 경계감이 유입</li><li>월가 주요 기관들은 밸류에이션 매력을 이유로 저가 매수 의견을 유지</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">bloomberg.com</span><a href="https://www.bloomberg.com/news/articles/2026-08-21/memory-stocks-struggle-for-momentum-with-smart-money-moving-on" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-tech);">
+          <div class="card-top"><div class="card-idx font-serif">06</div><div class="card-title-wrap"><div class="card-title">YMTC 모회사 CCSH, 상하이 증시 상장으로 49억 달러 조달 추진</div><span class="card-badge badge-ipo">IPO</span></div></div>
+          <div class="card-summary"><ul><li>중국 YMTC 모회사가 커창반 역대 3위 규모인 330억 위안(49억 달러) IPO 추진</li><li>AI 낸드 수요 폭증에 힘입어 2026년 1분기에만 333억 위안 규모 순이익 달성</li><li>미국 제재 속에서도 조달 자금을 생산라인 고도화 및 차세대 기술 개발에 투입</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">reuters.com</span><a href="https://www.reuters.com/world/asia-pacific/chinese-flash-memory-chipmaker-ymtc-plans-raise-49-billion-shanghai-ipo-2026-08-21/" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-tech);">
+          <div class="card-top"><div class="card-idx font-serif">07</div><div class="card-title-wrap"><div class="card-title">Anthropic, 자체 반도체 개발 가속을 위해 Google 출신 칩 전문가 영입</div><span class="card-badge badge-semi">반도체</span></div></div>
+          <div class="card-summary"><ul><li>Google TPU 1~7세대 개발을 총괄했던 아미르 살렉을 영입해 자체 칩 조직 강화</li><li>AI 칩 부족 완화 및 인프라 비용 절감을 위한 자체 실리콘 내재화 추진</li><li>빅테크 간 하드웨어 독립 경쟁 속 영국 스타트업 및 인프라 계약도 병행</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">bloomberg.com</span><a href="https://www.bloomberg.com/news/articles/2026-08-21/anthropic-taps-google-chip-veteran-as-part-of-push-into-hardware" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-tech);">
+          <div class="card-top"><div class="card-idx font-serif">08</div><div class="card-title-wrap"><div class="card-title">DeepSeek, 멀티모달 역량을 강화한 실험용 비전 AI 모델 공개</div><span class="card-badge badge-ai">AI</span></div></div>
+          <div class="card-summary"><ul><li>V4-Flash의 멀티모달 실험 버전인 Vision-Exp를 API 형태로 무료 출시</li><li>텍스트 처리 및 일반 추론 성능을 유지하면서 멀티모달 에이전트 역량을 대폭 개선</li><li>벤치마크상 Opus-4.8 수준에 근접하며 실용적 에이전트 고도화 가속</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">breakingthenews.net</span><a href="https://breakingthenews.net/Article/DeepSeek-unveils-experimental-vision-AI-model/66964488" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-tech);">
+          <div class="card-top"><div class="card-idx font-serif">09</div><div class="card-title-wrap"><div class="card-title">OpenAI, 향후 3개월간 GPT-5.6 Sol API 크레딧 요금 20% 인하 단행</div><span class="card-badge badge-ai">AI</span></div></div>
+          <div class="card-summary"><ul><li>향후 3개월간 적격 플랜 사용자를 대상으로 GPT-5.6 Sol API 요금 20% 인하</li><li>최신 모델 운영 효율성을 제고하고 개발자 인프라 진입 장벽을 대폭 완화</li><li>생태계 확장을 위해 적극적인 가격 인하 정책을 펼치며 점유율 방어에 주력</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">breakingthenews.net</span><a href="https://breakingthenews.net/Article/OpenAI-cuts-GPT-5.6-Sol-API-price-by-20/66966858" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-tech);">
+          <div class="card-top"><div class="card-idx font-serif">10</div><div class="card-title-wrap"><div class="card-title">DDR5 시장, 공급 부족 속 암표상 봇 트래픽이 실제 구매자를 압도</div><span class="card-badge badge-semi">DRAM</span></div></div>
+          <div class="card-summary"><ul><li>DDR5 제품 페이지 트래픽 중 악성 봇이 91%를 차지하며 인간 구매자를 압도</li><li>재고 부족 속에 32GB 키트 가격이 전년 72달러에서 392달러로 수직 상승</li><li>하이퍼스케일러의 물량 선점으로 소비자용 공급난은 2027년까지 지속될 전망</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">tomshardware.com</span><a href="https://www.tomshardware.com/pc-components/ddr5/scalper-bots-now-outnumber-human-shoppers-10-to-1-on-one-retailers-ddr5-pages" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-tech);">
+          <div class="card-top"><div class="card-idx font-serif">11</div><div class="card-title-wrap"><div class="card-title">기업용 SSD, 공급 부족 심화로 HDD 대비 테라바이트당 가격 차이 18.6배 기록</div><span class="card-badge badge-semi">메모리</span></div></div>
+          <div class="card-summary"><ul><li>30TB 기업용 SSD 가격이 급등해 동일 용량 하드디스크 대비 18.6배 격차 형성</li><li>Seagate 및 WD의 니어라인 HDD 물량이 2027년까지 장기 계약으로 조기 완판</li><li>AI 인프라 확장으로 인해 플래시와 하드디스크 전반의 고가격 기조가 구조화</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">tomshardware.com</span><a href="https://www.tomshardware.com/pc-components/ssds/enterprise-ssds-now-cost-18-times-more-than-hard-drives-per-terabyte" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-tech);">
+          <div class="card-top"><div class="card-idx font-serif">12</div><div class="card-title-wrap"><div class="card-title">NVIDIA, 중국 전용 LPU 연내 출하 관련 보도 공식 부인</div><span class="card-badge badge-semi">반도체</span></div></div>
+          <div class="card-summary"><ul><li>중국 맞춤형 LPU 연내 출하설에 대해 개발 로드맵이 존재하지 않는다며 공식 부인</li><li>해당 보도는 HBM 없이 삼성 4nm 및 SRAM으로 제작된 규제 우회 칩을 지칭했음</li><li>중국 정부의 수입 규제와 화웨이의 가속기 공세로 현지 사업 불확실성 지속</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">tomshardware.com</span><a href="https://www.tomshardware.com/tech-industry/semiconductors/nvidia-denies-report-it-will-ship-groq-based-lpus-to-china-by-year-end" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-tech);">
+          <div class="card-top"><div class="card-idx font-serif">13</div><div class="card-title-wrap"><div class="card-title">SanDisk, 350억 달러 손실을 낸 대형 헤지펀드의 강제 청산으로 주가 급등락</div><span class="card-badge badge-warning">위기</span></div></div>
+          <div class="card-summary"><ul><li>SanDisk와 마이크론에 56% 이상을 집중했던 대형 펀드가 350억 달러 손실 후 청산</li><li>대규모 강제 매도 물량이 시장에서 소화되며 단일 주체에 의한 수급 불안은 완화</li><li>변동성이 큰 AI 스토리지 테마에 대한 고레버리지 집중 투자 위험성을 부각</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">finance.yahoo.com</span><a href="https://finance.yahoo.com/markets/stocks/articles/sandisk-sndk-hit-hedge-fund-181351579.html" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-tech);">
+          <div class="card-top"><div class="card-idx font-serif">14</div><div class="card-title-wrap"><div class="card-title">Citadel, Situational Awareness 펀드 자산 인수 후 40억 달러 규모 AI 주식 블록딜 단행</div><span class="card-badge badge-invest">투자</span></div></div>
+          <div class="card-summary"><ul><li>Citadel이 긴급 인수한 위험 자산의 80% 이상을 100여 건의 블록딜을 통해 청산</li><li>SanDisk 및 마이크론 지분 113억 달러가 포함되어 단기 매물 압박 요인으로 작용</li><li>예측 시장 참가자들은 주요 AI 기업의 시스템적 파산 확률을 13% 수준으로 평가</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">finance.yahoo.com</span><a href="https://finance.yahoo.com/markets/stocks/articles/did-citadel-4-billion-ai-190603552.html" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-tech);">
+          <div class="card-top"><div class="card-idx font-serif">15</div><div class="card-title-wrap"><div class="card-title">NVIDIA, Poolside 모델 라이선스에 60억 달러 지급 및 10억 달러 지분 투자</div><span class="card-badge badge-invest">투자</span></div></div>
+          <div class="card-summary"><ul><li>코딩 AI 스타트업 Poolside와 60억 달러 라이선스 계약 및 10억 달러 지분 투자 합의</li><li>규제 당국의 반독점 심사를 우회하기 위해 핵심 개발 인력 109명에 대한 채용 추진</li><li>소프트웨어 개발 전용 Laguna 모델 및 모델 팩토리 플랫폼 접근권을 완전 확보</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">cryptobriefing.com</span><a href="https://cryptobriefing.com/nvidia-6b-poolside-ai-licensing-deal/" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-tech);">
+          <div class="card-top"><div class="card-idx font-serif">16</div><div class="card-title-wrap"><div class="card-title">Intel, 차세대 메모리 기술 XBM 및 ZAM 개발로 메모리 시장 재진입 추진</div><span class="card-badge badge-semi">메모리</span></div></div>
+          <div class="card-summary"><ul><li>HBM4에 대응해 인터포저 없이 고속 연결하는 적층형 메모리 XBM 특허 공개</li><li>소프트뱅크 자회사와 9층 적층 기반 융합 본딩 메모리 ZAM 공동 개발 착수</li><li>메모리 패러다임 변화 속 2030년 상용화를 목표로 향후 2~3년간 기술 검증 주력</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">trendforce.com</span><a href="https://www.trendforce.com/news/2026/08/21/news-intel-and-memory-a-history-of-exits-and-a-new-bid-to-return/" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-tech);">
+          <div class="card-top"><div class="card-idx font-serif">17</div><div class="card-title-wrap"><div class="card-title">AI 인프라 자본 지출, 수익화 격차 확대로 인한 하드웨어 과잉 리스크 대두</div><span class="card-badge badge-warning">경고</span></div></div>
+          <div class="card-summary"><ul><li>2031년까지 AI 인프라 누적 지출이 7.6조 달러에 달하나 기업 매출 회수는 지연</li><li>장비 상각 위기를 피하기 위해 2030년까지 연간 1조 달러 이상의 반복 매출 필요</li><li>수익화 지연 시 하이퍼스케일러의 발주 축소로 Nvidia의 마진 구조가 위협받을 위험</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">finance.yahoo.com</span><a href="https://finance.yahoo.com/technology/ai/articles/trillion-dollar-ai-capex-gap-140007152.html" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-tech);">
+          <div class="card-top"><div class="card-idx font-serif">18</div><div class="card-title-wrap"><div class="card-title">STMicroelectronics, 비용 상승과 수요 급증 속 연내 세 번째 제품 가격 인상 단행</div><span class="card-badge badge-semi">반도체</span></div></div>
+          <div class="card-summary"><ul><li>수요 폭증과 원자재 및 에너지 비용 상승을 이유로 연내 세 번째 전 제품 가격 인상</li><li>전력 반도체 납기가 최대 52주까지 늘어났으며 차량용 MCU 가격은 20% 상승</li><li>인피니언, TI, NXP 등 글로벌 주요 반도체 기업들의 연쇄 가격 인상세 확산</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">trendforce.com</span><a href="https://www.trendforce.com/news/2026/08/21/news-stmicroelectronics-plans-third-2026-price-hike-for-august-23-power-device-lead-times-reportedly-hit-52-weeks/" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-tech);">
+          <div class="card-top"><div class="card-idx font-serif">19</div><div class="card-title-wrap"><div class="card-title">NVIDIA, 에이전트의 장기 과제 수행에서 모델보다 하네스 프레임워크가 핵심임을 입증</div><span class="card-badge badge-ai">AI</span></div></div>
+          <div class="card-summary"><ul><li>단일 모델보다 메모리와 실행 도구를 통제하는 하네스 구조가 복합 과제 해결의 핵심</li><li>최적화된 프레임워크를 결합해 Claude Opus 5로 ARC-AGI-3 벤치마크 100% 달성</li><li>NeMo 브랜드를 통해 개방형 에이전트 런타임 및 통제 생태계 확장에 착수</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">techcrunch.com</span><a href="https://techcrunch.com/2026/08/21/nvidia-just-showed-that-the-harness-not-the-ai-model-is-now-the-real-hero/--telegram" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-tech);">
+          <div class="card-top"><div class="card-idx font-serif">20</div><div class="card-title-wrap"><div class="card-title">Samsung Electronics, AI 호황 속 주가 부진 극복을 위해 110조 원 규모 역대 최대 주주환원 의결</div><span class="card-badge badge-semi">반도체</span></div></div>
+          <div class="card-summary"><ul><li>주가 부진을 극복하기 위해 역대 최대 규모인 최대 110조 원 주주환원 프로그램 승인</li><li>30조 원은 배당에 우선 배정하고 80조 원은 자사주 매입·소각 및 추가 환원으로 집행</li><li>단기 주가 부양 효과와 함께 차세대 HBM 설비투자 재원 축소 우려가 병존</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">asia.nikkei.com</span><a href="https://asia.nikkei.com/business/tech/semiconductors/samsung-s-record-79bn-shareholder-return-reflects-ai-boom-pressure?utm_source=telegram&amp;utm_medium=referral&amp;utm_campaign=IC_telegram_channel&amp;utm_content=telegram_channel_posts" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-tech);">
+          <div class="card-top"><div class="card-idx font-serif">21</div><div class="card-title-wrap"><div class="card-title">Broadcom, 장외 금융 조달 구조를 무기로 NVIDIA에 대항하는 AI 공급망 구축</div><span class="card-badge badge-ai">AI</span></div></div>
+          <div class="card-summary"><ul><li>채권을 결합한 최대 1,000억 달러 금융 패키지로 Anthropic 등에 리스 형태 공급</li><li>고객사의 직접 차입 부담을 덜어주며 반도체 및 네트워킹 장비 출하를 촉진</li><li>자본 조달 지원 능력이 가속기 하드웨어 시장에서 Nvidia에 맞서는 핵심 무기로 부상</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">finance.yahoo.com</span><a href="https://finance.yahoo.com/technology/ai/articles/broadcom-secret-weapon-against-nvidia-191318992.html" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-tech);">
+          <div class="card-top"><div class="card-idx font-serif">22</div><div class="card-title-wrap"><div class="card-title">Microsoft, NVIDIA 차세대 플랫폼 Vera Rubin 초도 양산 물량 수령</div><span class="card-badge badge-ai">AI</span></div></div>
+          <div class="card-summary"><ul><li>마이크로소프트가 자사 클라우드 인프라에 탑재될 Nvidia Vera Rubin 초도 물량 인수</li><li>사티아 나델라 CEO가 직접 인수 사실을 공개하며 인프라 확장의 중대한 이정표로 평가</li><li>Nvidia Vera Rubin 플랫폼의 본격적인 전면 양산 단계 진입을 공식 확인</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">breakingthenews.net</span><a href="https://breakingthenews.net/Article/Microsoft-receives-Nvidia's-Vera-Rubin-AI-systems/66967465" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-tech);">
+          <div class="card-top"><div class="card-idx font-serif">23</div><div class="card-title-wrap"><div class="card-title">중국 AI 모델, 자본 및 최첨단 칩 제약 속에서도 미국과의 격차 급격히 축소</div><span class="card-badge badge-ai">AI</span></div></div>
+          <div class="card-summary"><ul><li>Kimi k3 등 중국 모델이 Claude 3.5 대비 4분의 1 비용으로 유사 성능 구현</li><li>미국의 수출 통제 속에서도 저비용 및 오픈웨이트 방식을 앞세워 미국 기업 도입 증가</li><li>자체 배포가 가능한 실용성을 무기로 글로벌 AI 시장 침투력을 빠르게 확대</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">bloomberg.com</span><a href="https://www.bloomberg.com/news/videos/2026-08-20/china-is-rapidly-catching-up-to-the-us-in-the-ai-race-video" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-tech);">
+          <div class="card-top"><div class="card-idx font-serif">24</div><div class="card-title-wrap"><div class="card-title">NVIDIA, 메모리 비용 급등으로 AI 서버 가격 15% 이상 인상 통보</div><span class="card-badge badge-semi">메모리</span></div></div>
+          <div class="card-summary"><ul><li>메모리 반도체 가격 상승으로 내년 초 출하될 Vera Rubin 및 Blackwell 서버 가격 15% 인상</li><li>DRAM 공급 부족으로 메모리 제조사 협상력이 극대화된 상황이 서버 단가에 반영</li><li>빅테크 기업들의 AI 데이터센터 설비투자 비용 부담이 한층 가중될 전망</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">bloomberg.com</span><a href="https://www.bloomberg.com/news/articles/2026-08-22/nvidia-customers-notified-about-ai-related-price-hikes-above-15" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-tech);">
+          <div class="card-top"><div class="card-idx font-serif">25</div><div class="card-title-wrap"><div class="card-title">NVIDIA, 중국 AI 모델에 대응하기 위해 오픈웨이트 AI 스타트업 Poolside에 60억 달러 투자</div><span class="card-badge badge-invest">투자</span></div></div>
+          <div class="card-summary"><ul><li>DeepSeek 등에 맞서기 위해 Poolside와 60억 달러 라이선스를 맺고 인재 100여 명 흡수</li><li>확보된 핵심 엔지니어들은 1조 파라미터 오픈웨이트 모델 Nemotron 개발에 전격 투입</li><li>프론티어 폐쇄형 협력과 오픈 모델 주도권 확보를 병행하는 투트랙 전략 가동</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">wsj.com</span><a href="https://www.wsj.com/tech/ai/nvidia-is-spending-6-billion-to-build-a-powerful-u-s-alternative-to-chinese-ai-c51c38cc?mod=rss_Technology" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 경기소비재 섹션 -->
+    <section class="sector-section" data-sector="discretionary">
+      <div class="sector-header">
+        <h2 class="font-serif">🛍️ 경기소비재</h2>
+        <span class="sec-count">2건</span>
+      </div>
+      <div class="news-grid">
+        <div class="news-card" style="border-left-color: var(--sec-discretionary);">
+          <div class="card-top"><div class="card-idx font-serif">01</div><div class="card-title-wrap"><div class="card-title">Tesla, 라스베이거스 로보택시 5,000대 배치 승인 획득으로 주가 상승</div><span class="card-badge badge-battery">EV</span></div></div>
+          <div class="card-summary"><ul><li>네바다주로부터 클라크 카운티 내 로보택시 5,000대 배치 허가를 공식 승인</li><li>초기 Model Y 투입 후 Cybercab으로 교체할 방침이며 내년 2,500대 배치가 목표</li><li>유럽 세미 트럭 출시 소식과 맞물려 Tesla 주가는 5% 이상 상승 마감</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">marketwatch.com</span><a href="https://www.marketwatch.com/story/tesla-stocks-jumps-as-the-company-gets-ready-for-a-robotaxi-push-c680f87f" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-discretionary);">
+          <div class="card-top"><div class="card-idx font-serif">02</div><div class="card-title-wrap"><div class="card-title">USITC, LG Energy Solution의 특허 침해 제소에 따라 중국 EVE Energy 조사 착수</div><span class="card-badge badge-battery">배터리</span></div></div>
+          <div class="card-summary"><ul><li>LG에너지솔루션의 특허 침해 제소로 미 국제무역위원회가 EVE Energy 조사 개시</li><li>원통형 배터리 및 부품 대상 미국 내 수입 금지 및 영업 정지 명령을 요청</li><li>중국산 배터리 보조금 제한 속에 한국 배터리 기업들의 반사이익 기대감 상승</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">asia.nikkei.com</span><a href="https://asia.nikkei.com/business/technology/us-probes-china-s-eve-energy-after-lg-energy-alleges-patent-infringement?utm_source=telegram&amp;utm_medium=referral&amp;utm_campaign=IC_telegram_channel&amp;utm_content=telegram_channel_posts" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 금융 섹션 -->
+    <section class="sector-section" data-sector="finance">
+      <div class="sector-header">
+        <h2 class="font-serif">📈 금융</h2>
+        <span class="sec-count">10건</span>
+      </div>
+      <div class="news-grid">
+        <div class="news-card" style="border-left-color: var(--sec-finance);">
+          <div class="card-top"><div class="card-idx font-serif">01</div><div class="card-title-wrap"><div class="card-title">Citigroup, Anthropic 상장 주관사단 합류로 IPO 경쟁력 강화</div><span class="card-badge badge-ipo">IPO</span></div></div>
+          <div class="card-summary"><ul><li>Anthropic 상장 주관사단에 Citigroup이 추가되어 모건스탠리·골드만 등과 공동 주관</li><li>기존 25억 달러 규모 신용공여 한도를 100억 달러 이상으로 대폭 확대 예정</li><li>이르면 이달 말 공식 상장 신청서 제출을 검토하며 대형 테크 IPO 준비 본격화</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">investing.com</span><a href="https://www.investing.com/news/stock-market-news/anthropic-adds-citigroup-to-lead-ipo-banks-ahead-of-listing--bloomberg-93CH-4870593" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-finance);">
+          <div class="card-top"><div class="card-idx font-serif">02</div><div class="card-title-wrap"><div class="card-title">외국인 투자자, AI 수혜주와 행동주의 펀드 타깃 기업 중심으로 일본 주식 보유 비중 사상 최고치 경신</div><span class="card-badge badge-invest">투자</span></div></div>
+          <div class="card-summary"><ul><li>일본 증시 내 외국인 지분율이 34.7%를 기록하며 3년 연속 사상 최고치 경신</li><li>ROE 개선 및 주주환원 정책을 적극 펼치는 기업과 AI 인프라 수혜주에 매수 집중</li><li>금리 인상에 따른 예대마진 개선 기대로 일본 대형 은행 섹터 지분도 확대</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">asia.nikkei.com</span><a href="https://asia.nikkei.com/business/markets/equities/foreign-ownership-of-japan-stocks-hits-new-record-on-ai-boom?utm_source=telegram&amp;utm_medium=referral&amp;utm_campaign=IC_telegram_channel&amp;utm_content=telegram_channel_posts" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-finance);">
+          <div class="card-top"><div class="card-idx font-serif">03</div><div class="card-title-wrap"><div class="card-title">Goldman Sachs, 7월 AI 모멘텀 둔화로 헤지펀드들이 20년 만에 최악의 상대 수익률 기록</div><span class="card-badge badge-warning">경고</span></div></div>
+          <div class="card-summary"><ul><li>헤지펀드 주요 롱 포지션 종목들이 7월 S&amp;P 500 대비 20년 만에 최악의 부진 기록</li><li>반도체와 빅테크 중심의 대규모 디그로싱이 진행되며 포트폴리오 다변화 가속</li><li>AI 쏠림 완화 속에서도 롱숏 헤지펀드는 8월 중순까지 10%의 누적 수익률 유지</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">cnbc.com</span><a href="https://www.cnbc.com/2026/08/21/goldman-hedge-funds-historic-underperformance-sp500-degrossing.html" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-finance);">
+          <div class="card-top"><div class="card-idx font-serif">04</div><div class="card-title-wrap"><div class="card-title">미국 테크 기업 AI 회사채 발행 폭증, 투자자들의 추가 금리 요구로 한계 봉착</div><span class="card-badge badge-warning">경고</span></div></div>
+          <div class="card-summary"><ul><li>빅테크 기업들의 AI 인프라 채권 발행 폭증으로 채권 시장의 소화 역량 한계 봉착</li><li>아마존·알파벳 등 최우량 등급도 대규모 물량 소화를 위한 가산금리 요구에 직면</li><li>연기금 등의 단일 편입 한도 규정으로 테크 기업의 차입 비용 상승 압력 확대</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">reuters.com</span><a href="https://www.reuters.com/legal/transactional/us-corporate-ai-debt-surge-tests-investor-limits-fatigue-emerges-2026-08-21/" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-finance);">
+          <div class="card-top"><div class="card-idx font-serif">05</div><div class="card-title-wrap"><div class="card-title">Nscale, AI 데이터센터 확장을 위해 미국 증시 상장으로 30억 달러 조달 추진</div><span class="card-badge badge-ipo">IPO</span></div></div>
+          <div class="card-summary"><ul><li>영국 AI 클라우드 기업 Nscale이 9월 미 증시 IPO로 최대 30억 달러 조달 추진</li><li>노르웨이 및 미국 등지에 데이터센터를 구축하고 510억 달러 규모 계약 수익 확보</li><li>10GW 규모 전력 확보 및 효율 극대화를 위해 스타트업 Anyscale 인수 완료</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">bloomberg.com</span><a href="https://www.bloomberg.com/news/articles/2026-08-21/ai-cloud-firm-nscale-is-said-to-seek-up-to-3-billion-in-us-ipo" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-finance);">
+          <div class="card-top"><div class="card-idx font-serif">06</div><div class="card-title-wrap"><div class="card-title">미국 재무부, 140억 달러 장기채 바이백 발표로 암호화폐 시장 숏스퀴즈 촉발</div><span class="card-badge badge-invest">투자</span></div></div>
+          <div class="card-summary"><ul><li>재무부의 국채 바이백 확대 발표로 비트코인이 77,000달러를 돌파하며 급등</li><li>국채 금리 하락이 촉발제가 되어 암호화폐 선물 시장에서 35억 달러 숏스퀴즈 발생</li><li>본질은 유동성 공급이 아닌 리파이낸싱이나 완화적 심리로 작용해 위험자산 랠리 견인</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">finance.yahoo.com</span><a href="https://finance.yahoo.com/markets/crypto/articles/treasury-14-billion-buyback-triggered-115000607.html" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-finance);">
+          <div class="card-top"><div class="card-idx font-serif">07</div><div class="card-title-wrap"><div class="card-title">데이터센터 투자자, 거세지는 정치적 규제 및 모라토리엄 리스크 간과</div><span class="card-badge badge-warning">경고</span></div></div>
+          <div class="card-summary"><ul><li>뉴욕, 텍사스, 펜실베이니아 등에서 데이터센터 신규 인허가 규제 장벽 급격히 강화</li><li>전력 요금 인상에 직면한 유권자 반발이 확산되며 지역 갈등이 초당적 정치 쟁점화</li><li>장기 인프라 자본과 단기 선거 일정 간의 시각차가 AI 산업 확장의 주요 뇌관으로 대두</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">axios.com</span><a href="https://www.axios.com/2026/08/21/data-center-business-politics" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-finance);">
+          <div class="card-top"><div class="card-idx font-serif">08</div><div class="card-title-wrap"><div class="card-title">핀테크 주식, 비트코인 급등에 힘입어 암호화폐 매출 노출도에 따라 동반 상승</div><span class="card-badge badge-invest">투자</span></div></div>
+          <div class="card-summary"><ul><li>비트코인 급등세로 거래 수수료 비중이 높은 Robinhood 주가가 13% 급등</li><li>자체 스테이블코인을 운영하는 SoFi는 5% 상승, 노출도가 없는 Affirm은 2%에 그침</li><li>각 핀테크 기업의 가상자산 매출 연계성에 비례하여 주가 상승폭이 차별화</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">finance.yahoo.com</span><a href="https://finance.yahoo.com/markets/stocks/articles/sofi-climbs-5-robinhood-spikes-153456436.html" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-finance);">
+          <div class="card-top"><div class="card-idx font-serif">09</div><div class="card-title-wrap"><div class="card-title">호주 QIC, 글로벌 빅테크 기업들의 AI 채권 발행 수용 능력 한계 경고</div><span class="card-badge badge-warning">경고</span></div></div>
+          <div class="card-summary"><ul><li>Alphabet의 55억 호주달러 채권 완판에도 불구하고 호주 채권시장 수용 한계 경고</li><li>2030년까지 빅테크 CapEx 6조 달러 전망 속에 비미국 시장 조달이 가속화</li><li>기관들의 익스포저 제한으로 향후 기업별 호주 시장 수요 편차가 커질 것으로 진단</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">bloomberg.com</span><a href="https://www.bloomberg.com/news/articles/2026-08-21/alphabet-bond-buyer-warns-on-australia-s-capacity-for-ai-debt" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-finance);">
+          <div class="card-top"><div class="card-idx font-serif">10</div><div class="card-title-wrap"><div class="card-title">한국 가상자산 시장, XRP와 TRUMP 거래량 폭증으로 Upbit 시간당 8.3억 달러 기록</div><span class="card-badge badge-invest">투자</span></div></div>
+          <div class="card-summary"><ul><li>업비트에서 단 1시간 만에 1조 1,500억 원(8.3억 달러) 규모의 폭발적 거래 발생</li><li>24시간 기준 XRP 비중 32.2%, 밈코인 TRUMP가 10.9%를 차지하며 시장 주도</li><li>KOSPI 횡보세 속에서 가상자산 시장으로 국내 개인 투자자 자금 유입 가속화</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">finance.yahoo.com</span><a href="https://finance.yahoo.com/markets/crypto/articles/830-million-hour-xrp-trump-183700758.html" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 에너지 섹션 -->
+    <section class="sector-section" data-sector="energy">
+      <div class="sector-header">
+        <h2 class="font-serif">🛢️ 에너지</h2>
+        <span class="sec-count">7건</span>
+      </div>
+      <div class="news-grid">
+        <div class="news-card" style="border-left-color: var(--sec-energy);">
+          <div class="card-top"><div class="card-idx font-serif">01</div><div class="card-title-wrap"><div class="card-title">트럼프 대통령의 Keystone XL 재추진 의지, 업계의 대체 파이프라인 우회 전략과 충돌</div><span class="card-badge badge-invest">에너지</span></div></div>
+          <div class="card-summary"><ul><li>트럼프의 Keystone XL 부활 공언에 대해 업계는 정치적 반발을 피할 우회로 추진</li><li>기설 파이프라인을 3개로 분할 연결하는 Prairie Connector 프로젝트 투자 검토</li><li>주 규제 당국과 법원의 환경 인허가 심의가 향후 프로젝트 성패의 핵심 분수령</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">wsj.com</span><a href="https://www.wsj.com/business/energy-oil/trump-wants-to-revive-keystone-xl-the-industry-has-a-different-plan-5f7e775b?mod=rss_worldnews" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-energy);">
+          <div class="card-top"><div class="card-idx font-serif">02</div><div class="card-title-wrap"><div class="card-title">사우디아라비아, 후티 공격 피해 시노코 탱커 활용한 홍해 북부 원유 우회 운송</div><span class="card-badge badge-geo">지정학</span></div></div>
+          <div class="card-summary"><ul><li>후티 반군의 남부 해협 위협을 피해 한국 장금상선 탱커로 홍해 북부 우회로 가동</li><li>얀부 선적 원유를 지중해 항구로 이송해 하루 약 110만 배럴 규모 안정적 수송</li><li>지중해 우회로 인해 아시아 운송 기간이 늘어났으나 글로벌 공급 차질을 최소화</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">bloomberg.com</span><a href="https://www.bloomberg.com/news/articles/2026-08-21/saudis-shuttle-oil-north-on-sinokor-tankers-to-evade-houthis" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-energy);">
+          <div class="card-top"><div class="card-idx font-serif">03</div><div class="card-title-wrap"><div class="card-title">미국 환경보호청, 정유업계 준수 비용 완화를 위해 재생연료 혼합 기한 연장 추진</div><span class="card-badge badge-macro">규제</span></div></div>
+          <div class="card-summary"><ul><li>바이오연료 혼합 준수 크레딧(RIN) 가격 급등에 따라 9월 1일 마감 기한 연장 검토</li><li>행정 조치를 통해 마감일을 최대 90일 연장하여 정유업계의 규제 준수 부담 완화</li><li>소형 정유사 의무 면제 결정을 통해 최대 18억 개의 신용 공급이 가능할 전망</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">reuters.com</span><a href="https://www.reuters.com/business/energy/epa-extends-renewable-fuel-standard-compliance-deadline-refiners-2026-08-21/" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-energy);">
+          <div class="card-top"><div class="card-idx font-serif">04</div><div class="card-title-wrap"><div class="card-title">미국 정유사, 최대 공급처인 캐나다 오일샌드 정기보수로 원유 수입 감소 직면</div><span class="card-badge badge-warning">경고</span></div></div>
+          <div class="card-summary"><ul><li>캐나다 오일샌드 정기보수로 다음 달 하루 약 30만 배럴의 원유 생산이 일시 중단</li><li>캐나다산 의존도 70%인 미 중서부 정유시설들이 가동률 하락 타격을 받을 우려</li><li>허디스티 재고가 역대 최저 수준에 근접함에 따라 디젤 합성 원유 프리미엄 급등</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">bloomberg.com</span><a href="https://www.bloomberg.com/news/articles/2026-08-21/us-oil-refiners-face-import-squeeze-from-biggest-foreign-seller" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-energy);">
+          <div class="card-top"><div class="card-idx font-serif">05</div><div class="card-title-wrap"><div class="card-title">러시아와 우크라이나, 독립기념일을 앞두고 정유시설 및 물류 인프라 상호 공습 심화</div><span class="card-badge badge-geo">전쟁</span></div></div>
+          <div class="card-summary"><ul><li>우크라이나군이 사마라 지역의 Rosneft 정유공장과 대형 물류센터를 드론으로 타격</li><li>러시아 물류 대기업 Wildberries는 공습 여파로 전체 창고 용량의 17%를 상실</li><li>러시아도 키이우 철도 및 오데사 항구 연료 탱크를 보복 공습하며 인프라 파괴 지속</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">bloomberg.com</span><a href="https://www.bloomberg.com/news/articles/2026-08-22/novak-says-russian-gasoline-supply-tight-diesel-market-stable" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-energy);">
+          <div class="card-top"><div class="card-idx font-serif">06</div><div class="card-title-wrap"><div class="card-title">러시아, 연료 공급 급감으로 모스크바 포함 전국적 가솔린 품귀 현상 직면</div><span class="card-badge badge-warning">위기</span></div></div>
+          <div class="card-summary"><ul><li>러시아 전국 주유소의 가솔린 공급 가능 비율이 약 28% 수준으로 급격히 하락</li><li>모스크바 시내 주유소 공급 가능 비율이 20%로 급락하며 5곳 중 1곳만 주유 가능</li><li>우크라이나의 정유 인프라 공격과 물류 마비가 정제 시스템 압박 요인으로 작용</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">azernews.az</span><a href="https://www.azernews.az/region/262722.html" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-energy);">
+          <div class="card-top"><div class="card-idx font-serif">07</div><div class="card-title-wrap"><div class="card-title">호르무즈 해협, 미국 비밀 작전 하에 유조선 40척 남부 항로 통과</div><span class="card-badge badge-geo">군사</span></div></div>
+          <div class="card-summary"><ul><li>미 해군 스텔스 작전 보호 아래 약 40척의 유조선이 호르무즈 해협을 안전하게 통과</li><li>페르시아만에서 국제 수역으로 약 1,600만 배럴 규모의 원유가 무사히 운송 완료</li><li>이란 IRGC 위협에도 불구하고 미국 측이 해협 남부 항로를 실질 통제 중임을 강조</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">breakingthenews.net</span><a href="https://breakingthenews.net/Article/40-oil-tankers-said-to-have-crossed-Hormuz-on-Friday/66968328" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 헬스케어 섹션 -->
+    <section class="sector-section" data-sector="healthcare">
+      <div class="sector-header">
+        <h2 class="font-serif">💊 헬스케어</h2>
+        <span class="sec-count">5건</span>
+      </div>
+      <div class="news-grid">
+        <div class="news-card" style="border-left-color: var(--sec-healthcare);">
+          <div class="card-top"><div class="card-idx font-serif">01</div><div class="card-title-wrap"><div class="card-title">Moderna, 임상 및 규제 성과를 바탕으로 본격적인 반등세 진입</div><span class="card-badge badge-invest">임상</span></div></div>
+          <div class="card-summary"><ul><li>차세대 독감 백신 FDA 승인 및 암 백신 3상 성공에 힘입어 주가 연초 대비 402% 상승</li><li>Merck와 공동 개발한 맞춤형 암 백신으로 흑색종 환자 무재발 생존율 대폭 개선</li><li>mRNA 플랫폼이 감염병을 넘어 고부가가치 종양학 영역으로 확장 가능함을 입증</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">finance.yahoo.com</span><a href="https://finance.yahoo.com/healthcare/articles/modernas-comeback-finally-taking-shape-220500417.html" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-healthcare);">
+          <div class="card-top"><div class="card-idx font-serif">02</div><div class="card-title-wrap"><div class="card-title">Gossamer Bio, 세랄루티닙 규제 마일스톤 연계로 최대 2억 5,000만 달러 투자 유치</div><span class="card-badge badge-invest">투자</span></div></div>
+          <div class="card-summary"><ul><li>폐동맥고혈압 치료제 개발 진전에 맞춰 최대 2억 5,000만 달러 규모 사모 펀딩 확보</li><li>신약허가신청(NDA) 승인 접수 및 최종 허가 시 단계별로 대규모 자금 추가 수령</li><li>확보된 자금을 바탕으로 2028년까지 안정적인 파이프라인 개발 자금 유지 가능</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">finance.yahoo.com</span><a href="https://finance.yahoo.com/healthcare/articles/gossamer-bio-secures-250-million-134944091.html" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-healthcare);">
+          <div class="card-top"><div class="card-idx font-serif">03</div><div class="card-title-wrap"><div class="card-title">Sellas Life Sciences, 암 백신 분야 훈풍 및 임상 3상 결과 기대감에 3주 연속 상승</div><span class="card-badge badge-invest">임상</span></div></div>
+          <div class="card-summary"><ul><li>모더나의 암 백신 성공 소식에 따른 업계 훈풍으로 셀라스 주가가 15% 급등</li><li>급성 골수성 백혈병 환자 대상 주력 파이프라인 GPS의 최종 3상 데이터 발표 임박</li><li>신규 진단 환자를 대상으로 한 SLS009 2상 임상 결과도 4분기 중 추가 공개 예정</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">finance.yahoo.com</span><a href="https://finance.yahoo.com/markets/stocks/articles/sls-stock-clocks-three-straight-211931656.html" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-healthcare);">
+          <div class="card-top"><div class="card-idx font-serif">04</div><div class="card-title-wrap"><div class="card-title">Novavax, 백신 섹터 투자 심리 회복 및 실적 호조에 힘입어 주가 강세</div><span class="card-badge badge-invest">실적</span></div></div>
+          <div class="card-summary"><ul><li>사노피 제휴를 통한 고정비 절감 및 2분기 깜짝 실적 달성으로 주가 10% 이상 급등</li><li>코로나 백신 판매 외주화 및 차세대 파이프라인 집중 구조 개혁 성공적 평가</li><li>연초 대비 34% 상승하며 나스닥 지수를 크게 상회하는 구조적 턴어라운드 시현</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">finance.yahoo.com</span><a href="https://finance.yahoo.com/healthcare/articles/nvax-stock-alert-biotechs-hit-170125699.html" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-healthcare);">
+          <div class="card-top"><div class="card-idx font-serif">05</div><div class="card-title-wrap"><div class="card-title">Oncolys BioPharma, 세계 최초 식도암 표적 항암 바이러스 치료제 일본 출시</div><span class="card-badge badge-warning">신약</span></div></div>
+          <div class="card-summary"><ul><li>식도암용 종양용해 바이러스 치료제 테로멜리신이 후생노동성 승인을 받아 상용화</li><li>정상 세포 손상 없이 종양만 파괴하여 기존 항암 요법 대비 부작용을 대폭 완화</li><li>방사선 병용 시 환자 절반이 18개월 시점에 완전 종양 소멸을 보이는 성과 확인</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">asia.nikkei.com</span><a href="https://asia.nikkei.com/business/pharmaceuticals/world-first-virus-therapy-for-esophageal-cancer-debuts-in-japan?utm_source=telegram&amp;utm_medium=referral&amp;utm_campaign=IC_telegram_channel&amp;utm_content=telegram_channel_posts" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 정치 섹션 -->
+    <section class="sector-section" data-sector="politics">
+      <div class="sector-header">
+        <h2 class="font-serif">🏛️ 정치</h2>
+        <span class="sec-count">6건</span>
+      </div>
+      <div class="news-grid">
+        <div class="news-card" style="border-left-color: var(--sec-politics);">
+          <div class="card-top"><div class="card-idx font-serif">01</div><div class="card-title-wrap"><div class="card-title">미국 정치권, 전력 및 수자원 소모 논란 속 데이터센터 규제 압박 본격화</div><span class="card-badge badge-warning">경고</span></div></div>
+          <div class="card-summary"><ul><li>전력 및 수자원 과소비에 대한 주민 반발로 텍사스 주정부가 1,800개 데이터센터 승인 보류</li><li>여야 후보들이 일제히 모라토리엄 및 세제 혜택 철회를 공약으로 내세우며 압박</li><li>미국인 60% 이상이 신설에 반대하며 빅테크의 AI 인프라 확장 일정에 큰 차질 초래</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">wsj.com</span><a href="https://www.wsj.com/politics/policy/politicians-who-once-championed-data-centers-are-now-bashing-them-c172d4cb?mod=rss_Technology" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-politics);">
+          <div class="card-top"><div class="card-idx font-serif">02</div><div class="card-title-wrap"><div class="card-title">트럼프 대통령, 물가 안정을 위한 분쇄육 수입 관세 완화 조치 발표</div><span class="card-badge badge-macro">관세</span></div></div>
+          <div class="card-summary"><ul><li>미국 내 가뭄 및 사육두수 급감에 대응해 90일간 분쇄육 30만 톤 무관세 수입 허용</li><li>현재 시장 가격보다 25% 저렴하게 공급할 계획이나 미국 축산업계는 강력 반발</li><li>11월 중간선거를 앞두고 물가 관리가 최대 쟁점으로 부상함에 따라 긴급 조치 시행</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">bloomberg.com</span><a href="https://www.bloomberg.com/news/articles/2026-08-21/trump-to-allow-tariff-relief-for-certain-ground-beef-imports" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-politics);">
+          <div class="card-top"><div class="card-idx font-serif">03</div><div class="card-title-wrap"><div class="card-title">미국 규제 당국, 의회 입법 난항 속 자체 가상자산 규정 수립 가속</div><span class="card-badge badge-invest">가상자산</span></div></div>
+          <div class="card-summary"><ul><li>포괄적 가상자산 법안 통과가 지연되자 SEC와 CFTC가 독자적 규제 프레임워크 수립</li><li>신규 토큰 프로젝트의 등록 부담을 대폭 완화하며 제도적 명확성을 시장에 제공</li><li>확립된 행정 규정은 정권 교체와 무관하게 수년간 예측 가능한 영업 환경을 보장</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">bloomberg.com</span><a href="https://www.bloomberg.com/news/newsletters/2026-08-21/crypto-rules-are-coming-even-if-clarity-act-fails" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-politics);">
+          <div class="card-top"><div class="card-idx font-serif">04</div><div class="card-title-wrap"><div class="card-title">트럼프 대통령, 협상 결렬에 따라 200억 달러 규모 캐나다산 제품에 50% 관세 발효</div><span class="card-badge badge-warning">관세</span></div></div>
+          <div class="card-summary"><ul><li>무역 협상 결렬로 약 200억 달러 규모 캐나다산 수입품 대상 50% 고율 관세 공식 발효</li><li>대미 캐나다 수출의 5%에 해당하는 공산품 및 소비재 전반에 적용되어 충격 가중</li><li>마크 카니 캐나다 총리는 무리한 요구에 굴복하지 않겠다며 즉각 맞대응 보복 관세 예고</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">breakingthenews.net</span><a href="https://breakingthenews.net/Article/Trump's-50-tariffs-on-Canadian-goods-take-effect/66967544" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-politics);">
+          <div class="card-top"><div class="card-idx font-serif">05</div><div class="card-title-wrap"><div class="card-title">미국과 캐나다, 무역 협상 최종 결렬로 상호 50% 보복 관세 전면전 돌입</div><span class="card-badge badge-warning">무역</span></div></div>
+          <div class="card-summary"><ul><li>철강·알루미늄·자동차 관세 면제를 둘러싼 이견으로 양국 무역 협상이 최종 파국 직면</li><li>미국의 50% 관세 발효에 맞서 캐나다 전 주정부가 연방정부 보복 관세에 전폭 지지 표명</li><li>북미자유무역협정(USMCA)의 존속 기반과 북미 제조 공급망 전반에 불확실성 확산</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">finance.yahoo.com</span><a href="https://ca.finance.yahoo.com/news/us-set-impose-50-tariffs-034955515.html" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-politics);">
+          <div class="card-top"><div class="card-idx font-serif">06</div><div class="card-title-wrap"><div class="card-title">미국과 캐나다, 무역 협상 결렬로 관세 전면전 위기 고조</div><span class="card-badge badge-warning">위기</span></div></div>
+          <div class="card-summary"><ul><li>마지막 협상 시한 연장에도 불구하고 주권 침해 및 관세 범위 이견으로 최종 합의 무산</li><li>캐나다는 노동절 연휴 직후인 9월 8일부터 동일 규모의 맞춤형 보복 관세를 집행할 방침</li><li>연간 9,000억 달러에 달하던 북미 최대 교역 관계가 급격한 냉각기에 진입</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">wsj.com</span><a href="https://www.wsj.com/economy/trade/canada-announces-new-post-labor-day-tariffs-ef1de8e1?mod=rss_worldnews" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 매크로 섹션 -->
+    <section class="sector-section" data-sector="macro">
+      <div class="sector-header">
+        <h2 class="font-serif">🌐 매크로</h2>
+        <span class="sec-count">6건</span>
+      </div>
+      <div class="news-grid">
+        <div class="news-card" style="border-left-color: var(--sec-macro);">
+          <div class="card-top"><div class="card-idx font-serif">01</div><div class="card-title-wrap"><div class="card-title">대만 7월 수출 주문, 미국 중심 수요 폭증으로 980억 달러 기록</div><span class="card-badge badge-invest">수출</span></div></div>
+          <div class="card-summary"><ul><li>대만의 7월 단일 수출 주문이 전년 대비 61.9% 급증한 979억 4,000만 달러 기록</li><li>1~7월 누적 대미 주문액이 70% 이상 증가하며 AI 하드웨어 수요 폭증을 증명</li><li>글로벌 CSP의 인프라 투자 지속으로 향후 주문 증가세도 견조하게 유지될 전망</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">digitimes.com</span><a href="https://www.digitimes.com/news/a20260820PD234/taiwan-2026-2025-moea-data.html" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-macro);">
+          <div class="card-top"><div class="card-idx font-serif">02</div><div class="card-title-wrap"><div class="card-title">일본 헤드라인 물가상승률, 에너지 가격 급등으로 연중 최고치인 1.9% 기록</div><span class="card-badge badge-warning">인플레</span></div></div>
+          <div class="card-summary"><ul><li>중동 분쟁에 따른 에너지 비용 상승으로 일본 7월 헤드라인 CPI가 1.9%로 연중 최고치 기록</li><li>도매 전기요금이 7.2% 급등하며 정부 보조금 효과를 상쇄하고 물가 상승을 견인</li><li>임금 인상의 가격 전가와 물가 압력으로 일본은행의 9월 추가 금리 인상 전망 고조</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">cnbc.com</span><a href="https://www.cnbc.com/2026/08/21/japan-inflation-iran-war-energy.html" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-macro);">
+          <div class="card-top"><div class="card-idx font-serif">03</div><div class="card-title-wrap"><div class="card-title">중국 정부, 경제 성장 둔화에 대응하기 위한 신규 재정 및 금융 지원 정책 발표</div><span class="card-badge badge-invest">정책</span></div></div>
+          <div class="card-summary"><ul><li>2분기 성장률 4.3% 둔화에 대응해 대출 보증 및 이자 보조금 결합 정책 연내 시행</li><li>재정 지출 단순 확대 대신 금융 자원의 레버리지를 극대화하여 20조 위안 이상 공급</li><li>하반기 2조 위안 규모 국채 한도를 조기 집행하고 비효율 보조금 정비 병행</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">bloomberg.com</span><a href="https://www.bloomberg.com/news/articles/2026-08-21/china-plans-new-fiscal-support-policies-this-year-amid-slowdown" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-macro);">
+          <div class="card-top"><div class="card-idx font-serif">04</div><div class="card-title-wrap"><div class="card-title">미국 정부, 40조 달러 국채 관리 강화 계획 발표 속 고통스러운 구조조정 전망</div><span class="card-badge badge-warning">부채</span></div></div>
+          <div class="card-summary"><ul><li>국가 부채 40조 달러 돌파에 따라 지출 삭감과 국채 바이백을 포괄하는 대책 발표 준비</li><li>선거를 앞두고 의무 지출 삭감이 어려워 단기적으로 실효성 있는 대책 마련에 난항</li><li>적기 구조조정 시기를 놓치며 향후 경제 전반에 걸쳐 고통스러운 충격이 불가피</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">marketwatch.com</span><a href="https://www.marketwatch.com/story/the-u-s-government-plans-to-crack-down-on-its-40-trillion-debt-but-brace-for-a-wrenching-time-ahead-b3fb76a8" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-macro);">
+          <div class="card-top"><div class="card-idx font-serif">05</div><div class="card-title-wrap"><div class="card-title">미국 재무부, 장기채 바이백 확대로 달러 가치 하락 우려 점화</div><span class="card-badge badge-macro">환율</span></div></div>
+          <div class="card-summary"><ul><li>장기 국채 매입 확대 조치로 인해 장기 금리 억제 부담이 달러화 약세 압력으로 전가</li><li>통화 가치 절하에 대한 경계감으로 금 가격이 3% 급등하고 비트코인 등 대체 자산 강세</li><li>잦은 시장 개입 시 정책 신뢰도가 하락할 수 있다는 우려와 탄탄한 실적 지지론이 팽팽</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">reuters.com</span><a href="https://www.reuters.com/legal/transactional/treasury-buyback-renews-dollar-debasement-fears-2026-08-21/" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+        <div class="news-card" style="border-left-color: var(--sec-macro);">
+          <div class="card-top"><div class="card-idx font-serif">06</div><div class="card-title-wrap"><div class="card-title">미국 국채 매입 정책, 일본식 통화 가치 절하 답습 우려로 달러화 압박 심화</div><span class="card-badge badge-warning">경고</span></div></div>
+          <div class="card-summary"><ul><li>국채 바이백 정책이 장기 금리 억제에 실패하며 달러 가치가 3개월 만에 최저치로 하락</li><li>근본적 재정 적자 해결 없는 개입은 일본식 통화 가치 하락을 초래할 것이라는 경고</li><li>중동 정세 불안과 발행 부담으로 투자자들의 국채 비중 축소 및 안전자산 이동 심화</li></ul></div>
+          <div class="card-bottom"><span class="card-domain">bloomberg.com</span><a href="https://www.bloomberg.com/news/newsletters/2026-08-21/us-playing-with-fire-with-debt-plan-evening-briefing-americas" target="_blank" class="card-link">원문 →</a></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <div>@TNBfolio · 해외 뉴스 대시보드 · 2026.08.21~08.23</div>
+  <div>총 70건 · 9개 섹터 완벽 집계</div>
+</footer>
+
+<script>
+function filterSector(sec) {
+  const buttons = document.querySelectorAll('.filter-btn');
+  buttons.forEach(btn => btn.classList.remove('active'));
+  
+  const sections = document.querySelectorAll('.sector-section');
+  const overview = document.getElementById('overviewCharts');
+  
+  if (sec === 'all') {
+    buttons[0].classList.add('active');
+    sections.forEach(s => s.style.display = 'flex');
+    if (overview) overview.style.display = 'grid';
+  } else {
+    event.currentTarget.classList.add('active');
+    sections.forEach(s => {
+      if (s.getAttribute('data-sector') === sec) {
+        s.style.display = 'flex';
+      } else {
+        s.style.display = 'none';
+      }
+    });
+    if (overview) overview.style.display = 'none';
+  }
+}
+
+
+
+function downloadHTML() {
+  const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'TNBfolio_뉴스대시보드_20260823.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+</script>
+
+</body></html>
