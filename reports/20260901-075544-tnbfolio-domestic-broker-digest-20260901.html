@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>TNBfolio — 국내 증권사 리포트 요약 2026.09.01</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Noto+Serif+KR:wght@300;400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1B2A4A;
+  --gold:#9A6E00;
+  --gold-light:#C4A35A;
+  --white:#ffffff;
+  --off:#f8f7f5;
+  --border:#e8e6e0;
+  --bull:#2E7D52;
+  --bear:#C8392B;
+  --base:#1A5C9E;
+  --neutral:#888780;
+  --purple:#534AB7;
+  --text:#1a1916;
+  --muted:#6b6966;
+}
+body{font-family:'Noto Serif KR',serif;background:var(--white);color:var(--text);font-weight:400;line-height:1.65;}
+
+/* HEADER */
+.site-header{
+  background:var(--navy);
+  padding:14px 32px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+}
+.site-header .brand{font-family:'DM Serif Display',serif;color:var(--gold-light);font-size:1.35rem;letter-spacing:.02em;}
+.site-header .meta-right{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:rgba(255,255,255,0.45);letter-spacing:.06em;}
+
+/* TITLE BAND */
+.title-band{
+  padding:40px 32px 28px;
+  background:var(--white);
+  border-bottom:1px solid var(--border);
+}
+.title-eyebrow{font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--gold);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;}
+.title-band h1{font-family:'DM Serif Display',serif;font-size:clamp(1.7rem,3vw,2.4rem);color:var(--navy);line-height:1.2;margin-bottom:8px;}
+.title-sub{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--muted);letter-spacing:.04em;}
+
+/* BANNER */
+.banner{
+  background:var(--off);
+  border-bottom:1px solid var(--border);
+  padding:20px 32px;
+  display:flex;flex-wrap:wrap;gap:24px;align-items:center;
+}
+.banner-item{display:flex;flex-direction:column;gap:2px;}
+.banner-label{font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;}
+.banner-value{font-family:'JetBrains Mono',monospace;font-size:0.92rem;font-weight:600;}
+.banner-divider{width:1px;height:36px;background:var(--border);}
+.v-bull{color:var(--bull);} .v-bear{color:var(--bear);} .v-base{color:var(--base);} .v-neutral{color:var(--neutral);} .v-gold{color:var(--gold);}
+
+/* CHART SECTION */
+.chart-section{padding:32px 32px 24px;}
+.section-label{font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--gold);letter-spacing:.12em;text-transform:uppercase;margin-bottom:16px;border-left:2px solid var(--gold-light);padding-left:10px;}
+.chart-scroll{overflow-x:auto;}
+.chart-scroll canvas{display:block;}
+
+/* CARD GRID */
+.cards-section{padding:8px 32px 32px;}
+.section-group-label{
+  font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:.1em;text-transform:uppercase;
+  padding:6px 12px;border-radius:3px;display:inline-block;margin:24px 0 14px;
+}
+.grp-up{background:#e6f1fb;color:var(--base);}
+.grp-maintain{background:#f1efea;color:var(--muted);}
+.grp-down{background:#fcebeb;color:var(--bear);}
+.grp-notp{background:#f8f7f5;color:var(--neutral);border:1px solid var(--border);}
+
+.card-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+  gap:16px;
+}
+.card{
+  background:var(--white);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:18px 18px 14px;
+  transition:box-shadow .15s;
+}
+.card:hover{box-shadow:0 2px 12px rgba(27,42,74,0.08);}
+.card-header{margin-bottom:10px;}
+.card-title-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;}
+.card-stock{font-family:'DM Serif Display',serif;font-size:1.05rem;color:var(--navy);}
+.card-broker{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--muted);margin-bottom:5px;}
+.card-title-sub{font-family:'Noto Serif KR',serif;font-size:0.78rem;color:var(--muted);line-height:1.4;}
+.card-tp-row{
+  display:flex;flex-wrap:wrap;align-items:center;gap:8px;
+  padding:8px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  margin-bottom:10px;
+}
+.tp-chip{font-family:'JetBrains Mono',monospace;font-size:0.68rem;font-weight:600;padding:2px 7px;border-radius:2px;}
+.tp-up{background:#e6f1fb;color:var(--base);}
+.tp-down{background:#fcebeb;color:var(--bear);}
+.tp-maintain{background:#f1efea;color:var(--muted);}
+.tp-none{background:#f8f7f5;color:var(--neutral);}
+.tp-val{font-family:'JetBrains Mono',monospace;font-size:0.82rem;font-weight:600;color:var(--text);}
+.card-curr{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--muted);margin-left:auto;}
+.card-bullets{list-style:none;display:flex;flex-direction:column;gap:5px;}
+.card-bullets li{font-family:'Noto Serif KR',serif;font-size:0.8rem;color:#3a3936;line-height:1.5;padding-left:4px;}
+
+/* BADGES */
+.badge{font-family:'JetBrains Mono',monospace;font-size:0.62rem;font-weight:600;padding:2px 7px;border-radius:2px;white-space:nowrap;}
+.badge-bull{background:#eaf3de;color:var(--bull);}
+.badge-up{background:#e6f1fb;color:var(--base);}
+.badge-new{background:#eeedfe;color:var(--purple);}
+.badge-neutral{background:#f1efea;color:var(--muted);}
+.badge-bear{background:#fcebeb;color:var(--bear);}
+
+/* EDITORIAL */
+.editorial-section{
+  padding:32px 32px 40px;
+  background:var(--off);
+  border-top:1px solid var(--border);
+}
+.editorial-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px;margin-top:20px;}
+.editorial-block{
+  background:var(--white);
+  border-radius:4px;
+  border:1px solid var(--border);
+  padding:22px 20px 18px;
+}
+.editorial-block:nth-child(1){border-top:3px solid var(--bull);}
+.editorial-block:nth-child(2){border-top:3px solid var(--base);}
+.editorial-block:nth-child(3){border-top:3px solid var(--gold);}
+.editorial-block:nth-child(4){border-top:3px solid var(--bear);}
+.editorial-eyebrow{font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;}
+.editorial-block h3{font-family:'DM Serif Display',serif;font-size:1.05rem;color:var(--navy);margin-bottom:10px;line-height:1.3;}
+.editorial-block p{font-family:'Noto Serif KR',serif;font-size:0.82rem;line-height:1.75;color:#3a3936;}
+.editorial-block p strong{color:var(--navy);font-weight:600;}
+
+/* FOOTER */
+.site-footer{
+  background:var(--navy);
+  padding:16px 32px;
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;
+}
+.site-footer .brand{font-family:'DM Serif Display',serif;color:var(--gold-light);font-size:1.05rem;}
+.footer-right{font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:rgba(255,255,255,0.4);text-align:right;line-height:1.6;}
+
+@media(max-width:640px){
+  .site-header,.title-band,.chart-section,.cards-section,.editorial-section,.site-footer{padding-left:16px;padding-right:16px;}
+  .banner{padding:16px;gap:14px;}
+}
+</style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="site-header">
+  <div class="brand">TNBfolio</div>
+  <div class="meta-right">MARKET INTELLIGENCE · KRX · 2026.09.01</div>
+</header>
+
+<!-- TITLE BAND -->
+<div class="title-band">
+  <div class="title-eyebrow">BROKER REPORT DIGEST</div>
+  <h1>국내 증권사 리포트 요약</h1>
+  <div class="title-sub">2026년 9월 1일 · DB증권 · DS투자증권 · iM증권 · 다올투자증권 · 대신증권 · 스터닝밸류리서치 · 신한투자증권 — 16건</div>
+</div>
+
+<!-- THEME BANNER -->
+<div class="banner">
+  <div class="banner-item">
+    <span class="banner-label">오늘의 핵심 테마</span>
+    <span class="banner-value v-gold">통신 9월 전략 · CDMO · MLCC/FC-BGA · ESS · 반도체 장비</span>
+  </div>
+  <div class="banner-divider"></div>
+  <div class="banner-item">
+    <span class="banner-label">매수/비중확대</span>
+    <span class="banner-value v-bull">9건</span>
+  </div>
+  <div class="banner-item">
+    <span class="banner-label">TP 미정 (커버리지)</span>
+    <span class="banner-value v-neutral">7건</span>
+  </div>
+  <div class="banner-divider"></div>
+  <div class="banner-item">
+    <span class="banner-label">목표주가 상향</span>
+    <span class="banner-value v-base">DB손해보험, 삼성전기</span>
+  </div>
+  <div class="banner-item">
+    <span class="banner-label">목표주가 하향</span>
+    <span class="banner-value v-bear">세진중공업</span>
+  </div>
+</div>
+
+<!-- CHART -->
+<div class="chart-section">
+  <div class="section-label">목표주가 비교 차트</div>
+  <div class="chart-scroll">
+    <div style="width:900px;height:480px;">
+      <canvas id="tpChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- CARDS -->
+<div class="cards-section">
+  <div class="section-label">종목별 리포트</div>
+
+  <div class="section-group-label grp-up">↑ 목표주가 상향</div>
+  <div class="card-grid">
+<div class="card" style="border-left:3px solid #2E7D52;">
+  <div class="card-header">
+    <div class="card-title-row">
+      <span class="card-stock">DB손해보험</span>
+      <span class="badge badge-bull">BUY</span>
+    </div>
+    <div class="card-broker">다올투자증권 김지원</div>
+    <div class="card-title-sub">배당 수준 높아지고 예측가능성 확보</div>
+  </div>
+  <div class="card-tp-row">
+    <span class="tp-chip tp-up">↑ 상향</span> <span class="tp-val">₩270,000</span>
+    <span class="card-curr">현재가 ₩181,100</span>
+    <span style="color:#2E7D52;font-family:'JetBrains Mono',monospace;font-size:0.78rem;">+49.1% 상승여력</span>
+  </div>
+  <ul class="card-bullets"><li>— 기다렸던 신규 기업가치 제고계획 발표</li><li>— 변경된 주주환원정책 해석, 그리고 함의</li></ul>
+</div>
+<div class="card" style="border-left:3px solid #2E7D52;">
+  <div class="card-header">
+    <div class="card-title-row">
+      <span class="card-stock">삼성전기</span>
+      <span class="badge badge-bull">Buy</span>
+    </div>
+    <div class="card-broker">DB증권 조현지</div>
+    <div class="card-title-sub">호황에 판가로 답한다</div>
+  </div>
+  <div class="card-tp-row">
+    <span class="tp-chip tp-up">↑ 상향</span> <span class="tp-val">₩2,000,000</span>
+    <span class="card-curr">현재가 ₩1,458,000</span>
+    <span style="color:#2E7D52;font-family:'JetBrains Mono',monospace;font-size:0.78rem;">+37.2% 상승여력</span>
+  </div>
+  <ul class="card-bullets"><li>— MLCC&FCBGA P Update</li><li>— 장단기 실적 모두 청신호</li><li>— 목표주가 200만원으로 상향</li></ul>
+</div></div>
+
+  <div class="section-group-label grp-maintain">→ 목표주가 유지</div>
+  <div class="card-grid">
+<div class="card" style="border-left:3px solid #2E7D52;">
+  <div class="card-header">
+    <div class="card-title-row">
+      <span class="card-stock">SK텔레콤</span>
+      <span class="badge badge-bull">BUY</span>
+    </div>
+    <div class="card-broker">하나증권 김홍식,이상훈</div>
+    <div class="card-title-sub">9월 전략 - 호재가 집중되는 구간, 주가 차별화 예상</div>
+  </div>
+  <div class="card-tp-row">
+    <span class="tp-chip tp-maintain">유지</span> <span class="tp-val">₩140,000</span>
+    <span class="card-curr">현재가 ₩94,200</span>
+    <span style="color:#2E7D52;font-family:'JetBrains Mono',monospace;font-size:0.78rem;">+48.6% 상승여력</span>
+  </div>
+  <ul class="card-bullets"><li>— 매수/TP 14만원/통신서비스업종 Top Pick 유지, 전 고점 돌파 시도 있을 것</li><li>— 실적/배당/5G/AI 성과 모든 호재 집중될 수 있는 구간에 진입</li><li>— 밸류에이션 논란 없어질 것, 장기 이익/배당 성장성 감안 시 주가 여전히 매력적</li></ul>
+</div>
+<div class="card" style="border-left:3px solid #2E7D52;">
+  <div class="card-header">
+    <div class="card-title-row">
+      <span class="card-stock">KT</span>
+      <span class="badge badge-bull">BUY</span>
+    </div>
+    <div class="card-broker">하나증권 김홍식,이상훈</div>
+    <div class="card-title-sub">9월 전략 - AI 과금화 전략 긍정적, 확실한 저점은 맞아</div>
+  </div>
+  <div class="card-tp-row">
+    <span class="tp-chip tp-maintain">유지</span> <span class="tp-val">₩76,000</span>
+    <span class="card-curr">현재가 ₩53,400</span>
+    <span style="color:#2E7D52;font-family:'JetBrains Mono',monospace;font-size:0.78rem;">+42.3% 상승여력</span>
+  </div>
+  <ul class="card-bullets"><li>— 투자의견 매수, 목표가 76,000원으로 유지, 2027년도 보고 매수할 것을 추천</li><li>— AI 과금화 시도 긍정적, 2027년 ARPU 성장 감안하면 주가 절대 저평가 상태</li><li>— 올해 본사 이익/배당 정체 가능성 이미 주가에 반영, 2027년으로 시각 바꾸어야</li></ul>
+</div>
+<div class="card" style="border-left:3px solid #2E7D52;">
+  <div class="card-header">
+    <div class="card-title-row">
+      <span class="card-stock">LG유플러스</span>
+      <span class="badge badge-bull">BUY</span>
+    </div>
+    <div class="card-broker">하나증권 김홍식,이상훈</div>
+    <div class="card-title-sub">9월 전략 - 3개월 이상 내다보면 주가 전망 밝습니다</div>
+  </div>
+  <div class="card-tp-row">
+    <span class="tp-chip tp-maintain">유지</span> <span class="tp-val">₩20,000</span>
+    <span class="card-curr">현재가 ₩14,990</span>
+    <span style="color:#2E7D52;font-family:'JetBrains Mono',monospace;font-size:0.78rem;">+33.4% 상승여력</span>
+  </div>
+  <ul class="card-bullets"><li>— 매수 의견 유지/TP 20,000원 유지, 길게 보면 적극 매수할 시점</li><li>— 사실상 2026년은 20% 이상 영업이익 증가 유력, 2027년엔 주주 환원 증가할 것</li><li>— 연내 18,000원 이상의 주가 형성 가능, 20% 수준의 안정적 차익 실현 전망</li></ul>
+</div>
+<div class="card" style="border-left:3px solid #2E7D52;">
+  <div class="card-header">
+    <div class="card-title-row">
+      <span class="card-stock">롯데렌탈</span>
+      <span class="badge badge-bull">Buy</span>
+    </div>
+    <div class="card-broker">대신증권 박강호</div>
+    <div class="card-title-sub">점유율 확대 가능성 부각</div>
+  </div>
+  <div class="card-tp-row">
+    <span class="tp-chip tp-maintain">유지</span> <span class="tp-val">₩60,000</span>
+    <span class="card-curr">현재가 ₩47,350</span>
+    <span style="color:#2E7D52;font-family:'JetBrains Mono',monospace;font-size:0.78rem;">+26.7% 상승여력</span>
+  </div>
+  <ul class="card-bullets"><li>— 투자의견 매수(BUY) 및 목표주가 60,000원 유지</li><li>— 9월 성수기 진입 / 3Q26 매출과 영업이익은 최대 예상</li></ul>
+</div>
+<div class="card" style="border-left:3px solid #2E7D52;">
+  <div class="card-header">
+    <div class="card-title-row">
+      <span class="card-stock">비에이치</span>
+      <span class="badge badge-bull">Buy</span>
+    </div>
+    <div class="card-broker">대신증권 박강호</div>
+    <div class="card-title-sub">폴더블폰(애플,삼성) 그리고 로봇에서 신성장을 확보!</div>
+  </div>
+  <div class="card-tp-row">
+    <span class="tp-chip tp-maintain">유지</span> <span class="tp-val">₩41,000</span>
+    <span class="card-curr">현재가 ₩18,230</span>
+    <span style="color:#2E7D52;font-family:'JetBrains Mono',monospace;font-size:0.78rem;">+124.9% 상승여력</span>
+  </div>
+  <ul class="card-bullets"><li>— 투자의견 매수(BUY) 및 목표주가 41,000원 유지</li><li>— 애플이 폴더블폰 출시 : 폴더블폰 성장 확대의 계기, 수혜 예상</li></ul>
+</div>
+<div class="card" style="border-left:3px solid #2E7D52;">
+  <div class="card-header">
+    <div class="card-title-row">
+      <span class="card-stock">SK이노베이션</span>
+      <span class="badge badge-bull">Buy</span>
+    </div>
+    <div class="card-broker">iM증권 전유진</div>
+    <div class="card-title-sub">SK-On, NeoVolta ESS 수주 코멘트</div>
+  </div>
+  <div class="card-tp-row">
+    <span class="tp-chip tp-maintain">유지</span> <span class="tp-val">₩190,000</span>
+    <span class="card-curr">현재가 ₩125,500</span>
+    <span style="color:#2E7D52;font-family:'JetBrains Mono',monospace;font-size:0.78rem;">+51.4% 상승여력</span>
+  </div>
+  <ul class="card-bullets"><li>— SK-On, 미국 NeoVolta와 ESS 9GWh 공급계약 체결 발표</li><li>— 2026년 ESS 수주 20GWh 가이던스의 절반 가량은 충족</li><li>— IET 합병 실망감을 모두 상쇄할 순 없으나, 그래도 미국 ESS 시장 진출의 첫 걸음 뗐다는 점에서는 고무적</li></ul>
+</div></div>
+
+  <div class="section-group-label grp-down">↓ 목표주가 하향</div>
+  <div class="card-grid">
+<div class="card" style="border-left:3px solid #2E7D52;">
+  <div class="card-header">
+    <div class="card-title-row">
+      <span class="card-stock">세진중공업</span>
+      <span class="badge badge-bull">매수</span>
+    </div>
+    <div class="card-broker">신한투자증권 이동헌,이지한</div>
+    <div class="card-title-sub">LPG 호황, 탱크 물량부터 채워진다</div>
+  </div>
+  <div class="card-tp-row">
+    <span class="tp-chip tp-down">↓ 하향</span> <span class="tp-val">₩18,500</span>
+    <span class="card-curr">현재가 ₩10,380</span>
+    <span style="color:#2E7D52;font-family:'JetBrains Mono',monospace;font-size:0.78rem;">+78.2% 상승여력</span>
+  </div>
+  <ul class="card-bullets"><li>— 이익률은 상승세, 업황도 호조, 과매도 구간</li><li>— 1H26 Review: 물량보다 단가, 하반기 탱크 쏠림</li><li>— Valuation & Risk: 탱크에 베트남까지, 이어지는 성장축</li></ul>
+</div></div>
+
+  <div class="section-group-label grp-notp">— TP 미정 / 커버리지 노트</div>
+  <div class="card-grid">
+<div class="card" style="border-left:3px solid #888780;">
+  <div class="card-header">
+    <div class="card-title-row">
+      <span class="card-stock">유한양행</span>
+      <span class="badge badge-neutral">TP 미정</span>
+    </div>
+    <div class="card-broker">아리스 우채연,이재모</div>
+    <div class="card-title-sub">무르익은 CDMO 위로 더해질 기술이전 모멘텀</div>
+  </div>
+  <div class="card-tp-row">
+    <span class="tp-chip tp-none">TP 미정</span>
+    <span class="card-curr">현재가 ₩83,700</span>
+    
+  </div>
+  <ul class="card-bullets"><li>— 1926년 설립. 1962년 코스피 상장</li><li>— 전통 약품 사업부터 원료CDMO, 신약 개발 등 4개의 사업부 구성</li><li>— 탈중국 수혜 기반 지속적으로 성장하는 고마진 CDMO</li></ul>
+</div>
+<div class="card" style="border-left:3px solid #888780;">
+  <div class="card-header">
+    <div class="card-title-row">
+      <span class="card-stock">제이브이엠</span>
+      <span class="badge badge-neutral">TP 미정</span>
+    </div>
+    <div class="card-broker">유안타증권 권명준,서석준</div>
+    <div class="card-title-sub">[NDR] 지속적인 관심이 필요한 3가지 이유</div>
+  </div>
+  <div class="card-tp-row">
+    <span class="tp-chip tp-none">TP 미정</span>
+    <span class="card-curr">현재가 ₩24,000</span>
+    
+  </div>
+  <ul class="card-bullets"><li>— 파우치 방식의 비교우위 요인</li><li>— 맞춤형 해외 확대전략</li></ul>
+</div>
+<div class="card" style="border-left:3px solid #888780;">
+  <div class="card-header">
+    <div class="card-title-row">
+      <span class="card-stock">예스티</span>
+      <span class="badge badge-neutral">TP 미정</span>
+    </div>
+    <div class="card-broker">유안타증권 권명준,서석준</div>
+    <div class="card-title-sub">하반기부터 본격적 반도체 장비 실적 반영</div>
+  </div>
+  <div class="card-tp-row">
+    <span class="tp-chip tp-none">TP 미정</span>
+    <span class="card-curr">현재가 ₩29,600</span>
+    
+  </div>
+  <ul class="card-bullets"><li>— 2Q26 실적 Good!, 2H26 Very Good 예상</li><li>— HPA(고압어니링장비) 불확실성은 연내 마무리 기대</li><li>— 차세대 장비(HPO, 검사, 유리기판)도 순항 중</li></ul>
+</div>
+<div class="card" style="border-left:3px solid #888780;">
+  <div class="card-header">
+    <div class="card-title-row">
+      <span class="card-stock">코칩</span>
+      <span class="badge badge-neutral">TP 미정</span>
+    </div>
+    <div class="card-broker">스터닝밸류리서치 정금열</div>
+    <div class="card-title-sub">실적으로 증명된 성장, 이제는 수익성 레버리지다.</div>
+  </div>
+  <div class="card-tp-row">
+    <span class="tp-chip tp-none">TP 미정</span>
+    <span class="card-curr">현재가 ₩20,200</span>
+    
+  </div>
+  <ul class="card-bullets"><li>— 2Q26 실적 큰폭 어닝서프라이즈 달성</li><li>— 2Q26 OPM 24.5%(+ 19.0%p YoY) 대폭 개선</li><li>— 스마트미터·AI 데이터센터·산업용 장비 등 슈퍼커패시터 적용처 확대</li><li>— 글로벌 고객사 물량 증가와 고부가 제품 확대에 따른 구조적 성장 기대</li></ul>
+</div>
+<div class="card" style="border-left:3px solid #888780;">
+  <div class="card-header">
+    <div class="card-title-row">
+      <span class="card-stock">에이비엘바이오</span>
+      <span class="badge badge-neutral">TP 미정</span>
+    </div>
+    <div class="card-broker">DS투자증권 김민정</div>
+    <div class="card-title-sub">Givastomig, 얼마나 효과가 있어야할까?</div>
+  </div>
+  <div class="card-tp-row">
+    <span class="tp-chip tp-none">TP 미정</span>
+    <span class="card-curr">현재가 ₩72,700</span>
+    
+  </div>
+  <ul class="card-bullets"><li>— Givastomig, 올해 10월 ESMO에서 임상 1b상 후속 데이터 발표 예정</li><li>— 위암 1차 치료 시장, Claudin18.2 발현량에 따라 세분화된 구조</li><li>— ABL001, 회생 가능할 것인가?</li></ul>
+</div>
+<div class="card" style="border-left:3px solid #888780;">
+  <div class="card-header">
+    <div class="card-title-row">
+      <span class="card-stock">큐알티</span>
+      <span class="badge badge-neutral">TP 미정</span>
+    </div>
+    <div class="card-broker">유안타증권 권명준,서석준</div>
+    <div class="card-title-sub">[NDR후기] 주요 Q&A</div>
+  </div>
+  <div class="card-tp-row">
+    <span class="tp-chip tp-none">TP 미정</span>
+    <span class="card-curr">현재가 ₩12,450</span>
+    
+  </div>
+  <ul class="card-bullets"><li>— 신뢰성 평가 사업구조</li><li>— 신뢰성 평가 주요 고객은</li><li>— 신뢰성 평가의 CAPA와 매출 규모</li></ul>
+</div>
+<div class="card" style="border-left:3px solid #888780;">
+  <div class="card-header">
+    <div class="card-title-row">
+      <span class="card-stock">저스템</span>
+      <span class="badge badge-neutral">TP 미정</span>
+    </div>
+    <div class="card-broker">대신증권 김아영</div>
+    <div class="card-title-sub">2027년 영업이익 500억을 향하여</div>
+  </div>
+  <div class="card-tp-row">
+    <span class="tp-chip tp-none">TP 미정</span>
+    <span class="card-curr">현재가 ₩13,900</span>
+    
+  </div>
+  <ul class="card-bullets"><li>— 글로벌 IDM 중심의 반도체 수율개선 '습도, AMC 제어' 솔루션 업체</li><li>— 기존 Fab 침투율 확대에서 신규 Fab, JDM까지, 성장 모멘텀 본격화</li><li>— 실적으로 확인된 성장, 2027년까지 이어진다</li></ul>
+</div></div>
+</div>
+
+<!-- EDITORIAL -->
+<div class="editorial-section">
+  <div class="section-label">에디토리얼 — 테마별 분석</div>
+  <div class="editorial-grid">
+
+    <div class="editorial-block">
+      <div class="editorial-eyebrow">Theme 01 · 통신서비스</div>
+      <h3>9월, 통신 3사에 호재가 한꺼번에 몰린다</h3>
+      <p>하나증권은 통신 3사에 대해 일제히 매수 의견을 유지하며 <strong>9월 이후 주가 차별화</strong>를 예고했다. SK텔레콤은 실적·배당·5G·AI 성과가 동시에 집중되는 구간에 진입했으며, 통신서비스업종 Top Pick으로 전 고점 돌파 시도가 있을 것으로 봤다. KT는 <strong>AI 과금화 전략</strong>이 긍정적이며 2027년 ARPU 성장을 감안하면 현 주가가 절대 저평가 상태라고 분석했다. LG유플러스는 2026년 영업이익이 20% 이상 증가할 가능성이 유력하고, 2027년에는 주주환원 확대가 예상되어 연내 <strong>20% 수준의 안정적 차익 실현</strong>이 가능하다고 판단했다.</p>
+    </div>
+
+    <div class="editorial-block">
+      <div class="editorial-eyebrow">Theme 02 · IT부품 · 전자</div>
+      <h3>삼성전기 목표주가 200만원, MLCC와 FC-BGA 동시 호황</h3>
+      <p>DB증권은 삼성전기에 대해 목표주가를 <strong>₩2,000,000</strong>으로 상향하며 호황기에 판가 회복이 본격화되고 있다고 진단했다. MLCC와 FC-BGA 모두 가격 업데이트가 긍정적이며 장단기 실적 모두 청신호라고 평가했다. 비에이치는 <strong>애플 폴더블폰 출시</strong>를 계기로 폴더블 시장 성장이 확대될 경우 직접적인 수혜가 예상되며, 로봇 부문에서도 신성장 동력을 확보하고 있다. DB손해보험은 기다렸던 신규 기업가치 제고계획이 발표되며 배당 수준 상승과 예측가능성 확보가 주가 리레이팅의 기반을 제공했다.</p>
+    </div>
+
+    <div class="editorial-block">
+      <div class="editorial-eyebrow">Theme 03 · 바이오 · CDMO</div>
+      <h3>유한양행 CDMO 고마진 성장, 에이비엘바이오 10월 ESMO 데이터 주목</h3>
+      <p>아리스는 유한양행을 원료 CDMO 중심의 <strong>탈중국 수혜주</strong>로 조명하며 기술이전 모멘텀이 더해질 시점이 무르익었다고 판단했다. 전통 약품부터 신약 개발까지 4개 사업부가 고루 성장 중이며, CDMO 마진 확장이 지속되고 있다. 에이비엘바이오는 오는 10월 ESMO에서 <strong>Givastomig 임상 1b상 후속 데이터</strong>가 공개될 예정이며, 위암 1차 치료 시장에서 Claudin18.2 발현량에 따른 세분화 전략이 유효한지가 평가의 핵심 변수로 작용할 전망이다.</p>
+    </div>
+
+    <div class="editorial-block">
+      <div class="editorial-eyebrow">Theme 04 · 반도체 장비 · 에너지</div>
+      <h3>반도체 장비 하반기 실적 가시화, SK-On ESS 미국 수주 첫 발</h3>
+      <p>예스티는 2H26 반도체 장비 실적이 <strong>본격 반영</strong>될 전망이며, HPA 장비 불확실성이 연내 마무리되고 차세대 장비(HPO, 유리기판)도 순항 중이라고 유안타증권은 평가했다. 저스템은 글로벌 IDM 향 습도·AMC 제어 솔루션 침투율이 확대되며 <strong>2027년 영업이익 500억</strong>을 겨냥한 성장 궤도에 올라섰다. SK이노베이션의 배터리 자회사 SK-On은 미국 NeoVolta와 <strong>9GWh ESS 공급계약</strong>을 체결하며 2026년 수주 가이던스의 절반을 충족했고, 미국 ESS 시장 진출의 첫 걸음을 뗐다는 점에서 고무적이다.</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div class="brand">TNBfolio</div>
+  <div class="footer-right">
+    2026.09.01 · KRX BROKER DIGEST<br/>
+    본 자료는 투자 참고용이며 투자 권유가 아닙니다
+  </div>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var ctx = document.getElementById('tpChart').getContext('2d');
+  var labels = ["DB손해보험 (다올투자증권)", "삼성전기 (DB증권)", "SK텔레콤 (하나증권)", "KT (하나증권)", "LG유플러스 (하나증권)", "세진중공업 (신한투자증권)", "롯데렌탈 (대신증권)", "비에이치 (대신증권)", "SK이노베이션 (iM증권)"];
+  var values = [270000, 2000000, 140000, 76000, 20000, 18500, 60000, 41000, 190000];
+  var bgColors = ["#2E7D5233", "#2E7D5233", "#2E7D5233", "#2E7D5233", "#2E7D5233", "#2E7D5233", "#2E7D5233", "#2E7D5233", "#2E7D5233"];
+  var borderColors = ["#2E7D52", "#2E7D52", "#2E7D52", "#2E7D52", "#2E7D52", "#2E7D52", "#2E7D52", "#2E7D52", "#2E7D52"];
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: '목표주가',
+        data: values,
+        backgroundColor: bgColors,
+        borderColor: borderColors,
+        borderWidth: 2,
+        borderRadius: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              var v = ctx.parsed.y;
+              return '목표주가: ₩' + v.toLocaleString('ko-KR');
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: false,
+          ticks: {
+            font: { family: "'JetBrains Mono', monospace", size: 11 },
+            callback: function(value) {
+              if (value >= 10000) return (value / 10000).toFixed(0) + '만';
+              return value.toLocaleString('ko-KR');
+            }
+          },
+          grid: { color: 'rgba(0,0,0,0.05)' }
+        },
+        x: {
+          ticks: {
+            font: { family: "'Noto Serif KR', serif", size: 11 },
+            maxRotation: 35,
+            minRotation: 20,
+          },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+});
+</script>
+</body>
+</html>
