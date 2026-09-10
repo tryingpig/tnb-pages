@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TNBfolio | 美 PPI 2026년 8월 — PCE 반영 항목 심층분석</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1A1714;
+  --paper:#F8F7F5;
+  --white:#FFFFFF;
+  --red:#B91C1C;
+  --green:#047857;
+  --amber:#92400E;
+  --gold:#C9A24B;
+  --line:#DEDAD3;
+  --muted:#6B655C;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Noto Serif KR',serif;
+  line-height:1.7;
+  padding-bottom:60px;
+}
+.mono{font-family:'JetBrains Mono',monospace;}
+.wrap{max-width:880px;margin:0 auto;background:var(--white);box-shadow:0 0 40px rgba(0,0,0,.06);}
+
+/* ===== Header controls ===== */
+.ctrl-bar{
+  background:var(--ink);color:#EAE6DE;display:flex;justify-content:space-between;align-items:center;
+  padding:10px 20px;font-family:'JetBrains Mono',monospace;font-size:12px;gap:12px;flex-wrap:wrap;
+}
+.ctrl-bar .brand{letter-spacing:.14em;color:var(--gold);font-weight:700;}
+.ctrl-bar .actions{display:flex;align-items:center;gap:14px;}
+.dl-btn{
+  background:var(--gold);color:var(--ink);border:none;padding:7px 14px;border-radius:3px;
+  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.03em;
+}
+.toggle-wrap{display:flex;align-items:center;gap:6px;font-size:11px;color:#B7B0A4;}
+.switch{position:relative;width:34px;height:18px;background:#4a453d;border-radius:20px;cursor:pointer;transition:.2s;}
+.switch.on{background:var(--gold);}
+.switch::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;background:#fff;border-radius:50%;transition:.2s;}
+.switch.on::after{left:18px;}
+
+/* ===== Section 1: Cover ===== */
+.cover{background:var(--ink);color:var(--white);padding:46px 40px 38px;}
+.cover .eyebrow{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.18em;color:var(--gold);margin-bottom:16px;}
+.cover h1{font-family:'DM Serif Display',serif;font-size:32px;line-height:1.32;font-weight:400;margin-bottom:14px;}
+.cover .sub{font-size:15px;color:#C7C1B6;max-width:660px;}
+.cover .meta{display:flex;gap:24px;margin-top:26px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#9C9689;flex-wrap:wrap;}
+.cover .meta span b{color:#EAE6DE;}
+
+/* ===== Section 2: Surprise banner ===== */
+.surprise{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line);}
+.surprise .cell{padding:22px 30px;border-right:1px solid var(--line);}
+.surprise .cell:last-child{border-right:none;}
+.surprise .label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;color:var(--muted);margin-bottom:8px;}
+.surprise .figures{display:flex;align-items:baseline;gap:10px;}
+.surprise .actual{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;}
+.surprise .fc{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);}
+.tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;padding:2px 8px;border-radius:2px;margin-top:8px;letter-spacing:.04em;}
+.tag.inline{background:#EFEAE0;color:var(--amber);}
+.tag.beat-green{background:#E3F2EA;color:var(--green);}
+.tag.beat-red{background:#FBE9E7;color:var(--red);}
+
+/* ===== Section headers ===== */
+.sec{padding:30px 30px 8px;}
+.sec h2{font-family:'DM Serif Display',serif;font-size:21px;font-weight:400;display:flex;align-items:center;gap:10px;}
+.sec h2 .num{color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:15px;}
+.sec .desc{font-size:13.5px;color:var(--muted);margin-top:6px;margin-bottom:18px;}
+
+/* ===== KPI cards ===== */
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:0 30px 26px;}
+.kpi{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:16px;}
+.kpi .name{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:8px;}
+.kpi .val{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;}
+.kpi .val.red{color:var(--red);}
+.kpi .val.green{color:var(--green);}
+.kpi .sub{font-size:11.5px;color:var(--muted);margin-top:4px;}
+
+/* ===== Charts ===== */
+.chart-box{padding:0 30px 30px;}
+.chart-note{font-size:12px;color:var(--muted);margin-top:8px;}
+.legend{display:flex;gap:18px;font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:6px;}
+.legend span{display:flex;align-items:center;gap:6px;}
+.legend i{width:14px;height:3px;display:inline-block;}
+
+/* ===== Table ===== */
+table{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:12px;}
+.tblwrap{padding:0 30px 30px;overflow-x:auto;}
+th{background:var(--ink);color:#EAE6DE;text-align:right;padding:9px 10px;font-weight:500;}
+th:first-child,td:first-child{text-align:left;}
+td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right;}
+tr:nth-child(even) td{background:#FBFAF8;}
+.pos{color:var(--red);} .neg{color:var(--green);}
+.hl-row td{background:#FBF3E4 !important;font-weight:700;}
+
+/* ===== PCE deep-dive (priority section) ===== */
+.pce-hero{
+  margin:0 30px 24px;border:2px solid var(--gold);border-radius:6px;overflow:hidden;
+}
+.pce-hero .pce-head{background:var(--ink);color:#EAE6DE;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+.pce-hero .pce-head .t{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;color:var(--gold);}
+.pce-item{border-bottom:1px solid var(--line);padding:18px 20px;}
+.pce-item:last-child{border-bottom:none;}
+.pce-item .row1{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;}
+.pce-item .name{font-family:'DM Serif Display',serif;font-size:17px;}
+.pce-item .figs{display:flex;gap:14px;align-items:baseline;}
+.pce-item .figs b{font-family:'JetBrains Mono',monospace;font-size:16px;}
+.pce-item .figs small{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);}
+.pce-item p{font-size:13.5px;color:#3a352e;margin-top:8px;}
+.pce-item .note{font-size:11.5px;color:var(--muted);margin-top:6px;font-style:italic;}
+.mini-tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:2px;margin-left:8px;vertical-align:middle;}
+.mini-tag.overhaul{background:#EFEAE0;color:var(--amber);}
+.mini-tag.nodata{background:#EDEAE4;color:var(--muted);}
+
+/* ===== Market impact cards ===== */
+.mkt-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:0 30px 10px;}
+.mkt-card{border:1px solid var(--line);border-radius:4px;padding:12px;}
+.mkt-card .t{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);}
+.mkt-card .p{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;margin-top:4px;}
+.mkt-card .c{font-family:'JetBrains Mono',monospace;font-size:11.5px;margin-top:2px;}
+
+/* ===== Quote / reaction cards ===== */
+.quote-card{border-left:3px solid var(--gold);background:var(--paper);padding:14px 18px;margin:0 30px 14px;border-radius:0 4px 4px 0;}
+.quote-card p{font-size:14px;}
+.quote-card .src{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-top:8px;}
+
+/* ===== FedWatch table ===== */
+.fw-hl{background:#1A1714;color:#EAE6DE;}
+.fw-cell-hl{background:#FBF3E4;color:var(--red);font-weight:700;}
+
+/* ===== Conclusion ===== */
+.concl{background:var(--ink);color:#EAE6DE;padding:30px;margin:20px 30px 30px;border-radius:6px;}
+.concl h2{font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:14px;color:var(--white);}
+.concl ul{padding-left:18px;}
+.concl li{margin-bottom:10px;font-size:14px;color:#D6D0C4;}
+.concl li b{color:var(--gold);}
+
+/* ===== Footer ===== */
+.footer{padding:24px 30px 34px;border-top:1px solid var(--line);}
+.footer .brand2{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--gold);font-weight:700;margin-bottom:10px;}
+.footer p{font-size:11px;color:var(--muted);line-height:1.6;}
+.footer .src-list{margin-top:10px;font-size:11px;color:var(--muted);}
+
+.badge-provisional{font-family:'JetBrains Mono',monospace;font-size:9.5px;background:#EFEAE0;color:var(--amber);padding:1px 6px;border-radius:2px;margin-left:6px;}
+
+@media(max-width:640px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .mkt-grid{grid-template-columns:repeat(2,1fr);}
+  .surprise{grid-template-columns:1fr;}
+  .cover h1{font-size:24px;}
+  .pce-item .row1{flex-direction:column;}
+}
+</style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="ctrl-bar">
+    <div class="brand">TNBfolio · RESEARCH DESK</div>
+    <div class="actions">
+      <div class="toggle-wrap">자동다운로드
+        <div class="switch" id="autoToggle" onclick="toggleAuto()"></div>
+      </div>
+      <button class="dl-btn" onclick="downloadReport()">⬇ 리포트 다운로드</button>
+    </div>
+  </div>
+
+  <!-- ① Cover -->
+  <div class="cover">
+    <div class="eyebrow">US ECONOMIC DATA · PRODUCER PRICE INDEX</div>
+    <h1>8월 PPI, 헤드라인은 예상 부합 +0.4%<br>PCE 반영 항목(포트폴리오 관리·법률서비스·의료)이 관전 포인트</h1>
+    <p class="sub">디젤 +24.1%, 에너지 최종수요 +4.2% 급등이 헤드라인을 밀어올린 가운데, 근원(식품·에너지 제외) PPI는 시장 예상(+0.3%)을 밑도는 +0.2%에 그쳤다. 9월 30일 BEA 핵심 PCE 방법론 개편을 앞두고 포트폴리오 관리·법률서비스 등 핵심 반영 항목의 흐름이 향후 인플레이션 지표 해석의 열쇠가 될 전망이다.</p>
+    <div class="meta">
+      <span>발표: <b>2026.09.10 (목) 오전 8:30 ET</b></span>
+      <span>대상 기간: <b>2026년 8월</b></span>
+      <span>출처: <b>BLS, Bloomberg, Reuters, WSJ, CNBC</b></span>
+      <span>다음 발표: <b>2026.10.15 (9월 PPI)</b></span>
+    </div>
+  </div>
+
+  <!-- ② Surprise banner -->
+  <div class="surprise">
+    <div class="cell">
+      <div class="label">헤드라인 PPI (전월비)</div>
+      <div class="figures">
+        <span class="actual mono">+0.4%</span>
+        <span class="fc mono">예상 +0.4%</span>
+      </div>
+      <span class="tag inline">예상 부합 · IN-LINE</span>
+    </div>
+    <div class="cell">
+      <div class="label">근원 PPI, 식품·에너지 제외 (전월비)</div>
+      <div class="figures">
+        <span class="actual mono">+0.2%</span>
+        <span class="fc mono">예상 +0.3%</span>
+      </div>
+      <span class="tag beat-green">예상 하회 · 완만한 디스인플레 신호</span>
+    </div>
+  </div>
+
+  <!-- KPI cards -->
+  <div class="sec">
+    <h2><span class="num">①</span> 8월 핵심 지표 요약</h2>
+    <div class="desc">전월비(MoM) 및 전년동월비(YoY, 비계절조정) 기준 — 7월 수치는 상향 수정됨(0.0% → +0.1%)</div>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="name">최종수요 PPI (헤드라인) MoM</div>
+      <div class="val red">+0.4%</div>
+      <div class="sub">7월 +0.1%(상향수정) → 8월 +0.4%, 5개월래 최대폭</div>
+    </div>
+    <div class="kpi">
+      <div class="name">최종수요 PPI YoY (비계절조정)</div>
+      <div class="val red">+5.4%</div>
+      <div class="sub">전월 4.8% → 상승폭 확대</div>
+    </div>
+    <div class="kpi">
+      <div class="name">근원 PPI (식품·에너지 제외) MoM</div>
+      <div class="val green">+0.2%</div>
+      <div class="sub">시장 예상 +0.3% 하회</div>
+    </div>
+    <div class="kpi">
+      <div class="name">근원+무역서비스 제외 MoM</div>
+      <div class="val red">+0.3%</div>
+      <div class="sub">예상 부합 · 전월 +0.4%</div>
+    </div>
+    <div class="kpi">
+      <div class="name">근원+무역서비스 제외 YoY</div>
+      <div class="val red">+4.7%</div>
+      <div class="sub">전월과 동일 수준 유지</div>
+    </div>
+    <div class="kpi">
+      <div class="name">최종수요 에너지 MoM</div>
+      <div class="val red">+4.2%</div>
+      <div class="sub">2개월 연속 하락 이후 반등 — 디젤 +24.1%</div>
+    </div>
+  </div>
+
+  <!-- ★ PCE deep-dive (priority section) -->
+  <div class="sec">
+    <h2><span class="num">②</span> PCE 반영 핵심 품목 심층분석</h2>
+    <div class="desc">연준이 목표로 삼는 PCE 물가지수는 CPI가 아닌 PPI의 일부 세부 항목을 직접 인용해 산출된다. 아래 항목들은 8월 PPI 발표에서 특히 주목할 만한 움직임을 보였으며, 9월 30일 BEA의 방법론 개편과 맞물려 향후 PCE 해석에 구조적 영향을 줄 수 있다.</div>
+  </div>
+
+  <div class="pce-hero">
+    <div class="pce-head">
+      <span class="t">PCE-FEEDING COMPONENTS · 8월 상세</span>
+      <span class="t" style="color:#B7B0A4;">BEA 개편 발효: 2026.09.30</span>
+    </div>
+
+    <div class="pce-item">
+      <div class="row1">
+        <div class="name">포트폴리오 관리 수수료 <span class="mini-tag overhaul">방법론 개편 대상</span></div>
+        <div class="figs"><b class="mono" style="color:var(--green)">-1.6%</b><small>MoM (CNBC)</small><b class="mono" style="color:var(--red)">+18.8%</b><small>YoY (CNBC)</small></div>
+      </div>
+      <p>PPI 원문은 "포트폴리오 관리도 하락했다"고만 명시했으나, CNBC는 전월비 -1.6%·전년비 +18.8%로 구체 수치를 집계했다. 이 항목은 그간 핵심 PCE 서비스 물가의 변동성을 주도해온 대표 항목으로, 9월 30일부터 BEA가 실측치 대신 <b>임퓨테이션(추정 대체값)</b> 방식으로 전환한다. Oxford Economics는 이 개편으로 관련 성장률이 <b>약 22% → 약 13%</b> 수준으로 하향 재조정될 것으로 추정한다(제3자 추정치, BEA 공식 수치 아님).</p>
+      <div class="note">※ 8월 실측치는 개편 이전 방식으로 산출된 마지막 데이터에 해당 — 9월 30일 발표되는 8월 PCE부터 새 방법론이 소급 적용될 가능성에 유의.</div>
+    </div>
+
+    <div class="pce-item">
+      <div class="row1">
+        <div class="name">법률 서비스 <span class="mini-tag overhaul">방법론 개편 대상</span></div>
+        <div class="figs"><b class="mono" style="color:var(--red)">+1.7%</b><small>MoM (Bloomberg, 2009년 이후 최대)</small></div>
+      </div>
+      <p>Bloomberg는 법률서비스 지수가 전월비 1.7% 상승해 2009년 통계 작성 이래 최대 상승폭을 기록했다고 집계했다. BLS 원문에서도 최종수요·중간수요 전 단계에 걸쳐 법률서비스가 상승 요인으로 반복 언급됐다. BEA는 9월 30일부터 <b>가계 법률서비스에 대한 새로운 PPI 기반 추정기</b>를 도입할 예정이어서, 이번 급등분이 새 산식에서 어떻게 반영될지가 관건이다.</p>
+      <div class="note">※ BLS 공식 발표문에는 법률서비스의 정확한 %변동치가 명시되지 않음 — 위 수치는 언론 집계치.</div>
+    </div>
+
+    <div class="pce-item">
+      <div class="row1">
+        <div class="name">항공 여객 서비스 <span class="mini-tag nodata">수치 미제공</span></div>
+        <div class="figs"><b class="mono" style="color:var(--red)">상승</b><small>방향성만 확인</small></div>
+      </div>
+      <p>BLS는 항공 여객 서비스 지수가 8월 중 상승했다고만 명시했으며 구체적인 %변동치는 공개하지 않았다("데이터 미제공"). 해당 항목은 근원 PCE 서비스 물가에 직접 반영되는 대표적 고변동성 품목으로, 원유·제트유 가격 급등(최종수요 에너지 +4.2%)과의 연동 여부를 다음 발표에서 확인할 필요가 있다.</p>
+    </div>
+
+    <div class="pce-item">
+      <div class="row1">
+        <div class="name">병원 입원·외래 진료 <span class="mini-tag nodata">수치 미제공</span></div>
+        <div class="figs"><b class="mono" style="color:var(--red)">상승</b><small>방향성만 확인</small></div>
+      </div>
+      <p>병원 입원·외래 진료 지수 역시 8월 중 강한 상승세를 보였다고 BLS·Bloomberg가 공통으로 언급했으나 정확한 수치는 제공되지 않았다. 의료서비스는 PCE 내 비중이 커 근원 PCE 상방 압력 요인으로 꾸준히 지목되는 항목이다.</p>
+    </div>
+
+    <div class="pce-item">
+      <div class="row1">
+        <div class="name">컴퓨터 소프트웨어 및 관련 장비 <span class="mini-tag overhaul">방법론 개편 대상</span></div>
+        <div class="figs"><b class="mono" style="color:var(--red)">+3.4%</b><small>전자부품·액세서리 MoM</small><b class="mono">+0.2%</b><small>컴퓨터·장비 MoM</small></div>
+      </div>
+      <p>데이터센터 구축 수요를 반영해 전자부품·액세서리 가격이 3.4% 상승한 반면, 컴퓨터·장비 자체 가격은 0.2% 상승에 그쳐 상대적으로 안정적이었다. 컴퓨터소프트웨어 역시 9월 30일 방법론 개편 대상 항목에 포함되어 있어, AI 데이터센터발 상방 압력이 개편 이후 PCE에 어떻게 반영될지가 관전 포인트다.</p>
+    </div>
+
+    <div class="pce-item">
+      <div class="row1">
+        <div class="name">도소매 무역 마진 (관세 전가 지표) <span class="mini-tag nodata">참고 지표</span></div>
+        <div class="figs"><b class="mono" style="color:var(--green)">-0.2%</b><small>MoM (Bloomberg)</small></div>
+      </div>
+      <p>PCE에 직접 반영되는 항목은 아니지만, 도소매 마진 축소는 기업이 관세 비용을 소비자에게 전가하기보다 자체 흡수하고 있음을 시사하는 보조 지표로 시장이 주시하고 있다.</p>
+    </div>
+  </div>
+
+  <div class="chart-box" style="padding-top:0;">
+    <div class="chart-note">
+      <b>종합 해석:</b> 포트폴리오 관리(-1.6% MoM)와 도소매 마진(-0.2%)의 하락은 근원 PCE에 하방 요인으로 작용할 수 있는 반면, 법률서비스(+1.7%)·항공요금·병원진료의 상승은 상방 요인이다. Bloomberg Economics는 이 조합이 "PCE 디플레이터 전망치를 상향 조정"하는 방향으로 작용했다고 평가했다 — 즉 하락 항목보다 상승 항목의 영향력이 더 크다는 시장의 판단이다. 9월 30일 BEA 개편 이후에는 포트폴리오 관리·법률서비스·소프트웨어 3개 항목의 산정 방식이 동시에 바뀌므로, 개편 전후 수치를 직접 비교하기보다 <b>구조적 단절(break in series)</b>로 다뤄야 한다.
+    </div>
+  </div>
+
+  <!-- Trend chart -->
+  <div class="sec">
+    <h2><span class="num">③</span> PPI 추세: 헤드라인 vs 근원 (YoY, 최근 13개월)</h2>
+    <div class="desc">비계절조정 기준. 4월 이후 데이터는 후속 보고서(4~7월)에서 수정치 반영</div>
+  </div>
+  <div class="chart-box">
+    <div class="legend">
+      <span><i style="background:#B91C1C"></i>헤드라인 PPI YoY</span>
+      <span><i style="background:#1A1714"></i>근원(식품·에너지·무역서비스 제외) YoY</span>
+    </div>
+    <svg viewBox="0 0 760 300" width="100%" style="overflow:visible;">
+      <g stroke="#DEDAD3" stroke-width="1">
+        <line x1="40" y1="20" x2="40" y2="260"/>
+        <line x1="40" y1="260" x2="740" y2="260"/>
+        <line x1="40" y1="192.9" x2="740" y2="192.9" stroke-dasharray="2,3"/>
+        <line x1="40" y1="125.7" x2="740" y2="125.7" stroke-dasharray="2,3"/>
+        <line x1="40" y1="58.6" x2="740" y2="58.6" stroke-dasharray="2,3"/>
+      </g>
+      <g font-family="JetBrains Mono" font-size="10" fill="#6B655C">
+        <text x="30" y="264" text-anchor="end">0%</text>
+        <text x="30" y="196.9" text-anchor="end">2%</text>
+        <text x="30" y="129.7" text-anchor="end">4%</text>
+        <text x="30" y="62.6" text-anchor="end">6%</text>
+      </g>
+      <polyline fill="none" stroke="#B91C1C" stroke-width="2.5"
+        points="40,167.4 98.3,157.1 156.7,164.0 215,153.7 273.3,153.7 331.7,153.7 390,143.4 448.3,112.6 506.7,64.6 565,57.7 623.3,68.0 681.7,95.4 740,74.9"/>
+      <polyline fill="none" stroke="#1A1714" stroke-width="2"
+        points="40,157.1 98.3,157.1 156.7,140.0 215,136.6 273.3,143.4 331.7,140.0 390,140.0 448.3,136.6 506.7,109.1 565,88.6 623.3,88.6 681.7,98.9 740,98.9"/>
+      <circle cx="740" cy="74.9" r="4" fill="#B91C1C"/>
+      <circle cx="740" cy="98.9" r="4" fill="#1A1714"/>
+      <text x="700" y="66" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#B91C1C">5.4%</text>
+      <text x="700" y="115" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#1A1714">4.7%</text>
+      <g font-family="JetBrains Mono" font-size="9.5" fill="#6B655C">
+        <text x="40" y="278" text-anchor="middle">25.8</text>
+        <text x="156.7" y="278" text-anchor="middle">25.10</text>
+        <text x="273.3" y="278" text-anchor="middle">25.12</text>
+        <text x="390" y="278" text-anchor="middle">26.2</text>
+        <text x="506.7" y="278" text-anchor="middle">26.4</text>
+        <text x="623.3" y="278" text-anchor="middle">26.6</text>
+        <text x="740" y="278" text-anchor="middle">26.8</text>
+      </g>
+    </svg>
+    <div class="chart-note">헤드라인 YoY는 4월(+5.7%)·5월(+5.9%) 고점 이후 6~7월 둔화됐다가 8월 재차 반등(+5.4%). 근원 지표는 5월 이후 4.7~5.0% 밴드에서 안정적으로 횡보 중.</div>
+  </div>
+
+  <!-- Sector chart -->
+  <div class="sec">
+    <h2><span class="num">④</span> 8월 구성항목별 기여도 (전월비)</h2>
+    <div class="desc">최종수요 재화·서비스 세부 항목 — 에너지가 재화 상승분의 4분의 3 이상 견인</div>
+  </div>
+  <div class="chart-box">
+    <svg viewBox="0 0 760 300" width="100%" style="overflow:visible;">
+      <line x1="40" y1="220" x2="740" y2="220" stroke="#1A1714" stroke-width="1.2"/>
+      <g font-family="JetBrains Mono" font-size="11" font-weight="700">
+        <rect x="30" y="216" width="60" height="4" fill="#B91C1C"/>
+        <text x="60" y="235" text-anchor="middle" fill="#B91C1C">+0.1%</text>
+        <text x="60" y="250" text-anchor="middle" font-size="10" font-weight="400" fill="#6B655C">식품</text>
+
+        <rect x="130" y="52" width="60" height="168" fill="#B91C1C"/>
+        <text x="160" y="45" text-anchor="middle" fill="#B91C1C">+4.2%</text>
+        <text x="160" y="250" text-anchor="middle" font-size="10" font-weight="400" fill="#6B655C">에너지</text>
+
+        <rect x="230" y="204" width="60" height="16" fill="#B91C1C"/>
+        <text x="260" y="199" text-anchor="middle" fill="#B91C1C">+0.4%</text>
+        <text x="260" y="235" text-anchor="middle" font-size="10" font-weight="400" fill="#6B655C">근원재화</text>
+
+        <rect x="330" y="220" width="60" height="8" fill="#047857"/>
+        <text x="360" y="242" text-anchor="middle" fill="#047857">-0.2%</text>
+        <text x="360" y="256" text-anchor="middle" font-size="10" font-weight="400" fill="#6B655C">무역서비스</text>
+
+        <rect x="430" y="128" width="60" height="92" fill="#B91C1C"/>
+        <text x="460" y="121" text-anchor="middle" fill="#B91C1C">+2.3%</text>
+        <text x="460" y="235" text-anchor="middle" font-size="10" font-weight="400" fill="#6B655C">운송·창고</text>
+
+        <rect x="530" y="219" width="60" height="2" fill="#6B655C"/>
+        <text x="560" y="234" text-anchor="middle" fill="#6B655C">0.0%</text>
+        <text x="560" y="249" text-anchor="middle" font-size="10" font-weight="400" fill="#6B655C">기타서비스</text>
+      </g>
+    </svg>
+    <div class="chart-note">최종수요 재화지수는 2개월 연속 하락 후 +1.1% 반등. 재화 상승분의 3분의 1 이상이 디젤(+24.1%) 단일 품목에서 발생.</div>
+  </div>
+
+  <!-- Data table -->
+  <div class="sec">
+    <h2><span class="num">⑤</span> 최근 5개월 최종수요 물가 추이</h2>
+    <div class="desc">계절조정, 전월비(%) — 출처: BLS Table A</div>
+  </div>
+  <div class="tblwrap">
+    <table>
+      <thead>
+        <tr><th>월</th><th>총 최종수요</th><th>근원+무역제외</th><th>재화 합계</th><th>에너지</th><th>서비스 합계</th><th>운송·창고</th><th>YoY(비조정)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>2026.04</td><td>+1.1</td><td>+0.5</td><td>+1.9</td><td>+7.1</td><td>+0.8</td><td>+3.7</td><td>5.7</td></tr>
+        <tr><td>2026.05</td><td>+0.5</td><td>+0.8</td><td>+2.2</td><td>+8.2</td><td class="neg">-0.2</td><td>+2.2</td><td>5.9</td></tr>
+        <tr><td>2026.06</td><td class="neg">-0.1</td><td>+0.2</td><td class="neg">-1.4</td><td class="neg">-6.8</td><td>+0.5</td><td class="neg">-0.3</td><td>5.6</td></tr>
+        <tr><td>2026.07<span class="badge-provisional">수정</span></td><td>+0.1</td><td>+0.4</td><td class="neg">-0.4</td><td class="neg">-1.8</td><td>+0.2</td><td class="neg">-1.1</td><td>4.8</td></tr>
+        <tr class="hl-row"><td>2026.08</td><td>+0.4</td><td>+0.3</td><td>+1.1</td><td>+4.2</td><td>+0.1</td><td>+2.3</td><td>5.4</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Product-level detail -->
+  <div class="sec">
+    <h2><span class="num">⑤-1</span> 품목별 주요 변동 (BLS 원문 기준, 전체)</h2>
+  </div>
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>품목</th><th>변동</th><th>구분</th></tr></thead>
+      <tbody>
+        <tr><td>디젤유</td><td class="pos">+24.1%</td><td>재화 상승 주도</td></tr>
+        <tr><td>가솔린 / 제트유 / 등유</td><td class="pos">상승</td><td>에너지</td></tr>
+        <tr><td>법률 서비스</td><td class="pos">+1.7%*</td><td>PCE 반영 · 위 ②항목 참조</td></tr>
+        <tr><td>트럭 화물운송</td><td class="pos">+2.0%</td><td>서비스 상승 주도</td></tr>
+        <tr><td>항공 여객 서비스 / 병원 입·외래 진료</td><td class="pos">상승</td><td>PCE 반영 · 위 ②항목 참조</td></tr>
+        <tr><td>포트폴리오 관리 수수료</td><td class="neg">-1.6%* (YoY +18.8%*)</td><td>PCE 반영 · 위 ②항목 참조</td></tr>
+        <tr><td>연료·윤활유 소매 마진</td><td class="neg">-11.3%</td><td>서비스 하락 주도</td></tr>
+        <tr><td>도소매 무역 마진</td><td class="neg">-0.2%</td><td>관세 전가 여부 관찰 지표</td></tr>
+        <tr><td>주거용 전력</td><td class="neg">-0.5%</td><td>에너지 내 예외적 하락</td></tr>
+        <tr><td>신선 소시지 / 알루미늄 압연제품</td><td class="neg">하락</td><td>재화 내 하락 품목</td></tr>
+      </tbody>
+    </table>
+    <div class="chart-note">* 표시 항목은 Bloomberg/CNBC 등 언론 집계치로, BLS 공식 발표문에는 정확한 수치가 명시되지 않음(방향성만 확인됨).</div>
+  </div>
+
+  <!-- Market impact cards -->
+  <div class="sec">
+    <h2><span class="num">⑥</span> 발표 직후 시장 반응</h2>
+    <div class="desc">2026.09.10 종가 기준 · 자체 스크리너 캡처</div>
+  </div>
+  <div class="mkt-grid">
+    <div class="mkt-card"><div class="t">WTI 원유 (CL)</div><div class="p">$95.39</div><div class="c pos">+$3.98 (+4.14%)</div></div>
+    <div class="mkt-card"><div class="t">금 (GC)</div><div class="p">$4,365.84</div><div class="c neg">-$62.44 (-1.40%)</div></div>
+    <div class="mkt-card"><div class="t">美 10년물 국채금리</div><div class="p">4.827%</div><div class="c pos">+0.089 (+1.84%)</div></div>
+    <div class="mkt-card"><div class="t">美 2년물 국채금리</div><div class="p">4.415%</div><div class="c pos">+0.085 (+1.92%)</div></div>
+    <div class="mkt-card"><div class="t">달러 인덱스 (DX)</div><div class="p">98.708</div><div class="c pos">+0.283 (+0.29%)</div></div>
+    <div class="mkt-card"><div class="t">비트코인</div><div class="p">$76,705</div><div class="c neg">-$2,184 (-2.76%)</div></div>
+    <div class="mkt-card"><div class="t">원/달러</div><div class="p">1,336.15</div><div class="c pos">+6.72 (+0.50%)</div></div>
+    <div class="mkt-card"><div class="t">TLT (20년+ 국채 ETF)</div><div class="p">$81.36</div><div class="c neg">-0.47 (-0.57%)</div></div>
+  </div>
+  <div class="chart-note" style="padding:0 30px 20px;">국채금리 급등 · 달러 강세 · 금 약세는 전형적인 매파적 재평가 패턴. 원유는 디젤 급등 데이터와 이란-美 갈등 리스크가 겹치며 장중 배럴당 $100 상회 후 상승분 일부 반납.</div>
+
+  <!-- Policy reaction -->
+  <div class="sec">
+    <h2><span class="num">⑥-1</span> 주요 코멘트</h2>
+  </div>
+  <div class="quote-card">
+    <p>PPI 지표가 여전히 뜨거운 만큼, 연준이 9월 이번 회의에서 당장 인상 버튼을 누르지 않더라도 올해 안에 금리를 올릴 가능성이 높다는 평가다.</p>
+    <div class="src">— Stephen Brown, Capital Economics 수석 북미 이코노미스트 (Bloomberg 요약)</div>
+  </div>
+  <div class="quote-card">
+    <p>PCE 디플레이터에 반영되는 PPI 구성항목(병원 비용, 항공요금)이 예상을 크게 웃돌아, 8월 PCE 인플레이션 전망치를 상향 조정했으며 이는 9월 금리 인상 가능성을 높이는 요인이라는 평가다.</p>
+    <div class="src">— Troy Durie, Bloomberg Economics</div>
+  </div>
+  <div class="quote-card">
+    <p>워시 의장의 잭슨홀 매파적 발언은 이번 회의에서 운신의 폭을 거의 남기지 않았으며, 인플레이션 파이터로서의 신뢰를 채권시장과 유지하려면 모든 지표가 한 방향(인상)을 가리킬 경우 행동할 수밖에 없다는 진단이다.</p>
+    <div class="src">— Scott Anderson, BMO Capital Markets 수석 이코노미스트 (Reuters 요약)</div>
+  </div>
+
+  <!-- FedWatch table -->
+  <div class="sec">
+    <h2><span class="num">⑦</span> CME FedWatch: 회의별 금리 밴드 확률</h2>
+    <div class="desc">현재 연준 목표금리 3.50–3.75%(350–375bp) · 375–400bp = 25bp 인상 시나리오 · 자체 캡처 기준 (PPI 발표 이후 시점)</div>
+  </div>
+  <div class="tblwrap">
+    <table>
+      <thead>
+        <tr class="fw-hl"><th>회의일</th><th>350–375<br>(동결)</th><th>375–400<br>(25bp 인상)</th><th>400–425<br>(50bp 누적)</th><th>425–450</th></tr>
+      </thead>
+      <tbody>
+        <tr class="hl-row"><td>2026.09.16</td><td>30.0%</td><td class="fw-cell-hl">70.0%</td><td>0.0%</td><td>0.0%</td></tr>
+        <tr><td>2026.10.28</td><td>20.7%</td><td class="fw-cell-hl">57.6%</td><td>21.7%</td><td>0.0%</td></tr>
+        <tr><td>2026.12.09</td><td>7.5%</td><td>34.0%</td><td class="fw-cell-hl">44.6%</td><td>13.9%</td></tr>
+        <tr><td>2027.01.27</td><td>5.1%</td><td>25.5%</td><td class="fw-cell-hl">41.2%</td><td>23.7%</td></tr>
+      </tbody>
+    </table>
+    <div class="chart-note">발표 전(Reuters, 62%) 대비 발표 후 CME FedWatch가 반영한 9월 25bp 인상 확률은 70%까지 상승. CNBC는 발표 직후 시장가 기준 약 66%로 집계 — 집계 시점·소스 차이로 두 수치를 병기.</div>
+  </div>
+
+  <!-- Structural background -->
+  <div class="sec">
+    <h2><span class="num">⑧</span> 구조적 배경: 관세·PCE 방법론 개편</h2>
+  </div>
+  <div class="quote-card">
+    <p>美-캐나다 관세 휴전 협상이 8월 결렬되며 미국은 캐나다산 상품 일부에 50% 관세를 부과했고, 캐나다는 15~50%의 보복 관세로 대응했다. 대법원이 상반기 상당수 관세를 무효화했음에도 트럼프 행정부는 다른 법적 권한을 통해 관세를 지속 부과 중이다.</p>
+    <div class="src">— Bloomberg 요약</div>
+  </div>
+  <div class="quote-card">
+    <p>9월 30일 BEA는 포트폴리오 관리·법률서비스·컴퓨터소프트웨어 등 변동성이 큰 항목의 가격 산정 방식을 개편할 예정이며, 다수 이코노미스트는 이번 개편이 PCE 인플레이션 수치를 낮추는 방향으로 작용할 것으로 예상한다. Morgan Stanley는 7월까지의 근원 PCE 12개월/6개월 연율이 각각 3.3%→3.1%, 3.5%→3.2%로 하향 수정될 수 있다고 추정했다(3개월 연율은 3.0~3.1%로 유지 전망).</p>
+    <div class="src">— Morgan Stanley 추정치, Reuters 재인용</div>
+  </div>
+
+  <!-- Conclusion -->
+  <div class="concl">
+    <h2>⑨ 종합 판단</h2>
+    <ul>
+      <li><b>PCE 반영 항목이 방향을 가른다:</b> 포트폴리오 관리(-1.6%)·도소매 마진(-0.2%)의 하락과 법률서비스(+1.7%)·항공요금·병원진료 상승이 혼재하지만, Bloomberg Economics는 상승 항목의 영향력이 더 커 8월 PCE 전망치를 상향 조정했다고 평가 — 표면적 근원 PPI 둔화(+0.2%, 예상 하회)와 다른 해석이 가능하다.</li>
+      <li><b>9월 30일 방법론 개편을 앞둔 마지막 관측치:</b> 포트폴리오 관리·법률서비스·소프트웨어 3개 항목은 개편 전 마지막 '구(舊)방식' 데이터에 해당 — 이후 발표되는 수치와 직접 비교 시 구조적 단절(break in series)을 유의해야 한다.</li>
+      <li><b>에너지·지정학 리스크:</b> 디젤 +24.1%, 최종수요 에너지 +4.2%는 미-이란 긴장 고조와 맞물려 있으며, 2개월 연속 하락 후 반등이라는 점에서 8월 단발성 요인인지 추세 전환인지 9월 지표로 확인이 필요하다.</li>
+      <li><b>정책 셈법:</b> CME FedWatch가 9월 25bp 인상 확률을 70%까지 끌어올린 가운데, 워시 의장의 매파적 스탠스와 채권시장 신뢰 유지 필요성이 겹치며 9월 인상 쪽으로 무게중심이 이동. 다만 PCE 방법론 개편에 따른 하향 수정 가능성은 10월 이후 완화적 해석의 여지를 남긴다.</li>
+      <li><b>다음 관전 포인트:</b> 9월 11일 CPI, 9월 15–16일 FOMC, 9월 30일 PCE(연례 GDP 수정치 동시 발표) — 세 이벤트가 연쇄적으로 정책 경로에 대한 불확실성을 해소할 전망.</li>
+    </ul>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="brand2">TNBfolio · FINANCIAL INTELLIGENCE</div>
+    <p>본 리포트는 미국 노동통계국(BLS)의 2026년 8월 생산자물가지수(PPI) 공식 발표문과 Bloomberg, Reuters, WSJ, CNBC 등 언론 보도를 바탕으로 작성되었습니다. 인용된 이코노미스트 코멘트는 각 매체의 보도를 요약·재구성한 것이며, 시장 데이터는 자체 스크리너 캡처(2026.09.10 기준) 및 CME FedWatch 캡처를 근거로 합니다. Oxford Economics·Morgan Stanley의 추정치는 제3자 추정으로 BEA 공식 수치가 아니며 별도 표기했습니다. 투자 판단의 참고 자료이며 투자 권유를 목적으로 하지 않습니다.</p>
+    <div class="src-list">출처: U.S. Bureau of Labor Statistics · Bloomberg · Reuters · The Wall Street Journal · CNBC · CME Group FedWatch · Oxford Economics · Morgan Stanley</div>
+  </div>
+
+</div>
+
+<script>
+function buildReportBlob(){
+  return document.documentElement.outerHTML;
+}
+function downloadReport(){
+  var blob = new Blob([buildReportBlob()], {type:'text/html;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'TNBfolio_PPI_202608.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function toggleAuto(){
+  var el = document.getElementById('autoToggle');
+  var on = el.classList.toggle('on');
+  localStorage.setItem('tnbfolio_auto_dl', on ? '1':'0');
+}
+
+</script>
+</body>
+</html>
