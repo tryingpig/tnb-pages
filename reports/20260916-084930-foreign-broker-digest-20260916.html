@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TNBfolio · 외국계 증권사 리포트 요약 · 2026.09.16</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Noto+Serif+KR:wght@300;400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:   #1B2A4A;
+    --gold:   #9A6E00;
+    --gold-accent: #C4A35A;
+    --white:  #ffffff;
+    --off:    #f8f7f5;
+    --border: #e8e6e0;
+    --bull:   #2E7D52;
+    --bear:   #C8392B;
+    --base:   #1A5C9E;
+    --purple: #534AB7;
+    --neutral:#888780;
+    --text:   #1a1917;
+    --muted:  #6b6966;
+  }
+
+  body {
+    font-family: 'Noto Serif KR', serif;
+    background: var(--white);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  /* ── HEADER ── */
+  .site-header {
+    background: var(--navy);
+    padding: 18px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .site-header .brand {
+    font-family: 'DM Serif Display', serif;
+    font-size: 24px;
+    color: var(--gold-accent);
+    letter-spacing: 0.02em;
+  }
+  .site-header .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: rgba(255,255,255,0.50);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* ── TITLE BAND ── */
+  .title-band {
+    padding: 48px 48px 36px;
+    border-bottom: 1px solid var(--border);
+  }
+  .title-band .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .title-band h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 36px;
+    color: var(--navy);
+    line-height: 1.2;
+    margin-bottom: 10px;
+  }
+  .title-band .subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* ── THEME BANNER ── */
+  .theme-banner {
+    background: var(--off);
+    border-bottom: 1px solid var(--border);
+    padding: 28px 48px;
+  }
+  .theme-banner-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: flex-start;
+  }
+  .theme-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .theme-item .theme-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .theme-item .theme-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .theme-item .theme-value.bull { color: var(--bull); }
+  .theme-item .theme-value.bear { color: var(--bear); }
+  .theme-item .theme-value.neutral { color: var(--neutral); }
+  .theme-item .theme-value.up { color: var(--base); }
+  .theme-item .theme-value.down { color: var(--bear); }
+  .theme-item .theme-value.text { color: var(--navy); font-size: 12px; font-weight: 400; font-family: 'Noto Serif KR', serif; }
+  .theme-divider {
+    width: 1px;
+    height: 40px;
+    background: var(--border);
+    align-self: center;
+  }
+
+  /* ── SECTION WRAPPER ── */
+  .section {
+    padding: 40px 48px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 24px;
+  }
+
+  /* ── CHART ── */
+  .chart-container {
+    background: var(--off);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 24px 24px 16px;
+    margin-bottom: 12px;
+  }
+  .chart-container canvas {
+    display: block;
+  }
+  .chart-note {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  /* ── CARD GRID ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+  }
+
+  .stock-card {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--white);
+  }
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    padding: 0;
+  }
+  .card-accent-bar {
+    width: 3px;
+    align-self: stretch;
+    flex-shrink: 0;
+  }
+  .card-header-inner {
+    flex: 1;
+    padding: 16px 16px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .card-name {
+    font-family: 'DM Serif Display', serif;
+    font-size: 17px;
+    color: var(--navy);
+    line-height: 1.2;
+  }
+  .card-broker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  /* badges */
+  .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 7px;
+    border-radius: 2px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .badge-bull    { background: #eaf3de; color: var(--bull); }
+  .badge-up      { background: #e6f1fb; color: var(--base); }
+  .badge-new     { background: #eeedfe; color: var(--purple); }
+  .badge-neutral { background: #f1efea; color: #5f5e5a; }
+  .badge-bear    { background: #fcebeb; color: var(--bear); }
+
+  /* TP row */
+  .card-tp {
+    padding: 8px 16px 8px 19px;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--off);
+  }
+  .tp-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .tp-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--navy);
+  }
+  .tp-change {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    margin-left: auto;
+  }
+  .tp-change.up { color: var(--base); }
+  .tp-change.down { color: var(--bear); }
+  .tp-change.hold { color: var(--muted); }
+  .tp-change.new { color: var(--purple); }
+
+  /* bullet points */
+  .card-bullets {
+    padding: 12px 16px 14px 19px;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .card-bullets li {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 12.5px;
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1.6;
+    padding-left: 14px;
+    position: relative;
+  }
+  .card-bullets li::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  /* ── EDITORIAL ── */
+  .editorial-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .editorial-block {
+    padding: 32px 0 32px 28px;
+    border-left: 3px solid var(--border);
+    margin-bottom: 28px;
+  }
+  .editorial-block:nth-child(1) { border-left-color: var(--bull); }
+  .editorial-block:nth-child(2) { border-left-color: var(--base); }
+  .editorial-block:nth-child(3) { border-left-color: var(--gold); }
+  .editorial-block:nth-child(4) { border-left-color: var(--bear); }
+
+  .editorial-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.10em;
+    margin-bottom: 8px;
+  }
+  .editorial-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--navy);
+    margin-bottom: 12px;
+    line-height: 1.3;
+  }
+  .editorial-body {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 13.5px;
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1.85;
+    max-width: 72ch;
+  }
+  .editorial-body strong {
+    font-weight: 600;
+    color: var(--navy);
+  }
+
+  /* ── FOOTER ── */
+  .site-footer {
+    background: var(--navy);
+    padding: 20px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .site-footer .brand {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    color: var(--gold-accent);
+  }
+  .site-footer .footer-right {
+    text-align: right;
+  }
+  .site-footer .footer-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .site-footer .footer-disclaimer {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 11px;
+    font-weight: 300;
+    color: rgba(255,255,255,0.35);
+  }
+
+  @media (max-width: 768px) {
+    .site-header, .title-band, .section, .theme-banner, .site-footer {
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+    .title-band h1 { font-size: 26px; }
+    .card-grid { grid-template-columns: 1fr; }
+  }
+</style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="site-header">
+  <div class="brand">TNBfolio</div>
+  <div class="meta">Market Intelligence · KRX · 2026.09.16</div>
+</header>
+
+<!-- ── TITLE BAND ── -->
+<div class="title-band">
+  <div class="eyebrow">Broker Report Digest</div>
+  <h1>외국계 증권사 리포트 요약</h1>
+  <div class="subtitle">2026년 9월 16일 &nbsp;·&nbsp; CLSA · 모건스탠리 · JP모건 · 골드만삭스 · UBS · CGSI &nbsp;—&nbsp; 11건</div>
+</div>
+
+<!-- ── THEME BANNER ── -->
+<div class="theme-banner">
+  <div class="theme-banner-grid">
+    <div class="theme-item">
+      <span class="theme-label">핵심 테마</span>
+      <span class="theme-value text">에이전틱 AI 공급망 · 정유마진 · 방산수주 · 보험금리 · 데이터센터</span>
+    </div>
+    <div class="theme-divider"></div>
+    <div class="theme-item">
+      <span class="theme-label">매수/비중확대</span>
+      <span class="theme-value bull">7건</span>
+    </div>
+    <div class="theme-item">
+      <span class="theme-label">중립/보유</span>
+      <span class="theme-value neutral">2건</span>
+    </div>
+    <div class="theme-item">
+      <span class="theme-label">비중축소</span>
+      <span class="theme-value bear">2건</span>
+    </div>
+    <div class="theme-divider"></div>
+    <div class="theme-item">
+      <span class="theme-label">의견 상향</span>
+      <span class="theme-value up">—</span>
+    </div>
+    <div class="theme-item">
+      <span class="theme-label">의견 하향</span>
+      <span class="theme-value down">—</span>
+    </div>
+    <div class="theme-divider"></div>
+    <div class="theme-item">
+      <span class="theme-label">최선호주</span>
+      <span class="theme-value text">SK하이닉스 · 이오테크닉스 · 삼성생명 · 한화에어로스페이스 · 삼양식품</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── CHART ── -->
+<div class="section">
+  <div class="section-title">목표주가 비교 — TP 공개 종목</div>
+  <div class="chart-container">
+    <canvas id="tpChartB" height="60"></canvas>
+  </div>
+  <div class="chart-note">※ CLSA(SK하이닉스·이오테크닉스), 모건스탠리(S-Oil·한화에어로스페이스), JP모건(한화엔진·한화생명·삼성생명), UBS(효성중공업), 골드만삭스(농심·삼양식품) — TP 수치 미제시 종목은 차트에서 제외됨. 공개 TP 보유 종목: 코오롱인더 ₩89,000 (CGSI) 1건</div>
+</div>
+
+<!-- ── CARD GRID ── -->
+<div class="section">
+  <div class="section-title">종목 카드 — 11건</div>
+  <div class="card-grid">
+
+    <!-- S-Oil -->
+    <div class="stock-card">
+      <div class="card-top">
+        <div class="card-accent-bar" style="background:var(--bull);"></div>
+        <div class="card-header-inner">
+          <div>
+            <div class="card-name">S-Oil</div>
+            <div class="card-broker">Morgan Stanley</div>
+          </div>
+          <span class="badge badge-bull">비중확대</span>
+        </div>
+      </div>
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value" style="font-size:12px; color:var(--muted); font-style:italic;">미제시</span>
+        <span class="tp-change hold" style="margin-left:auto;">선호주 선정</span>
+      </div>
+      <ul class="card-bullets">
+        <li>중국의 석유제품 수출 재개 이후 국내 재고가 3년래 최저 수준으로 급감</li>
+        <li>원유 수입 부족·재고 감소·내수 수요 회복이 동시에 진행되며 수출 재제한 가능성 부상</li>
+        <li>글로벌 정제시장 완충 여력 축소로 작은 공급 변화도 마진에 큰 영향</li>
+        <li>향후 3년간 GRM이 이전 사이클 대비 약 35% 높은 수준에서 형성될 수 있다고 전망</li>
+        <li>중국 정유사(Sinopec·Rongsheng) 대비 S-Oil·Thai Oil·Star Petroleum 등 역외 업체 선호</li>
+      </ul>
+    </div>
+
+    <!-- 효성중공업 -->
+    <div class="stock-card">
+      <div class="card-top">
+        <div class="card-accent-bar" style="background:var(--bull);"></div>
+        <div class="card-header-inner">
+          <div>
+            <div class="card-name">효성중공업</div>
+            <div class="card-broker">UBS</div>
+          </div>
+          <span class="badge badge-bull">매수</span>
+        </div>
+      </div>
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value" style="font-size:12px; color:var(--muted); font-style:italic;">미제시</span>
+        <span class="tp-change new" style="margin-left:auto;">신규수주 $287M</span>
+      </div>
+      <ul class="card-bullets">
+        <li>미국 빅테크 2곳으로부터 345kV·765kV 변압기 총 2억8,700만달러 신규 수주 발표</li>
+        <li>텍사스(2028H2)·오하이오(2029H1) front-of-the-meter 전력망용 — 국내 생산 후 수출</li>
+        <li>유틸리티가 아닌 하이퍼스케일러가 직접 발주한 첫 사례 — 신규 고객군 확인</li>
+        <li>AI 데이터센터 CAPEX가 전력기기 발주 속도를 더욱 빠르게 할 수 있다고 평가</li>
+        <li>기존 유틸리티 간접 노출에서 데이터센터 CAPEX 직접 연결 구조로 전환 가능성 주목</li>
+      </ul>
+    </div>
+
+    <!-- 한화에어로스페이스 -->
+    <div class="stock-card">
+      <div class="card-top">
+        <div class="card-accent-bar" style="background:var(--bull);"></div>
+        <div class="card-header-inner">
+          <div>
+            <div class="card-name">한화에어로스페이스</div>
+            <div class="card-broker">Morgan Stanley</div>
+          </div>
+          <span class="badge badge-bull">비중확대</span>
+        </div>
+      </div>
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value" style="font-size:12px; color:var(--muted); font-style:italic;">미제시</span>
+        <span class="tp-change hold" style="margin-left:auto;">Overweight 유지</span>
+      </div>
+      <ul class="card-bullets">
+        <li>미국 육군 MTC 프로토타입 프로그램 선정, 스페인 Indra와 SPH-M 프로그램 참여 확정</li>
+        <li>천무 다연장로켓 견조한 수요 — 방산 커버리지 업체 중 수주 가시성 가장 높음</li>
+        <li>한국 방산 성능·가격 경쟁력 글로벌 수준 자신감 표명 — 현지화·파트너십 역량이 관건</li>
+        <li>올해 하반기 지상무기·방공체계 중심으로 긍정적 수주 뉴스 증가 예상</li>
+        <li>방산업종이 KOSPI 대비 방어적 흐름을 보일 여건 형성됐다고 판단</li>
+      </ul>
+    </div>
+
+    <!-- 삼양식품 -->
+    <div class="stock-card">
+      <div class="card-top">
+        <div class="card-accent-bar" style="background:var(--bull);"></div>
+        <div class="card-header-inner">
+          <div>
+            <div class="card-name">삼양식품</div>
+            <div class="card-broker">Goldman Sachs</div>
+          </div>
+          <span class="badge badge-bull">매수</span>
+        </div>
+      </div>
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value" style="font-size:12px; color:var(--muted); font-style:italic;">미제시</span>
+        <span class="tp-change up" style="margin-left:auto;">모멘텀 가속</span>
+      </div>
+      <ul class="card-bullets">
+        <li>미국 판매량 전년비 +21%, ASP +6.7%, 판매액 +29% — 직전 기간 대비 성장세 가속</li>
+        <li>직전 4주 +12% 대비 이번 4주 +21%로 두 자릿수 판매량 성장을 지속</li>
+        <li>닛신식품의 프리미엄 라인업 확대와 직접 경쟁하는 구도이나 확연히 우위</li>
+        <li>농심이 같은 기간 판매량 -9.2% 기록한 것과 극명한 대조</li>
+      </ul>
+    </div>
+
+    <!-- 농심 -->
+    <div class="stock-card">
+      <div class="card-top">
+        <div class="card-accent-bar" style="background:var(--neutral);"></div>
+        <div class="card-header-inner">
+          <div>
+            <div class="card-name">농심</div>
+            <div class="card-broker">Goldman Sachs</div>
+          </div>
+          <span class="badge badge-neutral">중립</span>
+        </div>
+      </div>
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value" style="font-size:12px; color:var(--muted); font-style:italic;">미제시</span>
+        <span class="tp-change down" style="margin-left:auto;">모멘텀 급반전</span>
+      </div>
+      <ul class="card-bullets">
+        <li>미국 판매량 전년비 -9.2%, ASP +5.8%, 판매액 -3.9% — 직전 기간 +15% 대비 급반전</li>
+        <li>직전 4주 판매량 +15% 이후 단기간 내 -9.2%로 모멘텀 크게 악화</li>
+        <li>삼양식품과 달리 프리미엄 라인업에서 뚜렷한 차별화 부재</li>
+        <li>NielsenIQ 기준 sell-out 데이터 기준이나 출하 기반 실적 악화 우려 존재</li>
+      </ul>
+    </div>
+
+    <!-- 한화엔진 -->
+    <div class="stock-card">
+      <div class="card-top">
+        <div class="card-accent-bar" style="background:var(--bull);"></div>
+        <div class="card-header-inner">
+          <div>
+            <div class="card-name">한화엔진</div>
+            <div class="card-broker">JP Morgan</div>
+          </div>
+          <span class="badge badge-bull">비중확대</span>
+        </div>
+      </div>
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value" style="font-size:12px; color:var(--muted); font-style:italic;">미제시</span>
+        <span class="tp-change hold" style="margin-left:auto;">긍정 의견 유지</span>
+      </div>
+      <ul class="card-bullets">
+        <li>AI 데이터센터용 Everllence OEM 라이선스 분위기 최근 수 주간 점진적으로 긍정적 변화</li>
+        <li>의미 있는 업데이트는 이르면 올해 말·늦어도 내년 1분기 기대 — 4행정 엔진 ASP 2배 수준</li>
+        <li>중국 제외 LNG선 점유율 53%, 탱커 14% — 중국 증설이 자국 벌크선 수요로 흡수될 가능성</li>
+        <li>대만 Yang Ming 등 아세안·유럽 선주 직접 수주로 중국 조선소 점유율 하락 보완</li>
+        <li>4분기 컨테이너선 인도 집중 → 호실적 + 추정치 상향 사이클 진입 여부가 핵심 체크포인트</li>
+      </ul>
+    </div>
+
+    <!-- 한화생명 -->
+    <div class="stock-card">
+      <div class="card-top">
+        <div class="card-accent-bar" style="background:var(--bear);"></div>
+        <div class="card-header-inner">
+          <div>
+            <div class="card-name">한화생명</div>
+            <div class="card-broker">JP Morgan</div>
+          </div>
+          <span class="badge badge-bear">비중축소</span>
+        </div>
+      </div>
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value" style="font-size:12px; color:var(--muted); font-style:italic;">미제시</span>
+        <span class="tp-change down" style="margin-left:auto;">자본여력 위험</span>
+      </div>
+      <ul class="card-bullets">
+        <li>37개월차 67% → 49개월차 39%로 유지율 급락 — 7년차에는 35%까지 하락</li>
+        <li>금리 100bp 상승 시 K-ICS 비율 평균 7%p 하락 — 자본여력 상대적으로 취약</li>
+        <li>올해 금리 상승과 맞물려 4년차 유지율도 작년 12월 대비 악화</li>
+        <li>최근 강한 주가 상승에도 불구하고 금리 상승 수혜보다 위험이 더 크다고 판단</li>
+        <li>DB손해보험·SGI·삼성생명 선호 — 한화생명·현대해상은 언더퍼폼 우려</li>
+      </ul>
+    </div>
+
+    <!-- 삼성생명 -->
+    <div class="stock-card">
+      <div class="card-top">
+        <div class="card-accent-bar" style="background:var(--bull);"></div>
+        <div class="card-header-inner">
+          <div>
+            <div class="card-name">삼성생명</div>
+            <div class="card-broker">JP Morgan</div>
+          </div>
+          <span class="badge badge-bull">비중확대</span>
+        </div>
+      </div>
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value" style="font-size:12px; color:var(--muted); font-style:italic;">미제시</span>
+        <span class="tp-change hold" style="margin-left:auto;">섹터 선호주</span>
+      </div>
+      <ul class="card-bullets">
+        <li>국고채 10년물 1.21%p 상승 수혜 기대는 이미 주가에 상당 부분 반영됐다고 판단</li>
+        <li>상대적으로 자본여력이 강해 금리 상승 국면에서 안정적인 포지션 유지</li>
+        <li>듀레이션 매칭 고도화로 급격한 금리 변동 시 ALM 위험 제한적</li>
+        <li>DB손해보험·SGI와 함께 JP모건의 보험 섹터 선호 포트폴리오에 포함</li>
+      </ul>
+    </div>
+
+    <!-- SK하이닉스 -->
+    <div class="stock-card">
+      <div class="card-top">
+        <div class="card-accent-bar" style="background:var(--bull);"></div>
+        <div class="card-header-inner">
+          <div>
+            <div class="card-name">SK하이닉스</div>
+            <div class="card-broker">CLSA</div>
+          </div>
+          <span class="badge badge-bull">비중확대</span>
+        </div>
+      </div>
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value" style="font-size:12px; color:var(--muted); font-style:italic;">미제시</span>
+        <span class="tp-change hold" style="margin-left:auto;">HC O-PF 최선호</span>
+      </div>
+      <ul class="card-bullets">
+        <li>에이전틱 AI 확산으로 메모리 대역폭·생산능력이 새로운 공급망 병목으로 부상</li>
+        <li>2028년 기준 PER 3~4배 수준 — 현 마진 지속 가능 시 상당한 리레이팅 여력 존재</li>
+        <li>중국이 물량 수요 담당, 한국 업체들이 메모리·첨단 공정에서 고부가가치 확보</li>
+        <li>글로벌 반도체 매출 2030년 3.2조달러 성장 시 에이전틱 AI 시장 기회 약 4배 확대 전망</li>
+        <li>CLSA 한국 8대 핵심 수혜주 중 최선호 — 삼성전기·이오테크닉스와 함께</li>
+      </ul>
+    </div>
+
+    <!-- 이오테크닉스 -->
+    <div class="stock-card">
+      <div class="card-top">
+        <div class="card-accent-bar" style="background:var(--bull);"></div>
+        <div class="card-header-inner">
+          <div>
+            <div class="card-name">이오테크닉스</div>
+            <div class="card-broker">CLSA</div>
+          </div>
+          <span class="badge badge-bull">비중확대</span>
+        </div>
+      </div>
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value" style="font-size:12px; color:var(--muted); font-style:italic;">미제시</span>
+        <span class="tp-change hold" style="margin-left:auto;">HC O-PF 최선호</span>
+      </div>
+      <ul class="card-bullets">
+        <li>AI 칩 전환으로 테스트 속도 증가·패키지 대형화·I/O 수 증가 — ISC와 함께 수혜 구조</li>
+        <li>각자 틈새시장에서 깊은 진입장벽 보유 — 2027년 이후 성장성 메모리보다 상대적으로 높음</li>
+        <li>CLSA의 에이전틱 AI 6개 수요 벡터 중 테스트 공정 영역 핵심 수혜주</li>
+        <li>SK하이닉스·삼성전기와 함께 CLSA 3대 최선호주로 선정</li>
+      </ul>
+    </div>
+
+    <!-- 코오롱인더 -->
+    <div class="stock-card">
+      <div class="card-top">
+        <div class="card-accent-bar" style="background:var(--bull);"></div>
+        <div class="card-header-inner">
+          <div>
+            <div class="card-name">코오롱인더</div>
+            <div class="card-broker">CGSI</div>
+          </div>
+          <span class="badge badge-bull">Add</span>
+        </div>
+      </div>
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">₩89,000</span>
+        <span class="tp-change hold" style="margin-left:auto;">유지</span>
+      </div>
+      <ul class="card-bullets">
+        <li>4월 고점 대비 45% 하락 — P/BV 0.4배로 역사적 평균 하회, 밸류에이션 부담 제한적</li>
+        <li>AI 반도체용 mPPO 수지 신성장동력 — 올해 매출 1,500억원·영업이익 350억원 전망</li>
+        <li>폴더블용 투명PI 필름 CPF 매출 올해 1,000억→내년 2,150억원 확대 예상</li>
+        <li>올해 전체 영업이익 전년비 +150% 증가 전망 (1,090억→2,760억원), 영업이익률 2.2→5.3%</li>
+        <li>올해·내년 EPS 전망치 10~74% 상향 — 중국 자회사 지분법이익도 450→740억원</li>
+      </ul>
+    </div>
+
+  </div><!-- /card-grid -->
+</div>
+
+<!-- ── EDITORIAL ── -->
+<div class="section">
+  <div class="section-title">에디토리얼 — 테마별 분석</div>
+  <div class="editorial-grid">
+
+    <div class="editorial-block">
+      <div class="editorial-eyebrow">Theme 01 · Semiconductor</div>
+      <div class="editorial-title">에이전틱 AI, 반도체 공급망의 병목을 다시 쓰다</div>
+      <div class="editorial-body">
+        CLSA는 에이전틱 AI 확산이 반도체 생태계의 가치 분배 구조를 근본적으로 변화시키고 있다고 진단한다. 단순 컴퓨트 성능에서 <strong>메모리 대역폭, 첨단 패키징, 테스트 공정</strong>으로 병목이 이동하면서 한국 중소형 반도체 업체들이 각자의 틈새 영역에서 새로운 우위를 확보하는 국면이 열렸다. 글로벌 반도체 매출이 <strong>2030년 3.2조달러</strong>까지 성장하면 에이전틱 AI의 6개 수요 벡터가 만들어내는 시장 기회는 현재 대비 약 4배 확대될 수 있다는 전망이다. JP모건도 같은 맥락에서 반도체 장비·기판·첨단 패키징의 투자 매력도가 높다고 판단하며, 내년부터 클린룸에 이어 장비 자체가 핵심 병목으로 부상할 가능성을 제기한다. 특히 주목할 구조 변화는 <strong>중국이 물량을 사고 한국이 가치를 가져가는 분업체계</strong>가 형성될 것이라는 시각이다. SK하이닉스 메모리 업체들이 현 마진을 유지한다면 2028년 기준 PER 3~4배에서 상당한 리레이팅이 가능하다는 논거가 이 구조에 기반한다.
+      </div>
+    </div>
+
+    <div class="editorial-block">
+      <div class="editorial-eyebrow">Theme 02 · Refining &amp; Defense</div>
+      <div class="editorial-title">정유 마진과 방산 수주, 두 개의 구조적 업사이드</div>
+      <div class="editorial-body">
+        모건스탠리는 아시아 정유와 국내 방산 두 섹터 모두에서 구조적 업사이드를 확인한다. 정유 측면에서는 <strong>중국의 석유제품 수출 재제한 가능성</strong>이 핵심 촉매다. 중국 내 원유 수입 부족·재고 감소·내수 수요 회복이 동시에 나타나면서 하루 100만 배럴 규모의 수출이 다시 억제될 경우 이미 타이트한 글로벌 중간유분 수급이 추가 악화된다. 신규 정제설비 공급이 제한된 현 구조에서 향후 3년간 GRM은 이전 사이클 대비 <strong>약 35% 높은 수준</strong>에서 형성될 수 있다는 것이다. 방산 측면에서는 올해 변동성이 높았지만 최근 미국·스페인에서의 신규 수주가 흐름을 반전시키고 있다. 한화에어로스페이스는 MTC 프로토타입·SPH-M·천무로 가시성이 가장 높은 반면 LIG넥스원은 중동·북아프리카 천궁2 추가 수주 가능성, 한국항공우주는 KF-21의 중장기 잠재력이 각각의 논거가 된다. 두 섹터 모두 공급 여력 제약이라는 공통 분모를 갖는다는 점이 인상적이다.
+      </div>
+    </div>
+
+    <div class="editorial-block">
+      <div class="editorial-eyebrow">Theme 03 · Insurance</div>
+      <div class="editorial-title">금리 상승의 두 얼굴 — 보험사 자본 리스크의 부각</div>
+      <div class="editorial-body">
+        JP모건은 국고채 10년물이 올해만 <strong>1.21%p 상승</strong>하면서 보험사 주가에 쌓인 금리 수혜 기대가 이미 상당 부분 반영됐다고 진단한다. 이제 시선을 금리 상승이 초래할 위험으로 옮겨야 할 시점이라는 것이다. 보험사들이 자산·부채 듀레이션을 점차 일치시키면서 금리 상승 자체가 핵심자본에 일방적인 호재로 작용하기 어렵게 됐다. 금리가 100bp 상승하면 K-ICS 비율이 평균 7%p 하락한다는 수치가 이를 뒷받침한다. 더 심각한 문제는 <strong>해지율 상승과 CSM 질 저하</strong>다. 계약 후 49개월차 유지율이 39~57%에 불과한 현실, 특히 한화생명의 경우 7년차 유지율이 35%까지 떨어진다는 점은 CSM 잔액의 지속 가능성에 의문을 제기한다. UFR·LLP 논의에 시장이 집중하는 동안 현금흐름 기반의 펀더멘털 점검이 더 중요한 과제로 떠오른다.
+      </div>
+    </div>
+
+    <div class="editorial-block">
+      <div class="editorial-eyebrow">Theme 04 · Power &amp; Industrial</div>
+      <div class="editorial-title">데이터센터 전력 수요, 하이퍼스케일러가 직접 시장에 들어오다</div>
+      <div class="editorial-body">
+        UBS가 보고한 효성중공업의 빅테크 직접 수주는 전력기기 산업의 구조 변화를 압축적으로 보여준다. 기존 고압 변압기 매출의 <strong>90% 이상을 유틸리티 고객</strong>에서 올리던 효성중공업이 처음으로 하이퍼스케일러로부터 직접 발주를 받았다. 미국에서 기존 전력 소비자의 요금 부담을 최소화하기 위해 빅테크가 장거리 송전망 비용을 직접 부담하고 전력기기를 직접 조달하는 사례가 늘어날 수 있다는 전망이 현실이 된 것이다. 두산퓨얼셀의 경우는 다른 각도를 보여준다. 9월 2일에 이어 불과 <strong>2주 만에 3,220억원</strong> 규모 미국 데이터센터 PAFC 추가 수주를 달성했지만, 수익성(영업이익률 한 자릿수 중후반 추정)과 CAPEX 조달이 중기 과제로 남아 있다. 코오롱인더의 mPPO 수지 역시 AI 반도체용 CCL 소재라는 점에서 데이터센터 수요와 직접 연결된다. 전력망·연료전지·소재라는 세 갈래에서 데이터센터 수요가 국내 산업재·소재 업종의 실적을 실질적으로 견인하기 시작했다.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── FOOTER ── -->
+<footer class="site-footer">
+  <div class="brand">TNBfolio</div>
+  <div class="footer-right">
+    <div class="footer-meta">2026.09.16 · KRX Broker Digest</div>
+    <div class="footer-disclaimer">본 자료는 투자 참고용이며 투자 권유가 아닙니다</div>
+  </div>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  // ── 코오롱인더 단독 (TP 공개 유일 종목)
+  const ctxB = document.getElementById('tpChartB').getContext('2d');
+  new Chart(ctxB, {
+    type: 'bar',
+    data: {
+      labels: ['코오롱인더 (CGSI)'],
+      datasets: [{
+        label: 'TP',
+        data: [89000],
+        backgroundColor: '#2E7D5233',
+        borderColor: '#2E7D52',
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              return '코오롱인더 · CGSI · TP ₩89,000 · Add';
+            }
+          }
+        },
+        title: {
+          display: true,
+          text: '코오롱인더 목표주가 ₩89,000 (CGSI · Add · P/BV 0.6배 기준)',
+          font: { family: 'JetBrains Mono', size: 11 },
+          color: '#6b6966',
+          padding: { bottom: 12 }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { font: { family: 'JetBrains Mono', size: 10 }, color: '#6b6966' },
+          grid: { color: '#e8e6e0' }
+        },
+        y: {
+          ticks: {
+            font: { family: 'JetBrains Mono', size: 10 },
+            color: '#6b6966',
+            callback: function(v) { return '₩' + v.toLocaleString(); }
+          },
+          grid: { color: '#e8e6e0' }
+        }
+      }
+    }
+  });
+
+});
+</script>
+</body>
+</html>
