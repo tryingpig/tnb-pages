@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TNBfolio — 외국계 증권사 리포트 요약 | 2026.09.18</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Noto+Serif+KR:wght@300;400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --navy:   #1B2A4A;
+    --gold:   #9A6E00;
+    --gold-accent: #C4A35A;
+    --white:  #ffffff;
+    --off:    #f8f7f5;
+    --border: #e8e6e0;
+    --bull:   #2E7D52;
+    --bear:   #C8392B;
+    --base:   #1A5C9E;
+    --purple: #534AB7;
+    --neutral:#888780;
+    --muted:  #5f5e5a;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--white);
+    font-family: 'Noto Serif KR', serif;
+    color: #1a1a1a;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  /* ── HEADER ── */
+  .site-header {
+    background: var(--navy);
+    padding: 18px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .site-header .brand {
+    font-family: 'DM Serif Display', serif;
+    font-size: 26px;
+    color: var(--gold-accent);
+    letter-spacing: .02em;
+  }
+  .site-header .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: rgba(255,255,255,.5);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+
+  /* ── TITLE BAND ── */
+  .title-band {
+    background: var(--white);
+    padding: 48px 40px 36px;
+    border-bottom: 1px solid var(--border);
+  }
+  .title-band .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    margin-bottom: 10px;
+  }
+  .title-band h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 38px;
+    color: var(--navy);
+    line-height: 1.2;
+    margin-bottom: 10px;
+  }
+  .title-band .sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* ── THEME BANNER ── */
+  .theme-banner {
+    background: var(--off);
+    border-top: 3px solid var(--gold);
+    border-bottom: 1px solid var(--border);
+    padding: 28px 40px;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  .theme-banner .theme-block .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .theme-banner .theme-block .value {
+    font-family: 'Noto Serif KR', serif;
+    font-weight: 600;
+    font-size: 13px;
+    color: #1a1a1a;
+    line-height: 1.5;
+  }
+  .theme-banner .stat-block .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .theme-banner .stat-block .num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+  }
+  .theme-banner .stat-block .num.bull { color: var(--bull); }
+  .theme-banner .stat-block .num.neutral { color: var(--neutral); }
+  .theme-banner .stat-block .num.bear { color: var(--bear); }
+  .theme-banner .chg-block .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+  .theme-banner .chg-block .ticker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .ticker.up { color: var(--base); }
+  .ticker.down { color: var(--bear); }
+  .ticker.new-cov { color: var(--purple); }
+
+  /* ── SECTION TITLE ── */
+  .section-wrap {
+    padding: 40px 40px 0;
+  }
+  .section-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .15em;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 10px;
+    margin-bottom: 28px;
+  }
+
+  /* ── CHART ── */
+  .chart-wrap {
+    padding: 40px 40px;
+    background: var(--white);
+  }
+  .chart-inner {
+    background: var(--off);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 28px 28px 20px;
+  }
+  .chart-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .chart-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--navy);
+    margin-bottom: 20px;
+  }
+  #tpChart { width: 100% !important; }
+
+  /* ── CARD GRID ── */
+  .card-grid {
+    padding: 0 40px 40px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+  }
+  .card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .card-body {
+    padding: 18px 18px 18px 22px;
+    flex: 1;
+    border-left: 3px solid var(--bull);
+  }
+  .card.bull .card-body   { border-left-color: var(--bull); }
+  .card.up .card-body     { border-left-color: var(--base); }
+  .card.new .card-body    { border-left-color: var(--purple); }
+  .card.neutral .card-body{ border-left-color: var(--neutral); }
+  .card.bear .card-body   { border-left-color: var(--bear); }
+
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .card-name {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    color: var(--navy);
+    line-height: 1.2;
+  }
+  .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 2px;
+    white-space: nowrap;
+    margin-left: 8px;
+    flex-shrink: 0;
+    margin-top: 3px;
+    letter-spacing: .03em;
+  }
+  .badge-bull    { background:#eaf3de; color:var(--bull); }
+  .badge-up      { background:#e6f1fb; color:var(--base); }
+  .badge-new     { background:#eeedfe; color:var(--purple); }
+  .badge-neutral { background:#f1efea; color:var(--muted); }
+  .badge-bear    { background:#fcebeb; color:var(--bear); }
+
+  .card-broker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .card-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 10px 0;
+  }
+  .card-tp {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .card-tp .tp-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+  }
+  .card-tp .tp-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--navy);
+  }
+  .card-tp .tp-change {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    margin-left: auto;
+  }
+  .tp-up   { color: var(--base); }
+  .tp-down { color: var(--bear); }
+  .tp-hold { color: var(--muted); }
+  .tp-new  { color: var(--purple); }
+
+  .card-points {
+    list-style: none;
+    margin-top: 8px;
+  }
+  .card-points li {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 12.5px;
+    font-weight: 300;
+    color: #333;
+    line-height: 1.65;
+    padding: 3px 0;
+    padding-left: 14px;
+    position: relative;
+  }
+  .card-points li::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: var(--muted);
+  }
+
+  /* ── EDITORIAL ── */
+  .editorial-wrap {
+    padding: 0 40px 48px;
+  }
+  .editorial-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
+  }
+  .editorial-block {
+    background: var(--off);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--bull);
+    border-radius: 4px;
+    padding: 24px 24px 24px 22px;
+  }
+  .editorial-block:nth-child(1) { border-left-color: var(--bull); }
+  .editorial-block:nth-child(2) { border-left-color: var(--base); }
+  .editorial-block:nth-child(3) { border-left-color: var(--gold); }
+  .editorial-block:nth-child(4) { border-left-color: var(--bear); }
+
+  .ed-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .ed-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--navy);
+    margin-bottom: 12px;
+    line-height: 1.3;
+  }
+  .ed-body {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 13px;
+    font-weight: 300;
+    color: #333;
+    line-height: 1.8;
+  }
+  .ed-body strong {
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  /* ── FOOTER ── */
+  .site-footer {
+    background: var(--navy);
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .site-footer .brand {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    color: var(--gold-accent);
+  }
+  .site-footer .right {
+    text-align: right;
+  }
+  .site-footer .date-line {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: rgba(255,255,255,.5);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+  .site-footer .disclaimer {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 11px;
+    color: rgba(255,255,255,.35);
+    margin-top: 3px;
+  }
+
+  @media (max-width: 768px) {
+    .site-header, .title-band, .theme-banner,
+    .chart-wrap, .section-wrap, .card-grid,
+    .editorial-wrap, .site-footer {
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+    .theme-banner {
+      grid-template-columns: 1fr 1fr;
+    }
+    .theme-banner .theme-block {
+      grid-column: 1 / -1;
+    }
+  }
+</style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="site-header">
+  <div class="brand">TNBfolio</div>
+  <div class="meta">MARKET INTELLIGENCE &middot; KRX &middot; 2026.09.18</div>
+</header>
+
+<!-- ── TITLE BAND ── -->
+<section class="title-band">
+  <div class="eyebrow">BROKER REPORT DIGEST</div>
+  <h1>외국계 증권사 리포트 요약</h1>
+  <div class="sub">2026년 9월 18일 &middot; Citi · 맥쿼리 · JP모건 · 모건스탠리 · CLSA · 골드만삭스 · CGSI — 15건</div>
+</section>
+
+<!-- ── THEME BANNER ── -->
+<section class="theme-banner">
+  <div class="theme-block">
+    <div class="label">오늘의 핵심 테마</div>
+    <div class="value">
+      전력기기 LPT 업사이클 · AI 데이터센터 전력 인프라<br>
+      MLCC 가격 인상 사이클 진입 · 방산 UAE 수주 모멘텀<br>
+      한국 반도체 경기 확장 · SK하이닉스 미국 생산 전략
+    </div>
+  </div>
+  <div class="stat-block">
+    <div class="label">매수/비중확대</div>
+    <div class="num bull">8</div>
+  </div>
+  <div class="stat-block">
+    <div class="label">중립 / Hold</div>
+    <div class="num neutral">3</div>
+  </div>
+  <div class="stat-block">
+    <div class="label">비중축소</div>
+    <div class="num bear">0</div>
+  </div>
+  <div class="chg-block">
+    <div class="label">의견 / TP 변화</div>
+    <span class="ticker up">↑ 효성중공업 TP 상향</span>
+    <span class="ticker new-cov">★ HD현대일렉트릭 신규</span>
+    <span class="ticker down">↓ NAVER TP 하향</span>
+    <span class="ticker down">↓ 파라다이스 TP 하향</span>
+    <span class="ticker down">↓ 시프트업 TP 하향</span>
+    <span class="ticker down">↓ 두산 TP 하향</span>
+  </div>
+</section>
+
+<!-- ── CHART ── -->
+<section class="chart-wrap">
+  <div class="chart-inner">
+    <div class="chart-eyebrow">TARGET PRICE COMPARISON</div>
+    <div class="chart-title">목표주가 비교 — 2026.09.18</div>
+    <canvas id="tpChart" height="320"></canvas>
+  </div>
+</section>
+
+<!-- ── CARD GRID ── -->
+<div class="section-wrap">
+  <div class="section-title">STOCK COVERAGE — 종목별 브리핑</div>
+</div>
+<div class="card-grid">
+
+  <!-- 효성중공업 -->
+  <div class="card bull">
+    <div class="card-body">
+      <div class="card-top">
+        <div class="card-name">효성중공업</div>
+        <span class="badge badge-bull">비중확대</span>
+      </div>
+      <div class="card-broker">CLSA</div>
+      <hr class="card-divider">
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">₩4,780,000</span>
+        <span class="card-tp tp-up">↑ ₩3,400,000→₩4,780,000</span>
+      </div>
+      <hr class="card-divider">
+      <ul class="card-points">
+        <li>AI 데이터센터 전력수요 증가와 미국 765kV 초고압 송전망 확대로 LPT 및 STATCOM 수요 동시 수혜</li>
+        <li>765kV 대응 고부가 변압기 생산공장을 미국 현지에 운영 중으로 초고압 투자 확대 직접 대응 가능</li>
+        <li>STATCOM 역량이 시장에서 충분히 평가받지 못하고 있으며 765kV 확대가 동적 전압 보상장치 수요를 구조적으로 증가시킬 전망</li>
+        <li>2027E/2028E EPS 각각 전년비 +44%/+43% 성장 예상, 밸류에이션 방법을 SOTP에서 PER로 변경</li>
+        <li>글로벌 LPT 업체 평균 PER 28.2배 적용, LPT+STATCOM 동시 수혜로 HD현대일렉트릭보다 선호</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- HD현대일렉트릭 -->
+  <div class="card new">
+    <div class="card-body">
+      <div class="card-top">
+        <div class="card-name">HD현대일렉트릭</div>
+        <span class="badge badge-new">신규 Outperform</span>
+      </div>
+      <div class="card-broker">CLSA</div>
+      <hr class="card-divider">
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">₩840,000</span>
+        <span class="card-tp tp-new">신규 커버리지</span>
+      </div>
+      <hr class="card-divider">
+      <ul class="card-points">
+        <li>LPT·배전변압기·스위치기어·회전기기 등 종합 전력기기 포트폴리오로 AIDC 전력수요 다중 경로 수익화 가능</li>
+        <li>미국 LPT 공급 부족 2026년 165.5GVA → 2027년 193.8GVA로 확대, 현재 리드타임 3~4년 수준</li>
+        <li>AIDC Behind-the-meter 수요가 궁극적으로 전력망 측 변압기·스위치기어 수요로 이어지는 순차 성장 구조</li>
+        <li>연결 영업이익률 2026E 26% → 2027E 28% → 2028E 29%까지 단계적 상승 전망</li>
+        <li>글로벌 LPT 업체 평균 대비 26% 할인 PER 21.1배 적용, 2027E/2028E EPS 각각 +30%/+20% 성장</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 삼성전기 -->
+  <div class="card bull">
+    <div class="card-body">
+      <div class="card-top">
+        <div class="card-name">삼성전기</div>
+        <span class="badge badge-bull">Overweight</span>
+      </div>
+      <div class="card-broker">JP모건</div>
+      <hr class="card-divider">
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">₩2,400,000</span>
+        <span class="card-tp tp-hold">유지</span>
+      </div>
+      <hr class="card-divider">
+      <ul class="card-points">
+        <li>MLCC 본격 가격 인상 사이클 진입, 4Q26E부터 직거래 고객 대상 인상 시작, 향후 2년 누적 140% 상승 전망</li>
+        <li>FY27E/FY28E 영업이익 추정치 각각 24~29% 상향, 2027E 조정 EPS 41,174원→48,910원으로 18.8% 상향</li>
+        <li>AI 서버용 고사양 MLCC+실리콘 캐패시터 포함 시 컴포넌트솔루션 OPM 2027E 31%→2028E 38% 전망</li>
+        <li>무라타 MLCC 단종 발표로 2028년 수급 환경이 2017~2018년 수준으로 타이트해질 가능성</li>
+        <li>FY28E EPS에 PER 27배 적용, 향후 2년 영업이익 CAGR 102% 전망, 컨센서스 19~21% 상회</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SK하이닉스 -->
+  <div class="card neutral">
+    <div class="card-body">
+      <div class="card-top">
+        <div class="card-name">SK하이닉스</div>
+        <span class="badge badge-neutral">중립 (정보)</span>
+      </div>
+      <div class="card-broker">Citi</div>
+      <hr class="card-divider">
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">—</span>
+        <span class="card-tp tp-hold">이벤트 분석</span>
+      </div>
+      <hr class="card-divider">
+      <ul class="card-points">
+        <li>인텔 오하이오 공장 일부 임차 또는 클라우드 고객사 포함 JV 방식으로 미국 메모리 생산 검토 보도</li>
+        <li>아직 논의 초기 단계이며 확정된 투자계획 없음, 여러 전략적 선택지 중 하나로 판단</li>
+        <li>인텔 기존 시설 활용 시 그린필드 팹 대비 미국 생산능력 확보 시점을 4~5년 앞당길 수 있음</li>
+        <li>인디애나 HBM 패키징과 오하이오 전공정을 결합한 미국 HBM 밸류체인 구축 선택지 확보 가능</li>
+        <li>한국 정부의 핵심 기술 이전 승인 여부와 생산 제품 종류(DRAM/HBM), JV 구조가 현실화 핵심 변수</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 두산 -->
+  <div class="card bear">
+    <div class="card-body">
+      <div class="card-top">
+        <div class="card-name">두산</div>
+        <span class="badge badge-bear">Outperform ↓TP</span>
+      </div>
+      <div class="card-broker">맥쿼리</div>
+      <hr class="card-divider">
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">₩2,100,000</span>
+        <span class="card-tp tp-down">↓ ₩2,300,000→₩2,100,000</span>
+      </div>
+      <hr class="card-divider">
+      <ul class="card-points">
+        <li>CCL 생산능력 167% 확대, 총 투자 약 1.3조원 (기존 CAPEX 예상치 8,000~9,000억 상회)</li>
+        <li>Rubin CCL ASP 상승률이 기존 예상 60% 대비 10% 상승에 그쳐 2026E/2027E CCL 순이익 3%/11% 하향</li>
+        <li>광모듈용 CCL이 새로운 성장축으로 부상, 올해 전년비 10배 성장 후 2027년 2.5배 추가 성장 전망</li>
+        <li>10월 보통주 발행주식 12%에 해당하는 자사주 196만주 소각 예정, 실트론 내년 1월부터 EBITDA 기여</li>
+        <li>2026E/2027E/2028E 연결 EPS 38%/13%/14% 상향, 2028E CCL 순이익 추정치는 4% 상향</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- NAVER -->
+  <div class="card neutral">
+    <div class="card-body">
+      <div class="card-top">
+        <div class="card-name">NAVER</div>
+        <span class="badge badge-neutral">Equal-weight</span>
+      </div>
+      <div class="card-broker">모건스탠리</div>
+      <hr class="card-divider">
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">₩240,000</span>
+        <span class="card-tp tp-down">↓ ₩270,000→₩240,000</span>
+      </div>
+      <hr class="card-divider">
+      <ul class="card-points">
+        <li>AI Factory 하이브리드 모델(외부 금융 파트너 전액 부담 구조)로 2028년까지 200MW, 장기 GW급 확대 계획</li>
+        <li>경영진 제시 최대 20% OPM은 낙관적으로 판단, 보수적 수익성 가정 적용하여 2027년부터 네오클라우드 실적 연결 포함</li>
+        <li>2Q26 실적 기대치 하회, 검색·커머스 경쟁 심화·AI 투자비용 증가 등 변수 동시 존재</li>
+        <li>핵심 사업 NOPLAT 목표 멀티플 18배→16배 하향, 네오클라우드 가치가 일부 상쇄하나 역부족</li>
+        <li>재평가를 위해 AI Factory 실제 매출 성장과 높은 영업이익률 달성 여부 확인 필요</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 삼성에스디에스 -->
+  <div class="card bull">
+    <div class="card-body">
+      <div class="card-top">
+        <div class="card-name">삼성에스디에스</div>
+        <span class="badge badge-bull">Overweight</span>
+      </div>
+      <div class="card-broker">모건스탠리</div>
+      <hr class="card-divider">
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">₩270,000</span>
+        <span class="card-tp tp-hold">유지</span>
+      </div>
+      <hr class="card-divider">
+      <ul class="card-points">
+        <li>구미·AICC 등 선점 통해 국내 AIDC 시장에서 네오클라우드 구축 확대 수혜가 가장 클 것으로 판단</li>
+        <li>AI 데이터센터 5개 사업자 합산 5GW 규모 구축 계획 발표, 정부 지원·B2B AI 수요 확대가 뒷받침</li>
+        <li>사업모델은 네오클라우드·코로케이션·DBO·하이브리드 혼합 운영 예상, 위험-수익 구조 차별화</li>
+        <li>기업용 AI 소프트웨어 설치 사이클과 장기적 로보틱스 사업 진출이 추가 성장동력</li>
+        <li>국내 AIDC 주요 리스크: 전력 한계(5GW 초과 시 추가 발전설비 필요), 공급과잉, 규제 불확실성</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- HD현대중공업 -->
+  <div class="card bull">
+    <div class="card-body">
+      <div class="card-top">
+        <div class="card-name">HD현대중공업</div>
+        <span class="badge badge-bull">Overweight</span>
+      </div>
+      <div class="card-broker">JP모건</div>
+      <hr class="card-divider">
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">—</span>
+        <span class="card-tp tp-hold">유지</span>
+      </div>
+      <hr class="card-divider">
+      <ul class="card-points">
+        <li>상선 부문 영업이익률 17%, 2029년까지 높은 실적 가시성 확보</li>
+        <li>컨테이너선 발주잔고/선대 비율 30% 초과로 과잉 우려 있으나 실질 공급 제한 구조 유효</li>
+        <li>AI 데이터센터용 4행정 HiMSEN 엔진 4GW 증설, AIDC와 FDC 신규 수요가 성장 촉매</li>
+        <li>함정·방산 조달이 새로운 성장축으로 부상, 상선 단독 성장 모델 탈피 전략 가속화</li>
+        <li>HD현대마린솔루션·한화엔진과 함께 해운·조선 섹터 내 복합 성장 구조 형성</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- HD현대마린솔루션 -->
+  <div class="card bull">
+    <div class="card-body">
+      <div class="card-top">
+        <div class="card-name">HD현대마린솔루션</div>
+        <span class="badge badge-bull">Overweight</span>
+      </div>
+      <div class="card-broker">JP모건</div>
+      <hr class="card-divider">
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">—</span>
+        <span class="card-tp tp-hold">유지</span>
+      </div>
+      <hr class="card-divider">
+      <ul class="card-points">
+        <li>AIDC 육상 HiMSEN 엔진 MRO OPM 40%+ 예상, 선박 MRO(30~35%)보다 높은 수익성</li>
+        <li>HD현대중공업 4GW 엔진 증설로 약 7GW MRO 대상 추가, 2028년 이후 이익 기여 1%→14% 확대</li>
+        <li>FDC(부유식 발전설비) 문의 급증, 100MW급 BMPP 기본설계승인 획득, 독점 애프터마켓 지위 확보</li>
+        <li>2026E~2028E 누적 FCF가 순이익의 약 90%, 배당성향 50~70% Value Up 프로그램 제시</li>
+        <li>FTM PER 27배이나 AIDC·FDC 모멘텀과 독점 MRO 구조 감안 시 30배 이상 지속 리레이팅 가능 판단</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 한화에어로스페이스 -->
+  <div class="card bull">
+    <div class="card-body">
+      <div class="card-top">
+        <div class="card-name">한화에어로스페이스</div>
+        <span class="badge badge-bull">매수</span>
+      </div>
+      <div class="card-broker">골드만삭스</div>
+      <hr class="card-divider">
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">—</span>
+        <span class="card-tp tp-hold">유지</span>
+      </div>
+      <hr class="card-divider">
+      <ul class="card-points">
+        <li>미국 차륜형 MTC-W OTA 수주(60~80억달러 잠재 규모)에 이어 궤도형 자주포 사업 RFI 발동, 규모는 1.5배 이상</li>
+        <li>UAE EDGE Group과 L-SAM·M-SAM·천무 텀시트 체결, 크로아티아 천무 수출로 유럽 4번째 도입국 확보</li>
+        <li>L-SAM 그룹 내 콘텐츠 비중 70~80%로 M-SAM(40~50%)보다 경제적 가치 크게 높음, 해외 판매 2028년부터 가능</li>
+        <li>미국·사우디 수주만 반영 시 2030년까지 EPS CAGR 약 20%, 현 주가는 1년 선행 PER 17~18배</li>
+        <li>3Q 원화 강세로 단기 실적 부담 있으나 수주 파이프라인 동시 확장, 실적보다 수주 전환 속도가 핵심 변수</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 시프트업 -->
+  <div class="card neutral">
+    <div class="card-body">
+      <div class="card-top">
+        <div class="card-name">시프트업</div>
+        <span class="badge badge-neutral">Hold</span>
+      </div>
+      <div class="card-broker">CGSI</div>
+      <hr class="card-divider">
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">₩32,000</span>
+        <span class="card-tp tp-down">↓ 하향</span>
+      </div>
+      <hr class="card-divider">
+      <ul class="card-points">
+        <li>원화 11% 절상으로 매출 95% 달러 발생 구조에 직접 역풍, 약 200억원 환손실 예상</li>
+        <li>3Q26 매출·영업이익·EPS 컨센서스 대비 각각 11%·25%·92% 하회 전망</li>
+        <li>비인가 프로그램 제재 논란 이후 이용자 심리 악화, NIKKE 지출 둔화 및 커뮤니티 참여도 저하</li>
+        <li>11월 Stellar Blade Switch 2 Edition 출시, 4Q26 Project Spirit 게임플레이 영상 공개 예정</li>
+        <li>2028년까지 신작 모멘텀 제한적, NIKKE 회복 및 Project Spirit 가시성 확보 전까지 Hold 유지</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 파라다이스 -->
+  <div class="card bear">
+    <div class="card-body">
+      <div class="card-top">
+        <div class="card-name">파라다이스</div>
+        <span class="badge badge-bear">Add ↓TP</span>
+      </div>
+      <div class="card-broker">CGSI</div>
+      <hr class="card-divider">
+      <div class="card-tp">
+        <span class="tp-label">TP</span>
+        <span class="tp-value">₩17,000</span>
+        <span class="card-tp tp-down">↓ ₩28,000→₩17,000</span>
+      </div>
+      <hr class="card-divider">
+      <ul class="card-points">
+        <li>3Q26E 매출 3,260억(YoY +13%), 영업이익 540억(YoY +37%), OPM 16.7% 전망</li>
+        <li>방한 외국인 관광객 1Q26 +23%, 2Q26 +20%, 7월 +21% 증가 지속, 카지노 성장 견인</li>
+        <li>8월 테이블 드롭액 +3%, 카지노 순매출 +32%, 8월 카지노 매출 1,000억원 돌파</li>
+        <li>관광진흥개발기금 부담률 최대 15%로 인상 가능, FY28E 영업이익 약 8% 감소 추정(시장 우려 20% 하회)</li>
+        <li>FY26E/FY27E EPS 약 19% 하향, 목표 PER 24배→17배 하향 (2016년 중국인 피크 대비 30% 할인)</li>
+      </ul>
+    </div>
+  </div>
+
+</div><!-- /card-grid -->
+
+<!-- ── EDITORIAL ── -->
+<div class="section-wrap">
+  <div class="section-title">EDITORIAL — 테마별 심층 분석</div>
+</div>
+<div class="editorial-wrap">
+  <div class="editorial-grid">
+
+    <div class="editorial-block">
+      <div class="ed-eyebrow">Theme 01 · Power Equipment</div>
+      <div class="ed-title">미국 LPT 공급 부족, 2030년까지 구조적 업사이클</div>
+      <div class="ed-body">
+        CLSA는 미국 대형 전력변압기(LPT) 시장의 공급 부족이 <strong>2026년 165.5GVA, 2027년 193.8GVA</strong>로 정점에 달하며 <strong>2030년까지 지속</strong>될 것으로 분석한다. 모든 증설 물량을 LPT에 투입한다는 스트레스 테스트에서도 부족이 확인된다는 점이 수급 타이트닝의 가시성을 높인다. AI 데이터센터는 단순 전력 소비 증가를 넘어 주파수·전압 안정화, 무효전력 관리 설비에 대한 구조적 투자 수요를 창출한다. 효성중공업은 LPT 공급 부족 수혜와 함께 <strong>STATCOM</strong>이라는 동적 전압 보상장치 공급 역량을 동시에 보유해 경쟁사 대비 차별화된 포지셔닝을 확보한다. <strong>HD현대일렉트릭</strong>은 신규 커버리지로 제시되며, AIDC 현장 설비 수요가 전력망 측 투자로 순차 전환되는 구조를 통해 성장 기간이 연장된다는 점이 핵심이다. 두 기업 모두 한국 유일의 미국 유틸리티 인증 LPT 공급업체라는 진입 장벽을 공유한다.
+      </div>
+    </div>
+
+    <div class="editorial-block">
+      <div class="ed-eyebrow">Theme 02 · Electronics Components</div>
+      <div class="ed-title">삼성전기, MLCC 가격 인상 사이클의 실질적 전환점</div>
+      <div class="ed-body">
+        JP모건은 삼성전기의 주가 상승 논리가 <strong>기대감에서 실제 EPS 상향</strong>으로 전환되고 있다고 명확히 진단한다. 유통채널 MLCC 가격 인상이 두 차례 단행됐고, <strong>4Q26부터 직거래 고객 대상 가격 인상</strong>이 예상된다. 향후 2년간 누적 <strong>140% 상승</strong> 전망은 2017~2019년 사이클(80%)을 크게 웃도는 수준이다. 무라타의 일부 제품 단종 발표는 공급 감소를 고착화할 구조적 사건으로 평가된다. AI 데이터센터 고객들이 서버 랙 공급망에서 고성능 MLCC 확보에 공격적으로 나서고 있어 업스트림 반도체 대비 고객 저항도 낮다. ABF까지 포함하면 삼성전기는 AI 하드웨어 공급망 중 지속적 가격 상승과 EPS 성장이 가능한 두 영역을 동시에 제공하는 유일한 업체라는 독점적 경쟁력을 보유한다.
+      </div>
+    </div>
+
+    <div class="editorial-block">
+      <div class="ed-eyebrow">Theme 03 · Defence</div>
+      <div class="ed-title">한국 방산, UAE 텀시트로 중동 수주 파이프라인 재점화</div>
+      <div class="ed-body">
+        JP모건과 골드만삭스는 UAE EDGE Group-한화그룹 통합방공체계 텀시트 체결을 <strong>일회성 플랫폼 판매에서 현지화 방산 생태계 구축으로의 전환</strong>을 알리는 구조적 이벤트로 평가한다. L-SAM·M-SAM II·천무·K9 현지 생산 및 JV 설립까지 협력 범위가 확장되며, 유지보수·MRO·예비부품·교육훈련 등 <strong>장기 반복 수익원</strong>이 형성된다. 특히 L-SAM은 그룹 내 콘텐츠 비중이 <strong>70~80%</strong>로 M-SAM(40~50%)보다 경제적 가치가 크며, 해외 판매 가능 시점인 2028년부터 새로운 EPS 성장 엔진으로 작동할 전망이다. 다음 달 한국-UAE 정상회담과 11~12월 중동 국방예산 확정이 구체적 계약 전환 신호를 제공하는 핵심 이벤트가 될 것이다.
+      </div>
+    </div>
+
+    <div class="editorial-block">
+      <div class="ed-eyebrow">Theme 04 · Macro / Semiconductors</div>
+      <div class="ed-title">반도체 업사이클이 한국 경제 전체 구조를 바꾼다</div>
+      <div class="ed-body">
+        Citi는 반도체 수출 <strong>올해 175%, 2027년 41% 증가</strong>를 전망하며 올해 명목 GDP 성장률 <strong>25.0%</strong>로 상향 제시한다. 이는 1981년 이후 최고 수준이다. 메모리 업체와 고객사 간 LTA(장기공급계약) 확대가 업사이클의 지속성을 과거보다 높이는 구조적 변화로 평가된다. 이에 따라 한국은행이 <strong>2026~2028년 잠재성장률을 2.2~2.4%</strong>로 상향하고 명목 중립금리도 <strong>2.7~3.0%</strong>까지 높아질 가능성이 있다. 통화정책은 2026년 11월과 2027년 2월 각각 <strong>25bp 인상으로 최종금리 3.5%</strong>에 도달할 것으로 전망되며, 2027년 정부예산은 전년비 9% 확장적 재정정책을 지향한다. 반도체 사이클이 수출·세수·잠재성장률·중립금리를 동시에 끌어올리는 복합 구조가 형성되고 있다.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── FOOTER ── -->
+<footer class="site-footer">
+  <div class="brand">TNBfolio</div>
+  <div class="right">
+    <div class="date-line">2026.09.18 &middot; KRX BROKER DIGEST</div>
+    <div class="disclaimer">본 자료는 투자 참고용이며 투자 권유가 아닙니다</div>
+  </div>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const ctx = document.getElementById('tpChart').getContext('2d');
+
+  const labels = [
+    '효성중공업 (CLSA)',
+    'HD현대일렉트릭 (CLSA)',
+    '삼성전기 (JP모건)',
+    'NAVER (모건스탠리)',
+    '삼성에스디에스 (MS)',
+    '두산 (맥쿼리)',
+    '파라다이스 (CGSI)',
+    '시프트업 (CGSI)'
+  ];
+
+  // 만원 단위
+  const tpValues = [478, 84, 240, 24, 27, 210, 1.7, 3.2];
+
+  const colors = [
+    '#2E7D52', // 효성중공업 — bull (TP 상향)
+    '#534AB7', // HD현대일렉트릭 — new coverage
+    '#2E7D52', // 삼성전기 — bull
+    '#888780', // NAVER — neutral
+    '#2E7D52', // 삼성SDS — bull
+    '#C8392B', // 두산 — TP 하향
+    '#C8392B', // 파라다이스 — TP 하향
+    '#888780', // 시프트업 — neutral
+  ];
+
+  const bgColors = colors.map(c => c + '33');
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: '목표주가 (만원)',
+        data: tpValues,
+        backgroundColor: bgColors,
+        borderColor: colors,
+        borderWidth: 2,
+        borderRadius: 3,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const val = context.parsed.x;
+              if (val >= 100) {
+                return ` 목표주가: ₩${(val * 10000).toLocaleString()}`;
+              } else {
+                return ` 목표주가: ₩${(val * 10000).toLocaleString()}`;
+              }
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: '#e8e6e0' },
+          ticks: {
+            font: { family: "'JetBrains Mono', monospace", size: 11 },
+            callback: function(val) {
+              return val >= 1 ? val + '만' : val + '만';
+            }
+          },
+          title: {
+            display: true,
+            text: '목표주가 (만원)',
+            font: { family: "'JetBrains Mono', monospace", size: 11 },
+            color: '#888780'
+          }
+        },
+        y: {
+          grid: { display: false },
+          ticks: {
+            font: { family: "'Noto Serif KR', serif", size: 12 },
+            color: '#1B2A4A'
+          }
+        }
+      }
+    }
+  });
+});
+</script>
+
+</body>
+</html>
