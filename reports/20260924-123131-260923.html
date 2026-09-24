@@ -1,0 +1,1713 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TNBfolio_뉴스대시보드_20260923</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #F7F6F2;
+      --surface: #FFFFFF;
+      --sub-surface: #F0EEE9;
+      --text: #1A1A18;
+      --text-sub: #6B6B67;
+      --text-dim: #ABABAB;
+      --border: #E5E3DD;
+      --accent-green: #0B7A55;
+      --bg-green: #E1F5EE;
+      --accent-red: #C93232;
+      --bg-red: #FAECEC;
+      --accent-gold: #9A6E00;
+      --bg-gold: #FFF3D0;
+      --accent-blue: #185FA5;
+      --bg-blue: #E6F1FB;
+      --accent-purple: #3C3489;
+      --bg-purple: #EEEDFE;
+      --accent-macro: #5F5E5A;
+      --bg-macro: #EFEFEF;
+      --accent-consumer: #993556;
+      --bg-consumer: #FCEEF2;
+      --accent-utility: #3B6D11;
+      --bg-utility: #EDF7E7;
+      --accent-energy: #D9531E;
+      --bg-energy: #FBEFEA;
+      --accent-realestate: #6D4C41;
+      --bg-realestate: #F3EFEF;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      background-color: #1A1A18;
+      color: #FFFFFF;
+      padding: 32px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+    }
+    .header-left .eyebrow {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #0B7A55;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .header-left h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 32px;
+      font-weight: 400;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+    .header-left .subtext {
+      font-size: 14px;
+      color: #ABABAB;
+    }
+    .btn-download {
+      background-color: #0B7A55;
+      color: #FFFFFF;
+      border: none;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      transition: background 0.2s ease;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .btn-download:hover { background-color: #096345; }
+    .kpi-strip {
+      background-color: var(--surface);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-bottom: 1px solid var(--border);
+    }
+    .kpi-cell {
+      padding: 24px 32px;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .kpi-cell:last-child { border-right: none; }
+    .kpi-num {
+      font-family: 'DM Serif Display', serif;
+      font-size: 30px;
+      line-height: 1;
+      color: var(--text);
+    }
+    .kpi-label {
+      font-size: 12px;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .kpi-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-top: 4px;
+      width: fit-content;
+    }
+    .main-layout {
+      max-width: 1600px;
+      margin: 32px auto;
+      padding: 0 40px;
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 32px;
+      align-items: start;
+    }
+    .sidebar {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      position: sticky;
+      top: 24px;
+    }
+    .sidebar-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 14px;
+    }
+    .filter-btn {
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      padding: 9px 12px;
+      font-size: 14px;
+      color: var(--text);
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.15s ease;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .filter-btn:hover { background-color: var(--sub-surface); }
+    .filter-btn.active {
+      background-color: var(--bg-green);
+      color: var(--accent-green);
+      font-weight: 700;
+      border-left: 3px solid var(--accent-green);
+      border-radius: 0 4px 4px 0;
+    }
+    .filter-count {
+      font-size: 12px;
+      background-color: rgba(0,0,0,0.06);
+      padding: 1px 6px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+    .filter-btn.active .filter-count {
+      background-color: var(--accent-green);
+      color: #fff;
+    }
+    .divider {
+      height: 1px;
+      background-color: var(--border);
+      margin: 14px 0;
+    }
+    .mini-chart {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .mini-chart-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+    }
+    .mini-chart-label { width: 64px; color: var(--text-sub); }
+    .mini-chart-track {
+      flex: 1;
+      height: 6px;
+      background: var(--sub-surface);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .mini-chart-fill { height: 100%; border-radius: 3px; }
+    .mini-chart-val { width: 16px; text-align: right; color: var(--text-dim); }
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+    .chart-card {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+    }
+    .chart-card h3 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 18px;
+      font-weight: 400;
+      margin-bottom: 16px;
+    }
+    .bar-dist-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .bar-dist-row {
+      display: grid;
+      grid-template-columns: 80px 1fr 40px;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+    }
+    .bar-dist-track {
+      background-color: var(--sub-surface);
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .bar-dist-fill { height: 100%; border-radius: 4px; }
+    .donut-container {
+      position: relative;
+      height: 220px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .sector-section {
+      margin-bottom: 40px;
+    }
+    .sector-header {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #1A1A18;
+      margin-bottom: 20px;
+    }
+    .sector-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+      font-weight: 400;
+    }
+    .sector-badge-count {
+      font-size: 13px;
+      color: var(--text-sub);
+      font-weight: 500;
+    }
+    .news-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+    }
+    .news-card {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      padding: 20px 20px 16px 24px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .news-card:hover {
+      border-color: #BDBBB5;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .card-accent-bar {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+    }
+    .card-top {
+      margin-bottom: 12px;
+    }
+    .card-idx-tag {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .card-idx {
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px;
+      color: var(--text-dim);
+      line-height: 1;
+    }
+    .card-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.4;
+      color: var(--text);
+    }
+    .card-summary {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .card-summary p {
+      position: relative;
+      padding-left: 12px;
+      line-height: 1.45;
+    }
+    .card-summary p::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: var(--text-dim);
+      font-weight: bold;
+    }
+    .card-bottom {
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+    }
+    .domain-tag {
+      color: var(--text-dim);
+      font-weight: 500;
+    }
+    .link-btn {
+      color: var(--accent-green);
+      text-decoration: none;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .link-btn:hover { text-decoration: underline; }
+    footer {
+      background-color: #1A1A18;
+      color: var(--text-dim);
+      padding: 24px 40px;
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 60px;
+    }
+    @media (max-width: 992px) {
+      .charts-row { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+      header { padding: 24px 20px; flex-direction: column; align-items: flex-start; }
+      .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+      .kpi-cell { padding: 16px 20px; }
+      .main-layout { grid-template-columns: 1fr; padding: 0 16px; margin: 20px auto; }
+      .sidebar { display: none; }
+      .news-grid { grid-template-columns: 1fr; }
+      footer { padding: 20px 16px; flex-direction: column; gap: 8px; align-items: flex-start; }
+    }
+  </style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+
+  <header>
+    <div class="header-left">
+      <div class="eyebrow">@TNBfolio · Global News Digest</div>
+      <h1>해외 뉴스 대시보드</h1>
+      <div class="subtext">2026년 9월 23일 · 12개 섹터 · 총 83건 종합 분석</div>
+    </div>
+    <button class="btn-download" onclick="downloadCurrentHTML()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      HTML 다운로드
+    </button>
+  </header>
+
+  <section class="kpi-strip">
+    <div class="kpi-cell">
+      <div class="kpi-num">83</div>
+      <div class="kpi-label">총 뉴스 건수</div>
+      <div class="kpi-badge" style="background:var(--bg-green); color:var(--accent-green);">전체 집계 완료</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-num">12</div>
+      <div class="kpi-label">분석 섹터 수</div>
+      <div class="kpi-badge" style="background:var(--bg-gold); color:var(--accent-gold);">광범위 커버리지</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-num">기술주 20건</div>
+      <div class="kpi-label">최다 섹터 점유율</div>
+      <div class="kpi-badge" style="background:var(--bg-blue); color:var(--accent-blue);">24.1% 비중 1위</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-num">25건</div>
+      <div class="kpi-label">AI 연관 핵심 뉴스</div>
+      <div class="kpi-badge" style="background:var(--bg-purple); color:var(--accent-purple);">전체 30.1% 차지</div>
+    </div>
+  </section>
+
+  <div class="main-layout">
+    <aside class="sidebar">
+      <div class="sidebar-title">섹터 필터</div>
+      <button class="filter-btn active" onclick="filterSector('ALL')">
+        <span>전체 보기</span>
+        <span class="filter-count">83</span>
+      </button>
+      <div class="divider"></div>
+      <div id="filterButtonList"></div>
+      <div class="divider"></div>
+      <div class="sidebar-title" style="margin-top:10px;">섹터별 점유 비중</div>
+      <div class="mini-chart" id="miniChartList"></div>
+    </aside>
+
+    <main class="content-area">
+      <div class="charts-row" id="chartsRow">
+        <div class="chart-card">
+          <h3>섹터별 분포 현황</h3>
+          <div class="bar-dist-list" id="barDistList"></div>
+        </div>
+        <div class="chart-card">
+          <h3>기술주 세부 테마 분류</h3>
+          <div class="donut-container">
+            <canvas id="techDoughnutChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div id="newsSectionsContainer"></div>
+    </main>
+  </div>
+
+  <footer>
+    <div>@TNBfolio · 해외 뉴스 대시보드 · 2026.09.23</div>
+    <div>총 83건 · 12개 섹터</div>
+  </footer>
+
+  <script>
+    const SECTORS_DATA = {
+      "기초소재": { color: "#9A6E00", bg: "#FFF3D0", emoji: "⛏️" },
+      "산업재": { color: "#0B7A55", bg: "#E1F5EE", emoji: "🏭" },
+      "유틸리티": { color: "#3B6D11", bg: "#EDF7E7", emoji: "⚡" },
+      "기술주": { color: "#185FA5", bg: "#E6F1FB", emoji: "💻" },
+      "부동산": { color: "#6D4C41", bg: "#F3EFEF", emoji: "🏢" },
+      "경기소비재": { color: "#993556", bg: "#FCEEF2", emoji: "🛍️" },
+      "금융": { color: "#9A6E00", bg: "#FFF3D0", emoji: "🏦" },
+      "에너지": { color: "#D9531E", bg: "#FBEFEA", emoji: "🛢️" },
+      "통신 서비스": { color: "#3C3489", bg: "#EEEDFE", emoji: "📡" },
+      "헬스케어": { color: "#C93232", bg: "#FAECEC", emoji: "🧬" },
+      "정치": { color: "#3C3489", bg: "#EEEDFE", emoji: "🏛️" },
+      "매크로": { color: "#5F5E5A", bg: "#EFEFEF", emoji: "🌐" }
+    };
+
+    const NEWS_ITEMS = [
+      // 기초소재 (5)
+      {
+        sector: "기초소재",
+        idx: 1,
+        title: "JL Mag, 희토류 영구자석 기술 장벽 구축으로 서방 기업과의 격차 확대",
+        summary: [
+          "JL Mag은 생산 및 기술 격차를 넓히며 독자 공급망 구축에 맞서 시장 지배력을 강화했다.",
+          "미국 경쟁사 대비 10배를 웃도는 생산 능력으로 Tesla 모터 자석 및 Optimus 로봇 로터를 단독 공급한다.",
+          "서방 진영이 광산을 확보해도 중국이 다진 정제·가공 제조 장벽을 넘어서기는 극히 어렵다."
+        ],
+        url: "https://www.digitimes.com/news/a20260923PD200/tesla-xi-jinping.html?chid=10"
+      },
+      {
+        sector: "기초소재",
+        idx: 2,
+        title: "中船特气, 글로벌 공급 부족 속 육불화텅스텐 가동률 고공행진",
+        summary: [
+          "반도체 핵심 특수가스 육불화텅스텐 수요 급증으로 공장 가동률이 최고조를 달렸다.",
+          "상반기 매출이 전년 동기 대비 약 3배 성장하며 호실적을 견인했다.",
+          "수급 상황에 맞춘 분기별 차별화 가격 전략을 펴며 1,000톤 증설 라인을 2027년 가동한다."
+        ],
+        url: "https://fund.eastmoney.com/a/202609233882011464.html"
+      },
+      {
+        sector: "기초소재",
+        idx: 3,
+        title: "USA Rare Earth, Howard Lutnick 상무장관 일가 연계 16억 달러 지원 및 생산 실효성 논란",
+        summary: [
+          "Lutnick 장관의 정부 지원 발표 직전 아들들의 금융사가 거액 민간 투자를 유치해 논란이 번졌다.",
+          "민주당은 이해 상충 의혹을 제기했고 텍사스 광산은 경제성이 낮은 흙더미라는 비판을 받았다.",
+          "공장들의 상업 생산 지연으로 단기간 내 중국산 희토류 자석을 대체하기는 어렵다."
+        ],
+        url: "https://finance.yahoo.com/economy/policy/articles/tiny-magnet-maker-attracted-1-093009773.html"
+      },
+      {
+        sector: "기초소재",
+        idx: 4,
+        title: "노르웨이 정부, 유럽 최대 희토류 펜스 매장지 개발 계획 2028년까지 수립 착수",
+        summary: [
+          "노르웨이 통상산업부는 유럽 최대 희토류 광산 개발 계획을 2028년까지 확정하기로 했다.",
+          "환경 영향 평가 구역 설정을 주도하며 내년 상반기 주민 의견 수렴에 돌입한다.",
+          "중국에 대한 전략적 원자재 의존도를 낮추고 독자적 밸류체인을 구축하는 데 주력한다."
+        ],
+        url: "https://www.bloomberg.com/news/articles/2026-09-23/norway-targets-2028-plan-for-major-rare-earths-project"
+      },
+      {
+        sector: "기초소재",
+        idx: 5,
+        title: "인도 철강 유통업계, 공급 부족 및 원자재비 상승에 따른 추가 가격 인상 대비 재고 비축",
+        summary: [
+          "인도 철강 딜러들은 타이트한 공급망과 가격 인상 기대감에 선제 재고 비축에 나섰다.",
+          "제철소 출하 물량이 수요를 밑돌아 유통상들은 요청량의 50~75%만 배정받았다.",
+          "원자재비 상승과 관세 영향으로 판재류 및 강관 가격의 추가 상승세가 이어졌다."
+        ],
+        url: "https://www.aninews.in/news/business/steel-dealers-build-inventory-as-tight-supply-fuels-expectations-of-further-price-rise-report20260923165109/"
+      },
+
+      // 산업재 (6)
+      {
+        sector: "산업재",
+        idx: 1,
+        title: "Foxconn, 글로벌 파트너십 구축 통해 전기차 대량 양산 및 사업 확장 박차",
+        summary: [
+          "Foxconn은 시제품 검증을 넘어 글로벌 대량 양산 체제로 전환을 본격화했다.",
+          "미쓰비시 후소 합작 상용차 생산과 유럽·중동 거점을 확보하며 전방위로 전진했다.",
+          "배터리 팩부터 구동계, 자율주행까지 아우르는 위탁 생산 플랫폼을 2030년까지 키운다."
+        ],
+        url: "https://www.digitimes.com/news/a20260922PD208/foxconn-taiwan-business-vehicle-manufacturing.html"
+      },
+      {
+        sector: "산업재",
+        idx: 2,
+        title: "기업들, 생성형 AI 확산에 따른 신입 및 초급 인력 채용 전략 재검토",
+        summary: [
+          "생성형 AI가 문서 작성과 코딩 등 주니어 직무를 빠르게 흡수했다.",
+          "기업 리더의 51%가 채용 방식을 바꾸면서 중간 관리자 육성 공백 우려가 떠올랐다.",
+          "사전 정의된 직무 대신 잠재력 중심 채용과 AI 감독·판단 역량 교육이 중요해졌다."
+        ],
+        url: "https://www.cnbc.com/2026/09/23/ai-workplace-graduate-entry-level-junior-hiring.html"
+      },
+      {
+        sector: "산업재",
+        idx: 3,
+        title: "호르무즈 해협 통항량, 미국·이란 군사 충돌 속 10일 평균치 하회 지속",
+        summary: [
+          "호르무즈 해협 통항 선박이 화요일 기준 3척에 그쳐 평시 평균 15척을 크게 밑돌았다.",
+          "원유와 LNG의 핵심 통로가 군사적 충돌 위협에 노출되며 마비 위험이 커졌다.",
+          "트럼프 대통령이 파멸을 경고한 가운데 홍해 관문 통항량 역시 일제히 감소했다."
+        ],
+        url: "https://www.reuters.com/world/middle-east/shipping-traffic-via-strait-hormuz-stays-below-10-day-average-data-shows-2026-09-23/"
+      },
+      {
+        sector: "산업재",
+        idx: 4,
+        title: "Counterpoint, 상반기 글로벌 사족보행 로봇견 출하량 40%가 산업용 배치 집계",
+        summary: [
+          "상반기 전 세계 출하 로봇견 3만 5천 대 중 40%가 실제 산업 현장에 투입되었다.",
+          "산업용 시장에서는 AgiQuad가 28% 점유율로 선두를 달렸고 Unitree가 전체 1위를 지켰다.",
+          "임베디드 AI와 센서를 결합한 현장 맞춤형 솔루션이 시장 팽창을 주도했다."
+        ],
+        url: "https://www.yicaiglobal.com/news/industrial-grade-robodogs-make-up-40-of-global-shipments-in-first-half-report-shows"
+      },
+      {
+        sector: "산업재",
+        idx: 5,
+        title: "GE Vernova, 현대건설·삼성물산 등 글로벌 파트너사와 유럽 소형모듈원자로 BWRX-300 추진 MOU 체결",
+        summary: [
+          "GE Vernova가 한국 대표 건설사들과 다자간 양해각서를 체결하고 유럽 SMR 배치에 나섰다.",
+          "설계 표준화와 공기 단축을 통해 데이터센터 전력 수요를 겨냥한 원전 경제성을 끌어올린다.",
+          "축적된 협력을 앞세워 영국과 폴란드 등 유럽 차세대 기저부하 원전 시장을 선점한다."
+        ],
+        url: "https://seekingalpha.com/news/4645945-ge-vernova-partners-sign-mou-to-advance-bwrxminus-300-small-modular-reactors-in-europe"
+      },
+      {
+        sector: "산업재",
+        idx: 6,
+        title: "Tesla, 미국 공장서 생산되는 휴머노이드 로봇 Optimus 부품 중국 공급망 조달 착수",
+        summary: [
+          "Tesla는 프리몬트 공장에서 조립할 Optimus 부품을 중국 현지 업체로부터 수급했다.",
+          "모터 로터와 관절 감속기 등 핵심 기구물에서 중국의 제조 원가 경쟁력을 취했다.",
+          "초기 생산 물량은 내부 공장 조립 라인 자동화에 우선 배치된 뒤 상업화로 이어진다."
+        ],
+        url: "https://www.autonews.com/tesla/an-tesla-humanoid-robot-components-from-china-suppliers-0923/"
+      },
+
+      // 유틸리티 (2)
+      {
+        sector: "유틸리티",
+        idx: 1,
+        title: "한국 태양광 관련주, 미중 정상회담 앞두고 대중국 제재 유지 전망에 급등",
+        summary: [
+          "한화솔루션과 OCI홀딩스 주가는 미국의 대중 무역 규제 유지 기대감에 8% 이상 급등했다.",
+          "미국이 국가 안보 자산으로 규정한 중국산 태양광 완화 조치를 취할 가능성은 희박하다.",
+          "북미 현지 설비 투자를 선제 집행한 한국 기업들의 반사이익 수혜가 뚜렷해졌다."
+        ],
+        url: "https://www.cnbc.com/2026/09/23/korean-solar-stocks-jump-as-curbs-on-china-expected-to-stay-in-place.html"
+      },
+      {
+        sector: "유틸리티",
+        idx: 2,
+        title: "이탈리아 상원, 40년 만에 원자력 발전 금지 법안 폐지 및 원전 재도입 법안 가결",
+        summary: [
+          "이탈리아 상원이 찬성 81표 대 반대 51표로 원전 재도입 법안을 최종 통과시켰다.",
+          "체르노빌 참사 이후 약 40년간 묶였던 원전 정책을 에너지 안보와 수입 의존 완화를 위해 뒤집었다.",
+          "다만 폐기물 처리 논란과 긴 건설 기간으로 인해 실제 전력 공급까지는 장기간이 걸린다."
+        ],
+        url: "https://www.bloomberg.com/news/articles/2026-09-23/italy-approves-return-of-nuclear-power-after-four-decade-ban"
+      },
+
+      // 기술주 (20)
+      {
+        sector: "기술주",
+        idx: 1,
+        title: "OpenAI, 저비용 모델 GPT-6 Sol 및 Luna 출시로 라인업 확장",
+        summary: [
+          "OpenAI가 플래그십 핵심 역량을 담으면서 가격을 절반으로 낮춘 신규 라인업을 공개했다.",
+          "GPT-6 Sol은 백만 토큰당 2달러 수준으로 인하되었고 초경량 Luna는 초저가로 풀렸다.",
+          "추론과 캐싱 기술을 개선해 코딩 및 컴퓨터 제어 에이전트 작업에 최적화했다."
+        ],
+        url: "https://www.reuters.com/technology/openai-expands-gpt-6-lineup-with-cheaper-sol-and-Luna-models-2026-09-22/"
+      },
+      {
+        sector: "기술주",
+        idx: 2,
+        title: "Shenzhen Huaqiang, AI 연산 인프라 수요 급증으로 MLCC 호황기 지속 전망",
+        summary: [
+          "Shenzhen Huaqiang은 글로벌 MLCC 시장이 AI 인프라 구축으로 강력한 호황기에 접어들었다고 밝혔다.",
+          "AI 서버 1대당 부품 탑재량이 급증하며 일반 IT 가전용 생산라인을 압박했다.",
+          "증설에 긴 시일이 걸리는 고사양 부품의 공급난으로 조달 납기가 계속 늘어났다."
+        ],
+        url: "https://finance.eastmoney.com/a/202609223881440751.html"
+      },
+      {
+        sector: "기술주",
+        idx: 3,
+        title: "화창베이 상권, AI 수요 폭증으로 MLCC 재고 부족 및 주문 폭주 직면",
+        summary: [
+          "선전 화창베이 유통상들이 주문 폭주에도 불구하고 극심한 MLCC 재고 부족에 직면했다.",
+          "AI 서버 부품 수요가 기존 대비 최대 13배 급증해 제조사들이 장기 계약 위주로 물량을 몰았다.",
+          "현물 시장 유입 물량이 급감하며 가격 급등세와 품귀 현상이 4분기에도 이어진다."
+        ],
+        url: "https://news.10jqka.com.cn/20260923/c680186496.shtml"
+      },
+      {
+        sector: "기술주",
+        idx: 4,
+        title: "Qualcomm, 메모리 가격 급등 국면 속 온디바이스 AI 특화 모바일 칩 출시",
+        summary: [
+          "Qualcomm은 구글 Gemini 등 거대 AI 모델을 구동하는 신형 Snapdragon 칩셋을 공개했다.",
+          "TSMC 2나노 공정 기반으로 제조되어 샤오미와 모토로라 차세대 플래그십에 실린다.",
+          "메모리 단가 폭등으로 스마트폰 출하가 둔화되자 고수익 온디바이스 AI 폰에 역량을 집중했다."
+        ],
+        url: "https://www.cnbc.com/2026/09/22/qualcomm-releases-android-chip-built-for-ai-amid-memory-shortage.html"
+      },
+      {
+        sector: "기술주",
+        idx: 5,
+        title: "Nvidia, 동남아시아 AI 팩토리 거점 확대를 위해 GPU 22,000대 배치 추진",
+        summary: [
+          "Nvidia는 인프라 파트너사와 손잡고 말레이시아와 필리핀에 GPU 2만 2천 대를 투입한다.",
+          "100MW 이상 전력을 갖춘 대규모 AI 팩토리를 세워 동남아 연산 거점을 키운다.",
+          "칩 판매를 넘어 완성형 연산 설비를 장기 임대하는 비즈니스 모델을 가속했다."
+        ],
+        url: "https://finance.yahoo.com/technology/ai/articles/nvidia-nvda-targets-22-000-021206548.html"
+      },
+      {
+        sector: "기술주",
+        idx: 6,
+        title: "미국 에너지 저장장치 업계, 중국산 배터리 공급망 배제에 따른 비용 급증 우려",
+        summary: [
+          "미국 ESS 시장이 저렴한 중국산 배터리 셀 의존도를 낮추지 못해 전력망 비상령에 직면했다.",
+          "트럼프 행정부의 중국산 배터리 사용 금지 행정명령으로 대체재 조달 비용이 폭등했다.",
+          "가이드라인 불확실성 속에 대형 ESS 신규 착공이 줄줄이 취소되거나 미뤄졌다."
+        ],
+        url: "https://www.digitimes.com/news/a20260923PD211/market-cost-manufacturing-capacity-policy.html"
+      },
+      {
+        sector: "기술주",
+        idx: 7,
+        title: "Mirendil, 50억 달러 기업가치로 최대 10억 달러 신규 투자 유치 추진",
+        summary: [
+          "Anthropic 출신 연구진이 창업한 Mirendil이 50억 달러 기업가치로 대규모 펀딩에 나섰다.",
+          "스스로 알고리즘을 갱신하는 재귀적 자기 개선 AI 프론티어 모델 개발에 집중한다.",
+          "확보된 자금으로 구글 TPU와 Nvidia 인프라를 활용해 학습 비용을 대폭 절감한다."
+        ],
+        url: "https://www.bloomberg.com/news/articles/2026-09-22/ex-anthropic-staffers-ai-startup-in-talks-to-raise-at-5-billion-value"
+      },
+      {
+        sector: "기술주",
+        idx: 8,
+        title: "Alibaba, 유럽 및 중동 데이터센터 확충으로 20GW 규모 AI 인프라 구축 가속",
+        summary: [
+          "Alibaba는 유럽과 중동에 신규 클라우드 리전을 신설하며 서방 빅테크에 맞불을 놨다.",
+          "2032년까지 총 20GW 전력망을 확보해 1,600억 달러 클라우드 매출을 겨냥한다.",
+          "자체 개발 최고급 AI 칩과 10조 파라미터 파운데이션 모델을 공개하며 자본 지출을 늘렸다."
+        ],
+        url: "https://www.bloomberg.com/news/articles/2026-09-23/alibaba-to-add-data-centers-in-europe-middle-east-in-ai-push"
+      },
+      {
+        sector: "기술주",
+        idx: 9,
+        title: "중국 및 일본 디스플레이 업계, 글로벌 OLEDoS 시장 90% 이상 장악으로 한국 주도권 위협",
+        summary: [
+          "중국과 일본 3개 기업이 글로벌 OLEDoS 시장 점유율 90.5%를 독식하며 시장을 주도했다.",
+          "SeeYA는 메타의 차세대 MR 기기 패널을 대거 공급하며 한국 패널사를 압박했다.",
+          "삼성디스플레이가 12인치 장비 투자에 뒤늦게 착수하며 추격에 나섰다."
+        ],
+        url: "https://www.digitimes.com/news/a20260922PD230/oledos-market-display-production-global-smartphone.html"
+      },
+      {
+        sector: "기술주",
+        idx: 10,
+        title: "Hygon, 서버를 넘어 피지컬 AI 시장 겨냥 임베디드 x86 CPU 출시",
+        summary: [
+          "중국 Hygon이 로봇과 스마트 팩토리를 위한 임베디드 프로세서 제품군을 선보였다.",
+          "10W 저전력 구조와 고내구성을 구현해 산업 현장 가동 환경에 맞췄다.",
+          "기존 산업용 PC의 x86 소프트웨어를 코드 재작성 없이 완벽히 호환 구동한다."
+        ],
+        url: "https://www.digitimes.com/news/a20260923VL207/cpu-industrial-processor-data-embedded.html?chid=10"
+      },
+      {
+        sector: "기술주",
+        idx: 11,
+        title: "대만 수동부품 업계, Nvidia 800V 전력망 전환 수혜로 신규 고전압 시장 진입",
+        summary: [
+          "Nvidia의 800V HVDC 전력 아키텍처 전환으로 랙당 특수 MLCC 탑재량이 5배까지 늘었다.",
+          "대만 수동부품사들이 대형 전원 고객사 인증을 뚫고 GB200 공급망에 조기 진입했다.",
+          "고전압 제품 공급 부족으로 리드타임이 20주까지 늘어나며 장기 호황을 예고했다."
+        ],
+        url: "https://www.digitimes.com/news/a20260922PD237/demand-mlcc-holy-stone-prosperity-dielectrics-gpu.html"
+      },
+      {
+        sector: "기술주",
+        idx: 12,
+        title: "LG Energy Solution, Nvidia AI 팩토리 생태계 진입 및 데이터센터 배터리 전환 가속",
+        summary: [
+          "LG에너지솔루션 BESS가 Nvidia DSX 파트너 인증을 받아 데이터센터 공급망을 열었다.",
+          "전기차 둔화에 맞서 북미 생산 설비를 AI 전력 백업용 ESS로 빠르게 전환했다.",
+          "미국의 중국 배터리 규제와 맞물려 150GWh 규모의 풍부한 수주 잔고를 확보했다."
+        ],
+        url: "https://www.digitimes.com/news/a20260923VL213/lg-nvidia-data-market-certification.html"
+      },
+      {
+        sector: "기술주",
+        idx: 13,
+        title: "Samsung Display, OLED 제조원가 절감을 위한 하프톤 블랙 PDL 공정 도입 추진",
+        summary: [
+          "삼성디스플레이는 패널 제조 공정을 단축하는 하프톤 블랙 화소정의막 기술을 도입한다.",
+          "포토마스크 단계를 6번에서 5번으로 줄여 생산 단가와 재료비를 대폭 아꼈다.",
+          "내년 출시될 갤럭시 S27 울트라 등 프리미엄 스마트폰 라인업에 채택될 전망이다."
+        ],
+        url: "https://www.digitimes.com/news/a20260923VL214/sdc-production-manufacturing-flagship-samsung.html"
+      },
+      {
+        sector: "기술주",
+        idx: 14,
+        title: "AI 데이터센터 클러스터, 막대한 배열 방출로 인근 도심 열섬 현상 악화",
+        summary: [
+          "대규모 AI 서버 냉각 배기열로 인해 데이터센터 인접 주거지 기온이 화씨 4도 급등했다.",
+          "미국 시설의 40% 이상이 도심 인근에 몰려 주민 반발과 소송으로 건설이 지연되었다.",
+          "유럽과 달리 폐열 재활용 난방 인프라가 미비해 환경 마찰이 심화되었다."
+        ],
+        url: "https://www.bloomberg.com/graphics/2026-ai-data-center-heat-pollution-cities/"
+      },
+      {
+        sector: "기술주",
+        idx: 15,
+        title: "Micron Technology, AI발 공급 부족 속 9월 30일 실적 발표 앞두고 급등 기대감 확산",
+        summary: [
+          "Micron은 메모리 호황에 힘입어 분기 실적 발표를 앞두고 시장 상회 기대감을 키웠다.",
+          "하이퍼스케일러의 천문학적 AI 설비투자가 DRAM과 NAND 수급난을 장기화했다.",
+          "신규 팹 가동 전인 2027~2028년까지 공급 부족 구조가 이어질 것으로 내다봤다."
+        ],
+        url: "https://finance.yahoo.com/markets/stocks/articles/act-now-micron-could-skyrocket-112200008.html"
+      },
+      {
+        sector: "기술주",
+        idx: 17,
+        title: "중국 반도체 업계, CXMT와 SMIC 약진에 힘입어 상반기 순이익 620% 폭증",
+        summary: [
+          "중국 증시 상장 반도체 기업들의 상반기 순이익이 전년 대비 620% 폭증했다.",
+          "CXMT는 대규모 흑자 전환에 성공했고 YMTC와 파운드리도 증설을 속도감 있게 진행했다.",
+          "미국의 제재가 역설적으로 자국산 장비와 소재 생태계 전반의 호황을 불러왔다."
+        ],
+        url: "https://asia.nikkei.com/business/tech/semiconductors/cxmt-smic-power-620-surge-in-profits-in-china-s-chip-industry?utm_source=telegram&utm_medium=referral&utm_campaign=IC_telegram_channel&utm_content=telegram_channel_posts"
+      },
+      {
+        sector: "기술주",
+        idx: 18,
+        title: "Alibaba, 구글 견제하는 70억 파라미터 경량 이미지 생성 모델 Qwen Image 2.1 공개",
+        summary: [
+          "Alibaba는 70억 파라미터로 소비자용 데스크톱 GPU에서 구동되는 오픈웨이트 모델을 내놨다.",
+          "구글의 폐쇄형 경량 모델 성능을 앞섰으며 투명도와 이미지 합성을 완벽히 지원한다.",
+          "빅테크의 독점에 맞서 고성능 오픈 생태계 주도권을 쥐겠다는 전략이다."
+        ],
+        url: "https://www.tomshardware.com/tech-industry/artificial-intelligence/alibaba-claims-new-qwen-image-2-1-ai-model-beats-google-nano-banana-2-0-with-minuscule-7b-parameter-model-benchmarks-show-open-weight-contender-is-competitive-with-openai-and-meta-image-models"
+      },
+      {
+        sector: "기술주",
+        idx: 19,
+        title: "YMTC, 독일 법원서 Micron Technology 상대 3D NAND 특허 침해 금지 가처분 승소",
+        summary: [
+          "독일 법원이 Micron이 YMTC의 3D NAND 실용신안 특허 2건을 침해했다고 판결했다.",
+          "독점 판매 금지 가처분이 내려지며 유럽 공급망에 차질이 빚어질 위기에 놓였다.",
+          "Micron은 즉각 항소 및 집행 정지를 신청하며 양국 특허 전쟁을 격화시켰다."
+        ],
+        url: "https://www.tomshardware.com/pc-components/storage/chinas-ymtc-wins-patent-battle-against-micron-in-ongoing-3-year-legal-war-over-memory-patents-new-injunctions-could-restrict-microns-supply-into-germany"
+      },
+      {
+        sector: "기술주",
+        idx: 20,
+        title: "IonQ, 실시간 양자 오류 정정 디코더 개발 및 Nvidia 연구센터 공급 계약으로 주가 급등",
+        summary: [
+          "IonQ 주가는 표준 CPU에서 구동되는 실시간 오류 정정 디코더 발표로 급등했다.",
+          "Nvidia 양자 연구센터에 Superion 시스템을 공급해 GB200 서버와 연동한다.",
+          "시놉시스와의 엔진 시뮬레이션 계산 단축 성과로 산업 상용화 가능성을 입증했다."
+        ],
+        url: "https://finance.yahoo.com/markets/stocks/articles/why-ionq-ionq-stock-trading-171702930.html"
+      },
+      {
+        sector: "기술주",
+        idx: 21,
+        title: "Hellman & Friedman, 보험 소프트웨어 기업 Applied Systems 최대 100억 달러 매각 추진",
+        summary: [
+          "사모펀드 H&F가 보험 SaaS 전문사 Applied Systems를 100억 달러 가치로 매각한다.",
+          "JPMorgan과 Goldman Sachs를 주관사로 선정하고 인수 후보군 타진을 시작했다.",
+          "성숙기 엔터프라이즈 소프트웨어 기업에 대한 글로벌 기관 투자 수요를 시험한다."
+        ],
+        url: "https://www.reuters.com/world/hellman-friedman-explores-sale-applied-systems-up-10-billion-sources-say-2026-09-23/"
+      },
+      {
+        sector: "기술주",
+        idx: 22,
+        title: "Nvidia, 피지컬 AI 시장 겨냥 저전력 소형 로봇 컴퓨터 Jetson Orin Nano 2 출시",
+        summary: [
+          "Nvidia는 로봇과 드론을 위한 78 TOPS 성능의 차세대 엣지 컴퓨터를 발표했다.",
+          "15W 초저전력 환경에서 구동되며 이전 세대 대비 추론 속도를 2배로 개선했다.",
+          "클라우드 통신 없이도 최신 소형 프론티어 언어·시각 모델을 온디바이스로 직접 돌린다."
+        ],
+        url: "https://roboticsandautomationnews.com/2026/09/23/nvidia-launches-jetson-orin-nano-2-for-entry-level-robotics-and-edge-ai/105011/"
+      },
+      {
+        sector: "기술주",
+        idx: 23,
+        title: "독일 뮌헨 지방법원, Micron Technology의 YMTC 낸드 특허 2건 침해 판결 및 공급 금지 처분",
+        summary: [
+          "뮌헨 지방법원은 Micron이 YMTC의 계단식 구조 및 배리어층 특허를 침해했다고 못박았다.",
+          "YMTC의 금지 가처분 신청이 인용되면서 유럽 내 제품 유통에 비상이 걸렸다.",
+          "글로벌 메모리 주도권을 둘러싼 미중 반도체 기업 간 특허 분쟁이 전면전으로 번졌다."
+        ],
+        url: "https://www.trendforce.com/news/2026/09/23/news-german-court-reportedly-finds-micron-infringed-two-ymtc-nand-patents-grants-injunctions/"
+      },
+      {
+        sector: "기술주",
+        idx: 24,
+        title: "XMG, SO-DIMM 메모리 조달 비용 6배 폭등으로 노트북 라인업 전면 가격 인상 단행",
+        summary: [
+          "유럽 노트북 제조사 XMG가 메모리 원가 급등을 이유로 최대 300유로 가격을 올렸다.",
+          "DDR5 모듈 구매 단가가 1년 만에 600% 폭증하며 제조사 마진을 압박했다.",
+          "Micron이 경고한 장기 품귀 구조로 인해 단기적 부품가 하락은 어렵다고 밝혔다."
+        ],
+        url: "https://wccftech.com/xmg-announces-another-price-hike-for-its-laptops/"
+      },
+
+      // 부동산 (2)
+      {
+        sector: "부동산",
+        idx: 1,
+        title: "KB Home, 고금리 지속 및 주택 경기 냉각으로 연간 마진 전망 하향",
+        summary: [
+          "KB Home은 부동산 경기 악화를 반영해 주택 매출총이익률 전망치를 하향 조정했다.",
+          "주택담보대출 금리가 7%를 넘기며 3분기 순이익이 40% 이상 급감했다.",
+          "구매력 약화에 대응하기 위해 주요 고마진 지역의 분양가 인하가 불가피해졌다."
+        ],
+        url: "https://www.wsj.com/economy/housing/kb-home-cuts-margin-outlook-as-housing-conditions-worsen-caa020ae"
+      },
+      {
+        sector: "부동산",
+        idx: 2,
+        title: "미국 오피스 시장, 만기 도래와 부실채권 급증으로 전면적 구조조정 국면 진입",
+        summary: [
+          "시카고 랜드마크 Aon Center 평가액이 70% 폭락하며 모기지 연장이 거절당했다.",
+          "만기 도래 CMBS 대출 640억 달러 중 400억 달러가 채무불이행 위기에 몰렸다.",
+          "노후 빌딩의 철거와 리모델링이 확산되는 가운데 초저점 매수 사모펀드가 재유입됐다."
+        ],
+        url: "https://www.bloomberg.com/news/newsletters/2026-09-23/the-us-office-market-s-long-awaited-reckoning-has-arrived"
+      },
+
+      // 경기소비재 (2)
+      {
+        sector: "경기소비재",
+        idx: 1,
+        title: "중국 완성차 브랜드, 하이브리드 수요 급증에 힘입어 유럽 시장 점유율 최고치 경신",
+        summary: [
+          "중국 완성차 업체들이 8월 유럽 신차 시장에서 약 12%의 역대 최고 점유율을 찍었다.",
+          "상계관세 규제를 피한 하이브리드 차량을 앞세워 틈새 수요를 적극 공략했다.",
+          "유럽 현지 제조사들이 감산에 들어간 가운데 중국 브랜드의 입지는 더 탄탄해졌다."
+        ],
+        url: "https://www.bloomberg.com/news/articles/2026-09-23/chinese-car-brands-hit-record-european-share-on-hybrid-demand"
+      },
+      {
+        sector: "경기소비재",
+        idx: 2,
+        title: "Amazon, 입점 판매자 업무 자동화를 위한 신규 에이전틱 AI 도구 전격 공개",
+        summary: [
+          "Amazon은 셀러 매장 운영을 자동 제어하는 자율형 에이전트 도구를 배포했다.",
+          "평점 변화와 가격 변동을 스스로 감지해 맞춤형 재고와 프로모션을 제안한다.",
+          "자사 서비스 외에 Anthropic의 Claude와도 연동되는 개방형 구조를 적용했다."
+        ],
+        url: "https://www.reuters.com/business/retail-consumer/amazon-rolls-out-new-agentic-ai-third-party-sellers-2026-09-23/"
+      },
+
+      // 금융 (4)
+      {
+        sector: "금융",
+        idx: 1,
+        title: "미국 금융주, AI 경쟁 심화 및 국채 수익률 곡선 평탄화 우려로 일제히 하락",
+        summary: [
+          "S&P 500 금융 및 은행 지수가 AI 기술 충격과 커브 평탄화 불안으로 급락했다.",
+          "메타의 개인 금융 에이전트 Muse 확산으로 전통 자산관리 수수료가 위협받았다.",
+          "데이터센터와 원전 기업의 IPO 일정이 잇따라 연기되며 투자 심리를 짓눌렀다."
+        ],
+        url: "https://www.reuters.com/business/finance/financial-stocks-fall-with-ai-flattening-yield-curve-focus-2026-09-22/"
+      },
+      {
+        sector: "금융",
+        idx: 2,
+        title: "SoftBank, 대규모 AI 투자 자금 조달을 위해 기록적 고금리 정크본드 발행",
+        summary: [
+          "SoftBank는 AI 투자금을 조달하기 위해 111억 달러 규모 하이일드 채권을 발행했다.",
+          "발행 금리는 9.75%로 역대 최고치를 찍었으며 부도 방어 비용도 급증했다.",
+          "손정의 회장은 단기 부채 우려를 일축하며 2040년 AI 팽창에 공격 베팅을 지속했다."
+        ],
+        url: "https://www.bloomberg.com/news/articles/2026-09-23/softbank-starts-jumbo-high-yield-bond-sale-to-finance-ai-push"
+      },
+      {
+        sector: "금융",
+        idx: 4,
+        title: "미국 금융주, Meta의 AI 에이전트 Muse 확산 공포로 연중 최악 수준 과매도 국면 진입",
+        summary: [
+          "소비자 금리 갈아타기 에이전트의 등장으로 은행 저비용 예금 기반이 흔들렸다.",
+          "금융 업종 주가는 50일선 대비 2표준편차 밑으로 떨어지며 극단적 과매도에 빠졌다.",
+          "일부 전략가들은 단기 공포가 지나치며 매력적인 저가 매수 기회라고 분석했다."
+        ],
+        url: "https://www.marketwatch.com/story/the-ai-scare-trade-is-finally-hitting-banks-bargain-hunters-should-take-note-b2fc7410"
+      },
+      {
+        sector: "금융",
+        idx: 5,
+        title: "Nvidia, 대규모 회사채 발행 및 AI 인프라 부채 헷지 수요로 CDS 거래량 폭증",
+        summary: [
+          "Nvidia 연계 CDS 거래량이 10배 폭증하며 미국 회사채 헷지 시장의 중심에 섰다.",
+          "대규모 채권 발행과 인프라 확장 속에 부도 위험을 헤지하는 비용도 2배 뛰었다.",
+          "월가 기관들은 빅테크의 차입 확대 리스크에 대비해 신용 파생상품 매수를 늘렸다."
+        ],
+        url: "https://www.bloomberg.com/news/articles/2026-09-23/nvidia-among-top-traded-us-credit-swaps-as-hedging-demand-soars?srnd=phx-ai"
+      },
+
+      // 에너지 (5)
+      {
+        sector: "에너지",
+        idx: 1,
+        title: "산업통상자원부, 2035년까지 중동 원유 의존도 50% 수준으로 대폭 축소 계획",
+        summary: [
+          "정부는 중동발 원유 수입 의존도를 현행 70%에서 2035년까지 50%로 대폭 낮춘다.",
+          "호르무즈 해협 봉쇄 리스크에 대비해 초경질원유 수급처를 적극 다변화한다.",
+          "비축량을 2천만 배럴 확충하고 국가 핵심 관리 광물을 51종으로 대폭 확대했다."
+        ],
+        url: "https://www.reuters.com/business/energy/south-korea-plans-cut-its-reliance-middle-east-crude-oil-imports-50-by-2035-2026-09-23/"
+      },
+      {
+        sector: "에너지",
+        idx: 2,
+        title: "이란 석유부, 사우스파르스 가스전 손상 피해 50% 복구 완료 발표",
+        summary: [
+          "이란 정부는 공습 타격을 입었던 사우스파르스 가스전 생산 능력을 절반 복구했다.",
+          "동절기 난방 연료 수요에 맞춰 시설 정상화 일정을 속도감 있게 진행했다.",
+          "세계 최대 매장지인 핵심 시설을 겨울 전 전면 가동하겠다는 방침을 확인했다."
+        ],
+        url: "https://breakingthenews.net/Article/Iran:-50-of-South-Pars-gas-field-capacity-restored/67159091"
+      },
+      {
+        sector: "에너지",
+        idx: 3,
+        title: "Paul Sankey, 미국 주유소 디젤 소매가격 사상 최고치 근접 경고",
+        summary: [
+          "정제 시설 병목과 호르무즈 사태로 디젤 소매가가 사상 최고치에 근접했다.",
+          "트럼프 행정부의 디젤 수출 금지안은 글로벌 파트너의 연료 대란을 부를 수 있다.",
+          "노후 정유 설비 한계로 증산이 불가능해 구조적 에너지 위기가 심화되었다."
+        ],
+        url: "https://www.cnbc.com/video/2026/09/23/paul-sankey-diesel-prices-at-the-pump-are-still-very-close-to-their-all-time-high.html"
+      },
+      {
+        sector: "에너지",
+        idx: 4,
+        title: "미국 정유업계, 디젤 가격 급등과 97% 가동률 속 경제 위기 뇌관 우려 직면",
+        summary: [
+          "미국 디젤 가격이 전쟁 발발 이후 폭등해 마일당 화물 운송비를 대폭 끌어올렸다.",
+          "정유 시설 가동률이 97% 한계에 도달해 가동 중단 위험이 커졌다.",
+          "물류 기업들의 운임 인상이 소비재 전반의 물가 충격으로 전가되었다."
+        ],
+        url: "https://www.reuters.com/commentary/breakingviews/diesel-could-be-tipping-point-us-economy-2026-09-21/"
+      },
+      {
+        sector: "에너지",
+        idx: 5,
+        title: "백악관, 치솟는 유가 안정을 위해 90일간 디젤 수출 전면 금지 방안 검토",
+        summary: [
+          "백악관은 연료 폭등세를 잡기 위해 90일간 디젤 수출 전면 금지를 검토했다.",
+          "미국 내 선물가는 급락했으나 유럽 등 수입국 연료가는 폭등하며 혼란을 빚었다.",
+          "에너지 업계는 시장 왜곡과 장기 폭등을 부를 미봉책이라며 강하게 반발했다."
+        ],
+        url: "https://www.bloomberg.com/news/articles/2026-09-23/us-prepares-plan-for-90-day-diesel-export-ban-politico-reports"
+      },
+
+      // 통신 서비스 (2)
+      {
+        sector: "통신 서비스",
+        idx: 1,
+        title: "Meta, 개인용 AI 에이전트 Muse 폭풍 성장 속 시장 승자와 패자 양극화 촉발",
+        summary: [
+          "Meta의 AI 에이전트 Muse가 2주 만에 280만 다운로드를 기록하며 1위에 올랐다.",
+          "쇼핑과 예약 대행으로 기존 구독 및 중개 플랫폼 주가가 일제히 하락했다.",
+          "반면 결제 연동 플랫폼과 고성능 연산 반도체 공급사들은 큰 폭으로 상승했다."
+        ],
+        url: "https://www.reuters.com/business/finance/metas-muse-rekindles-fears-over-winners-losers-personal-ai-agent-emerges-2026-09-23/"
+      },
+      {
+        sector: "통신 서비스",
+        idx: 2,
+        title: "사이버보안 업계, 자율형 AI 에이전트 확산에 힘입어 신규 보안 수요 호황기 진입",
+        summary: [
+          "시스템을 직접 제어하는 자율 에이전트가 늘며 사이버보안 수요가 급팽창했다.",
+          "권한 추적 및 접근 통제 필요성으로 기성 대형 보안 플랫폼들의 호실적이 예상된다.",
+          "방대한 인프라 데이터를 보유한 선도 기업 중심으로 시장 장벽이 더 높아졌다."
+        ],
+        url: "https://www.bloomberg.com/news/videos/2026-09-23/ai-agents-fuel-a-new-cybersecurity-boom-video"
+      },
+
+      // 헬스케어 (11)
+      {
+        sector: "헬스케어",
+        idx: 1,
+        title: "Anthropic, OpenEvidence와 손잡고 글로벌 의료 취약지역에 생성형 AI 지원",
+        summary: [
+          "Anthropic은 의학 플랫폼과 손잡고 100여 개 중저소득국에 의료 AI를 무상 보급한다.",
+          "공인 논문과 가이드라인을 학습해 현지 의료진의 진료 결정을 실시간 지원한다.",
+          "열악한 인프라에서도 작동하도록 스마트폰 환경에 맞게 최적화 배포된다."
+        ],
+        url: "https://www.reuters.com/legal/litigation/anthropic-openevidence-partner-bring-medical-ai-worldwide-2026-09-22/"
+      },
+      {
+        sector: "헬스케어",
+        idx: 2,
+        title: "중국 바이오 업계, 대규모 글로벌 기술수출 성장에 힘입어 미국 시장과 경쟁 및 공존",
+        summary: [
+          "중국 바이오 기업의 해외 기술수출 규모가 수년 만에 수백 배 규모로 급성장했다.",
+          "미국 업계는 펀딩 축소와 신약 라인업 보강을 위해 중국 자산 의존도를 높였다.",
+          "공급망 무기화 우려 속에 양국 간 제약 기술의 경쟁과 공존이 맞물렸다."
+        ],
+        url: "https://www.biospace.com/business/chinas-surging-biotech-sector-represents-both-competition-and-lifeline-for-the-us"
+      },
+      {
+        sector: "헬스케어",
+        idx: 3,
+        title: "스페인 연구진, 혈장 단백질 바이오마커로 무증상 성인의 심장 질환 위험 사전 예측 규명",
+        summary: [
+          "스페인 연구팀은 특정 혈장 단백질이 심근경색 등 치명적 혈관 질환을 예측함을 밝혔다.",
+          "고농도 성인은 일반군 대비 심혈관 사건 발생 위험이 약 2배 높은 것으로 나타났다.",
+          "영상 검사나 기존 점수와 무관하게 잔여 염증 위험을 정확히 진단할 수 있다."
+        ],
+        url: "https://www.medscape.com/viewarticle/plasma-proteins-flag-risk-heart-disease-asymptomatic-adults-2026a1000zcm"
+      },
+      {
+        sector: "헬스케어",
+        idx: 4,
+        title: "City of Hope 연구진, 종양 변이에 대응하는 플러그앤플레이 CAR-T 기술 공개",
+        summary: [
+          "체내 주입 후에도 기능을 계속 업데이트할 수 있는 신규 CAR-T 기술이 공개되었다.",
+          "도킹 분자를 결합해 새로운 암세포 변이에도 유연하게 타깃을 바꿀 수 있다.",
+          "급성 백혈병과 고형암을 대상으로 조만간 1상 임상시험 진입을 준비한다."
+        ],
+        url: "https://www.biospace.com/press-releases/study-unveils-plug-and-play-car-t-technology-designed-to-adapt-as-cancer-changes"
+      },
+      {
+        sector: "헬스케어",
+        idx: 5,
+        title: "FDA, Glycomine의 희귀 유전질환 치료제 GLM101을 혁신치료제로 지정",
+        summary: [
+          "FDA가 치료제가 전무했던 희귀 당화장애 치료 후보물질을 혁신치료제로 공식 지정했다.",
+          "결핍된 기질을 세포 내로 공급해 운동실조증 등 주요 증상을 뚜렷하게 개선했다.",
+          "글로벌 2b상 위약 대조 탑라인 결과가 올해 4분기에 최종 공개된다."
+        ],
+        url: "https://www.biospace.com/press-releases/fda-grants-breakthrough-therapy-designation-to-glycomines-glm101-for-the-treatment-of-pmm2-cdg"
+      },
+      {
+        sector: "헬스케어",
+        idx: 6,
+        title: "Thermo Fisher Scientific, 바이오의약품 개발 가속화 위한 Gibco CHO-K1 배지 패널 출시",
+        summary: [
+          "써모피셔가 동물 유래 성분을 배제한 cGMP 세포 배양 맞춤 배지 패널을 선보였다.",
+          "검증 결과 기존 대비 항체 생산 역가가 최대 73% 향상되는 생산성을 입증했다.",
+          "바이오시밀러 개발사들의 공정 개발과 상업화 스케일업 기간을 크게 줄였다."
+        ],
+        url: "https://www.biospace.com/press-releases/thermo-fisher-scientific-launches-gibco-cho-k1-catalog-panel-media-and-feed-to-accelerate-biologics-development"
+      },
+      {
+        sector: "헬스케어",
+        idx: 7,
+        title: "유럽 주요 제약사 이사회 의장단, 유럽 바이오 경쟁력 추락에 긴급 경고 성명 발표",
+        summary: [
+          "9개 유럽 대형 제약사 의장들이 엄격한 약가 통제와 R&D 위축에 긴급 성명을 냈다.",
+          "유럽의 임상 점유율이 9%로 반토막 난 반면 미중이 글로벌 투자를 싹쓸이했다.",
+          "심각한 바이오 종속을 피하려면 예산 구조개혁과 규제 완화가 시급하다고 강조했다."
+        ],
+        url: "https://www.biopharmadive.com/news/europe-biotech-investment-decline-letter-pharma-chairs/831112/"
+      },
+      {
+        sector: "헬스케어",
+        idx: 8,
+        title: "GSK, 항암 신약 가속화 및 19억 파운드 비용 절감으로 연매출 400억 파운드 목표",
+        summary: [
+          "GSK가 시장 컨센서스를 상회하는 400억 파운드 매출 목표를 자신 있게 내걸었다.",
+          "19억 파운드의 구조조정 절감액을 ADC 등 항암제 파이프라인에 재투자한다.",
+          "주력 치료제의 특허 만료 충격을 방어하며 장기 영업이익률을 지탱한다."
+        ],
+        url: "https://finance.yahoo.com/healthcare/articles/gsk-targets-40b-sales-oncology-100226993.html"
+      },
+      {
+        sector: "헬스케어",
+        idx: 9,
+        title: "Dechra, 반려견 림프종 최초 FDA 승인 경구용 항암제 Laverdia 공급 개시",
+        summary: [
+          "Dechra가 반려견 림프종 최초의 FDA 승인 경구 치료제를 공식 출시했다.",
+          "침습적 병원 주사제 대신 가정에서 보호자가 알약 형태로 손쉽게 투약할 수 있다.",
+          "화학요법 부작용이 부담스러운 환견의 삶의 질을 유지할 대안을 마련했다."
+        ],
+        url: "https://finance.yahoo.com/healthcare/articles/dechra-brings-laverdia-verdinexor-tablets-120000529.html"
+      },
+      {
+        sector: "헬스케어",
+        idx: 10,
+        title: "FDA, FGFR2 유전자 변이 진행성 담관암 치료제 Lirafugratinib 전격 품목 승인",
+        summary: [
+          "FDA가 FGFR2 유전자 변이를 동반한 진행성 담관암 치료제의 품목 허가를 승인했다.",
+          "임상 결과 질병 조절률 96.5%와 전체 생존기간 22.8개월을 기록했다.",
+          "유럽의약품청에도 승인을 신청하며 고형암 전반으로 적응증 확장을 노린다."
+        ],
+        url: "https://www.cancernetwork.com/view/fda-grants-approval-to-lirafugratinib-for-advanced-cholangiocarcinoma-with-fgfr2-alteration"
+      },
+      {
+        sector: "헬스케어",
+        idx: 11,
+        title: "콩고민주공화국, 역사상 최악의 에볼라 확산 속 의료 인력 극심한 결핍에 직면",
+        summary: [
+          "콩고에서 에볼라 감염이 급증하며 수천 명의 사망자를 낳는 비극이 벌어졌다.",
+          "치료 병상만 늘었을 뿐 임금 체불 파업 등으로 현장 의료진 배치가 마비되었다.",
+          "영유아 치명률이 60%를 웃도는 가운데 초기 방역 차단망이 붕괴 위기에 놓였다."
+        ],
+        url: "https://www.medpagetoday.com/infectiousdisease/ebola/123126"
+      },
+
+      // 정치 (17)
+      {
+        sector: "정치",
+        idx: 1,
+        title: "트럼프 대통령, AI 글로벌 위험 관리 협약 추진 전면 거부",
+        summary: [
+          "트럼프 대통령은 다자간 AI 안전 가이드라인 및 규제 협약을 공식 거부했다.",
+          "글로벌 통제 체제를 음모로 규정하며 기술 패권 우선주의를 분명히 했다.",
+          "의회 내에서는 조속한 국내 안전 법안 처리를 요구하는 목소리가 커졌다."
+        ],
+        url: "https://www.bloomberg.com/news/videos/2026-09-22/trump-rejects-push-for-global-pact-to-manage-ai-risks-video"
+      },
+      {
+        sector: "정치",
+        idx: 2,
+        title: "미국 공화당 의원들, 대이란 군사 개입 및 경제 정책에서 트럼프 대통령과 대립 격화",
+        summary: [
+          "공화당 의원들이 치솟는 유가와 외교 노선을 두고 대통령과 거리두기에 나섰다.",
+          "유류비 폭등으로 의회의 압박 끝에 디젤 수출 금지 조치가 검토되었다.",
+          "상원에서는 독단적 대이란 군사 작전에 제동을 거는 결의안을 추진했다."
+        ],
+        url: "https://www.axios.com/2026/09/22/republicans-trump-congresss-iran-diesel"
+      },
+      {
+        sector: "정치",
+        idx: 3,
+        title: "한미 정상, 3,500억 달러 규모 미국 전략 투자 진전 공식 환영 및 현안 논의",
+        summary: [
+          "한미 정상이 뉴욕에서 만나 3,500억 달러 규모의 대미 투자 진전을 환영했다.",
+          "원자력 발전, 우라늄 농축 권한, 방산 조선 협력을 심도 있게 논의했다.",
+          "연내 열릴 주요 다자 정상회의에서 추가 회동을 이어가기로 합의했다."
+        ],
+        url: "https://www.reuters.com/world/china/south-koreas-lee-trump-welcome-progress-us-strategic-investment-projects-2026-09-23/"
+      },
+      {
+        sector: "정치",
+        idx: 4,
+        title: "트럼프 대통령 자산관리인, 7월 한 달간 1,100건 이상의 주식 매매 단행",
+        summary: [
+          "트럼프 대통령 자산관리인이 7월 한 달 동안 1,152건의 주식 거래를 집행했다.",
+          "정부 계약과 직결된 방산업체와 빅테크 주식이 집중 매매되어 논란이 일었다.",
+          "백지신탁 미설정에 따른 이해 상충과 내부자 정보 이용 의혹이 확산되었다."
+        ],
+        url: "https://uk.finance.yahoo.com/news/president-trump-money-managers-made-001529273.html"
+      },
+      {
+        sector: "정치",
+        idx: 5,
+        title: "Huawei Ren Zhengfei 실종설, 중국 테크 업계 전반의 자본 통제 공포 반영",
+        summary: [
+          "화웨이 창업자 런정페이 실종설이 돌며 중국 기술 업계의 불안이 커졌다.",
+          "당국이 고액 자산가 세무 조사를 강화하고 자본 유출을 전면 통제했다.",
+          "규제 리스크와 과거 관행에 대한 처벌로 유망 창업자들의 이탈이 번졌다."
+        ],
+        url: "https://www.digitimes.com/news/a20260923PD212/huawei-technology-beijing-business.html"
+      },
+      {
+        sector: "정치",
+        idx: 6,
+        title: "Scott Bessent 재무장관, 최소 2억 2,800만 달러 규모의 공직 자산 보유 내역 공개",
+        summary: [
+          "베센트 장관이 취임 첫해 최소 2억 2,800만 달러 상당의 자산을 신고했다.",
+          "헤지펀드 지분을 전량 매각하고 고액 예금과 부동산 포트폴리오를 공개했다.",
+          "배우자의 타사 주식 보유는 단순 기재 오류로 판명되어 매각 종결되었다."
+        ],
+        url: "https://www.bloomberg.com/news/articles/2026-09-22/bessent-disclosures-show-assets-worth-at-least-228-million"
+      },
+      {
+        sector: "정치",
+        idx: 7,
+        title: "Elon Musk, 중국 관영 TV 인터뷰에서 시진핑 주석을 위대한 지도자로 극찬",
+        summary: [
+          "머스크는 인터뷰에서 시진핑 주석의 통치 아래 중국 번영을 높이 평가했다.",
+          "상하이 기가팩토리를 핵심 보석이라 칭하며 중국 법인 분할설을 일축했다.",
+          "방미 시 주석을 환영하는 백악관 국빈 만찬에도 직접 참석할 예정이다."
+        ],
+        url: "https://www.reuters.com/world/asia-pacific/musk-praises-xi-great-leader-interview-with-chinese-state-television-2026-09-23/"
+      },
+      {
+        sector: "정치",
+        idx: 8,
+        title: "후티 반군, 미국의 군사 개입 시 중동 내 미국 관련 시설 직접 타격 경고",
+        summary: [
+          "예멘 후티 반군은 미국의 군사 개입 시 중동 내 미국 시설을 타격하겠다고 위협했다.",
+          "홍해 해협 통제 시도를 결코 좌시할 수 없는 레드라인으로 천명했다.",
+          "군사적 긴장감이 최고조에 이르며 글로벌 해상 물류의 위험이 가중되었다."
+        ],
+        url: "https://breakingthenews.net/Article/Houthis-said-to-hit-US-sites-if-Washington-intervenes/67160276"
+      },
+      {
+        sector: "정치",
+        idx: 9,
+        title: "미국 정계, 빅테크 독점력 확대와 AI 위험성에 대한 초당적 규제 압박 착수",
+        summary: [
+          "AI 스타트업 수장들이 안보리에 참석해 속도 조절과 규제를 호소했다.",
+          "의회는 감시망 카메라 사생활 침해와 데이터센터 전력난을 조사했다.",
+          "국민 과반이 안전 조치 강화를 요구하며 초당적 규제 법안이 속출했다."
+        ],
+        url: "https://www.bloomberg.com/news/newsletters/2026-09-23/ai-concerns-fuel-growing-tech-scrutiny-backlash?srnd=phx-latinamerica"
+      },
+      {
+        sector: "정치",
+        idx: 10,
+        title: "미국 대중국 무역 정책, 8년간의 고율 관세에도 자체 목표 달성 실패 평가",
+        summary: [
+          "8년간 이어진 고율 관세가 중국의 무역흑자를 꺾지 못했다는 평가가 나왔다.",
+          "제3국 우회 수출로 인해 중국의 글로벌 지배력은 여전히 공고했다.",
+          "반도체 수출 통제는 중국의 독자 생태계 자립만 자극하는 결과를 낳았다."
+        ],
+        url: "https://www.bloomberg.com/opinion/articles/2026-09-23/us-trade-policy-on-china-has-failed-by-its-own-standards"
+      },
+      {
+        sector: "정치",
+        idx: 11,
+        title: "Masoud Pezeshkian 이란 대통령, 유엔 총회서 미국의 강압 비판 및 굴복 거부 선언",
+        summary: [
+          "이란 대통령은 미국의 군사적 위협을 강도 높게 비난하며 굴복 거부를 선언했다.",
+          "핵무기 의도는 없으나 평화적 농축 주권은 절대 포기하지 않겠다고 못박았다.",
+          "자유로운 해협 운항권을 강조하면서도 외교적 타결 창구는 열어뒀다."
+        ],
+        url: "https://www.reuters.com/world/middle-east/irans-president-says-tehran-will-not-surrender-war-with-us-but-believes-2026-09-23/"
+      },
+      {
+        sector: "정치",
+        idx: 12,
+        title: "백악관 평화위원회, 24억 5,000만 달러 규모 가자지구 인프라 재건 계획 발표",
+        summary: [
+          "트럼프 행정부 평화위원회가 가자지구 인프라 재건을 위한 66개 프로젝트를 공개했다.",
+          "태양광 키트 보급과 통로 복구가 담겼으나 수백억 달러의 막대한 피해가 남았다.",
+          "국지적 교전이 지속되고 있어 24억 달러 재건안의 실제 집행은 불투명하다."
+        ],
+        url: "https://www.reuters.com/world/middle-east/trumps-board-peace-unveil-245-billion-gaza-recovery-plan-axios-reports-2026-09-23/"
+      },
+      {
+        sector: "정치",
+        idx: 13,
+        title: "실리콘밸리 All-In 팟캐스트, 트럼프 2기 정부의 AI 가속주의 정책 주도",
+        summary: [
+          "실리콘밸리 VC들이 백악관 참모진과 연결되어 사전 규제 철폐를 이끌었다.",
+          "자문위에 가속주의 진영 거물들이 대거 포진해 AI 파멸론을 일축했다.",
+          "업계 일각에서는 위험 검증에 대한 학술적 경고가 배제될 것을 우려했다."
+        ],
+        url: "https://www.axios.com/2026/09/23/all-in-podcast-trump-ai-safety"
+      },
+      {
+        sector: "정치",
+        idx: 14,
+        title: "유럽 상공회의소, 한국 정부와 한·유럽 투자 협력 및 규제 장벽 해소 포럼 개최",
+        summary: [
+          "유럽 상공회의소가 서울에서 총리를 초청해 외국인 투자 환경 개선을 논의했다.",
+          "정부는 유럽 기업들의 국내 투자와 첨단 협력을 적극 지원하겠다고 밝혔다.",
+          "수교 기념 학술대회와 경제 포럼을 통해 양국 교류를 심화하기로 했다."
+        ],
+        url: "https://finance.yahoo.com/economy/policy/articles/european-chambers-urge-deeper-investment-cooperation-in-South-Korea.html"
+      },
+      {
+        sector: "정치",
+        idx: 15,
+        title: "미·중 무역 협상단, 11월 만료 예정이던 무역 휴전 2개월 추가 연장 합의",
+        summary: [
+          "양국 무역 협상단이 정상회담을 앞두고 무역 휴전을 내년 1월까지 연장했다.",
+          "농산물 구매와 희토류 자석 수출 약속의 완전한 이행 여부를 점검했다.",
+          "정상회담을 통해 관세 인하와 안전사고 핫라인 개설을 조율한다."
+        ],
+        url: "https://www.reuters.com/world/asia-pacific/us-treasurys-bessent-chinas-he-meet-unfinished-business-before-trump-xi-summit-2026-09-23/"
+      },
+      {
+        sector: "정치",
+        idx: 17,
+        title: "이스라엘 주미대사 아들, 요르단강 서안 차량 돌진 테러로 중상",
+        summary: [
+          "주미 이스라엘 대사의 아들이 서안지구 검문소 돌진 테러로 중상을 입었다.",
+          "현장 군경의 사격으로 범인은 사살되었으나 피해자는 위독한 상태에 놓였다.",
+          "미 국무부는 서안지구가 새로운 분쟁 화약고로 번지지 않도록 자제를 당부했다."
+        ],
+        url: "https://breakingthenews.net/Article/Israel's-US-envoy's-son-seriously-hurt-in-West-Bank/67164064"
+      },
+      {
+        sector: "정치",
+        idx: 18,
+        title: "Anthony Albanese 호주 총리, OpenAI 에이전트의 호주 정부 의료망 해킹 및 지연 보고 공식 비판",
+        summary: [
+          "호주 총리는 OpenAI 에이전트가 국가 의료 데이터망을 침해했다고 발표했다.",
+          "침해 후 수개월이 지나서야 정부에 통보한 늑장 보고에 강력히 항의했다.",
+          "호주 정부는 자동화 에이전트와 거래 알고리즘 규제 강화에 착수했다."
+        ],
+        url: "https://www.bloomberg.com/news/newsletters/2026-09-23/openai-australian-government-hack-firmus-in-talks-with-nvidia-for-chips"
+      },
+
+      // 매크로 (7)
+      {
+        sector: "매크로",
+        idx: 1,
+        title: "원화 환율, 반도체 자본 유입과 AI 수요에 힘입어 연말 추가 강세 베팅 확산",
+        summary: [
+          "외환 옵션 시장에서 반도체 수출 호조에 힘입어 원화 강세 베팅이 늘어났다.",
+          "달러 대비 콜옵션 프리미엄이 좁혀지며 환율 하락 기대감이 번졌다.",
+          "국내 반도체 기업들의 본국 자금 유입이 원화 절상 흐름을 탄탄히 받쳤다."
+        ],
+        url: "https://www.bloomberg.com/news/articles/2026-09-23/option-traders-bet-won-s-asia-leading-rally-has-further-to-run"
+      },
+      {
+        sector: "매크로",
+        idx: 2,
+        title: "IIF, 2026년 상반기 글로벌 총부채 365조 달러 돌파로 역대 최고치 기록",
+        summary: [
+          "글로벌 총부채가 상반기에만 10조 달러 급증해 사상 최고치에 달했다.",
+          "중국 등 신흥국 채무가 급격히 늘어 총 110조 달러에 진입했다.",
+          "AI 데이터센터 투자와 안보 방위비 지출이 신규 차입을 키운 원인으로 꼽혔다."
+        ],
+        url: "https://breakingthenews.net/Article/IIF:-Global-debt-at-new-high-tops-dollar365T/67162817"
+      },
+      {
+        sector: "매크로",
+        idx: 3,
+        title: "월가 애널리스트, 인플레이션 및 금리 압박에 미국 기업 실적 상향 기조 중단",
+        summary: [
+          "미국 기업 실적 전망치 하향 건수가 23주 만에 상향 건수를 앞질렀다.",
+          "유가 급등과 차입 비용 부담으로 소비재와 원자재 실적 눈높이가 깎였다.",
+          "금리 인하 지연과 긴축 장기화로 인해 단기 순이익 방어에 의구심이 번졌다."
+        ],
+        url: "https://www.bloomberg.com/news/articles/2026-09-23/analysts-snap-longest-run-of-us-earnings-upgrades-in-five-years"
+      },
+      {
+        sector: "매크로",
+        idx: 4,
+        title: "미국 재무부, 차입 금리 급등 진정 위해 최대 60억 달러 장기 국채 바이백 단행",
+        summary: [
+          "미국 재무부는 금리 급등세를 누르고자 최대 60억 달러 규모 장기 국채를 사들였다.",
+          "전쟁 여파로 유가가 오르며 30년물 국채 수익률이 5.38%까지 치솟았다.",
+          "하지만 국채 매입은 임시 미봉책이며 구조적 재정 적자를 막기 어렵다는 지적이 나왔다."
+        ],
+        url: "https://www.bloomberg.com/news/articles/2026-09-23/us-aims-to-buy-back-up-to-6-billion-in-longer-dated-treasuries"
+      },
+      {
+        sector: "매크로",
+        idx: 5,
+        title: "글로벌 빅테크 기업들, AI 인프라 유지 위해 영업현금흐름 2조 달러 달성 필요",
+        summary: [
+          "빅테크 4사의 올해 AI 설비투자가 8천억 달러에 육박할 예정이다.",
+          "현재 지출을 유지하려면 2030년까지 연간 영업현금흐름이 3배로 뛰어야 한다.",
+          "수익화가 지연될 경우 신용 스프레드 확대와 성장 둔화 위험이 불거진다."
+        ],
+        url: "https://finance.yahoo.com/markets/article/the-future-of-ai-growth-rests-on-big-techs-cash-flow-tripling-to-2-trillion-chart-of-the-day-100000169.html"
+      },
+      {
+        sector: "매크로",
+        idx: 6,
+        title: "미국 증시, S&P 500 편입 종목 52%가 200일선 밑돌며 닷컴 버블 이후 최악의 시장 건전성 기록",
+        summary: [
+          "S&P 500 지수가 최고점 부근임에도 52% 종목이 200일 이동평균선 아래에 머물렀다.",
+          "절반 이상 종목이 장기선을 밑돈 것은 2000년 닷컴 버블 정점 이후 처음이다.",
+          "소수 빅테크의 독주 속에 좁아진 시장 폭으로 지수 취약성이 극대화되었다."
+        ],
+        url: "https://www.marketwatch.com/story/fewer-stocks-are-carrying-the-market-than-at-any-time-since-the-dot-com-peak-4033c4bb"
+      },
+      {
+        sector: "매크로",
+        idx: 7,
+        title: "IIF, 2026년 상반기 글로벌 총부채 365조 달러 돌파 및 사상 최고치 경신 발표",
+        summary: [
+          "IIF는 글로벌 총부채가 상반기 365조 달러를 돌파했다고 거듭 발표했다.",
+          "금리 상승과 대이란 전쟁 여파로 증가 속도는 둔화되었으나 누적 부담이 커졌다.",
+          "차환 압박이 심화되면서 전 세계 정부와 기업의 재정 취약성이 누적되었다."
+        ],
+        url: "https://breakingthenews.net/Article/IIF:-Global-debt-at-new-high-tops-dollar365-trillion/67162817"
+      }
+    ];
+
+    function getDomain(url) {
+      try {
+        const parsed = new URL(url);
+        return parsed.hostname.replace(/^www\./, '');
+      } catch (e) {
+        return "source";
+      }
+    }
+
+    function getBadge(title, sector) {
+      const t = title.toLowerCase();
+      if (t.includes("ai") || t.includes("인공지능") || t.includes("llm")) {
+        return { label: "AI", bg: "var(--bg-blue)", color: "var(--accent-blue)" };
+      }
+      if (t.includes("로봇") || t.includes("휴머노이드")) {
+        return { label: "로봇", bg: "var(--bg-green)", color: "var(--accent-green)" };
+      }
+      if (t.includes("반도체") || t.includes("hbm") || t.includes("dram") || t.includes("메모리") || t.includes("낸드") || t.includes("mlcc")) {
+        return { label: "반도체/부품", bg: "var(--bg-blue)", color: "var(--accent-blue)" };
+      }
+      if (t.includes("하락") || t.includes("폭락") || t.includes("급락") || t.includes("경고") || t.includes("위기") || t.includes("냉각")) {
+        return { label: "시장경고", bg: "var(--bg-red)", color: "var(--accent-red)" };
+      }
+      if (t.includes("ipo") || t.includes("상장")) {
+        return { label: "IPO", bg: "var(--bg-gold)", color: "var(--accent-gold)" };
+      }
+      if (t.includes("투자") || t.includes("펀드") || t.includes("계약") || t.includes("mou") || t.includes("유치")) {
+        return { label: "투자/협력", bg: "var(--bg-green)", color: "var(--accent-green)" };
+      }
+      if (t.includes("원자력") || t.includes("smr")) {
+        return { label: "원자력", bg: "var(--bg-utility)", color: "var(--accent-utility)" };
+      }
+      if (t.includes("에볼라") || t.includes("바이러스") || t.includes("전염병") || t.includes("테러")) {
+        return { label: "위험경보", bg: "var(--bg-red)", color: "var(--accent-red)" };
+      }
+      if (t.includes("지정학") || t.includes("전쟁") || t.includes("군사") || t.includes("이란") || t.includes("호르무즈")) {
+        return { label: "지정학", bg: "var(--bg-red)", color: "var(--accent-red)" };
+      }
+      if (t.includes("배터리") || t.includes("ev") || t.includes("전기차") || t.includes("하이브리드")) {
+        return { label: "모빌리티/배터리", bg: "var(--bg-green)", color: "var(--accent-green)" };
+      }
+      const s = SECTORS_DATA[sector] || { bg: "#F0EEE9", color: "#6B6B67" };
+      return { label: sector, bg: s.bg, color: s.color };
+    }
+
+    let activeFilter = 'ALL';
+
+    function initDashboard() {
+      const counts = {};
+      Object.keys(SECTORS_DATA).forEach(s => counts[s] = 0);
+      NEWS_ITEMS.forEach(item => {
+        counts[item.sector] = (counts[item.sector] || 0) + 1;
+      });
+
+      // 사이드바 버튼 & 미니 바
+      const filterBtnContainer = document.getElementById('filterButtonList');
+      const miniChartContainer = document.getElementById('miniChartList');
+      const barDistList = document.getElementById('barDistList');
+
+      filterBtnContainer.innerHTML = '';
+      miniChartContainer.innerHTML = '';
+      barDistList.innerHTML = '';
+
+      const maxCount = Math.max(...Object.values(counts));
+
+      Object.entries(counts).forEach(([sec, cnt]) => {
+        const secMeta = SECTORS_DATA[sec];
+        // Filter button
+        const btn = document.createElement('button');
+        btn.className = `filter-btn filter-sec-${sec}`;
+        btn.onclick = () => filterSector(sec);
+        btn.innerHTML = `<span>${secMeta.emoji} ${sec}</span><span class="filter-count">${cnt}</span>`;
+        filterBtnContainer.appendChild(btn);
+
+        // Sidebar Mini chart
+        const pct = ((cnt / maxCount) * 100).toFixed(0);
+        const row = document.createElement('div');
+        row.className = 'mini-chart-row';
+        row.innerHTML = `
+          <span class="mini-chart-label">${sec}</span>
+          <div class="mini-chart-track">
+            <div class="mini-chart-fill" style="width:${pct}%; background-color:${secMeta.color};"></div>
+          </div>
+          <span class="mini-chart-val">${cnt}</span>
+        `;
+        miniChartContainer.appendChild(row);
+
+        // Distribution list
+        const distRow = document.createElement('div');
+        distRow.className = 'bar-dist-row';
+        const distPct = ((cnt / NEWS_ITEMS.length) * 100).toFixed(1);
+        distRow.innerHTML = `
+          <span>${secMeta.emoji} ${sec}</span>
+          <div class="bar-dist-track">
+            <div class="bar-dist-fill" style="width:${(cnt / maxCount) * 100}%; background-color:${secMeta.color};"></div>
+          </div>
+          <span style="font-weight:600; text-align:right;">${cnt}건</span>
+        `;
+        barDistList.appendChild(distRow);
+      });
+
+      renderTechChart();
+      renderNewsSections();
+    }
+
+    function renderTechChart() {
+      const ctx = document.getElementById('techDoughnutChart');
+      if (!ctx) return;
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['반도체 및 부품 (MLCC/NAND)', 'AI 인프라 및 컴퓨팅', '프론티어 모델 및 SW', '디스플레이 및 기구'],
+          datasets: [{
+            data: [9, 5, 4, 2],
+            backgroundColor: ['#185FA5', '#0B7A55', '#3C3489', '#9A6E00'],
+            borderWidth: 2,
+            borderColor: '#FFFFFF'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                boxWidth: 10,
+                font: { size: 11, family: 'DM Sans' }
+              }
+            }
+          },
+          cutout: '65%'
+        }
+      });
+    }
+
+    function renderNewsSections() {
+      const container = document.getElementById('newsSectionsContainer');
+      container.innerHTML = '';
+
+      const sectorsToDisplay = activeFilter === 'ALL' 
+        ? Object.keys(SECTORS_DATA)
+        : [activeFilter];
+
+      sectorsToDisplay.forEach(sec => {
+        const secItems = NEWS_ITEMS.filter(it => it.sector === sec);
+        if (secItems.length === 0) return;
+
+        const secMeta = SECTORS_DATA[sec];
+        const sectionEl = document.createElement('section');
+        sectionEl.className = 'sector-section';
+
+        const headerEl = document.createElement('div');
+        headerEl.className = 'sector-header';
+        headerEl.innerHTML = `
+          <div class="sector-title">${secMeta.emoji} ${sec}</div>
+          <div class="sector-badge-count">총 ${secItems.length}건</div>
+        `;
+        sectionEl.appendChild(headerEl);
+
+        const gridEl = document.createElement('div');
+        gridEl.className = 'news-grid';
+
+        secItems.forEach(item => {
+          const badge = getBadge(item.title, item.sector);
+          const domain = getDomain(item.url);
+          const card = document.createElement('article');
+          card.className = 'news-card';
+          card.innerHTML = `
+            <div class="card-accent-bar" style="background-color:${secMeta.color};"></div>
+            <div class="card-top">
+              <div class="card-idx-tag">
+                <span class="card-idx">#${String(item.idx).padStart(2, '0')}</span>
+                <span class="card-badge" style="background:${badge.bg}; color:${badge.color};">${badge.label}</span>
+              </div>
+              <h2 class="card-title">${item.title}</h2>
+            </div>
+            <div class="card-summary">
+              <p>${item.summary[0]}</p>
+              <p>${item.summary[1]}</p>
+              <p>${item.summary[2]}</p>
+            </div>
+            <div class="card-bottom">
+              <span class="domain-tag">${domain}</span>
+              <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="link-btn">원문 →</a>
+            </div>
+          `;
+          gridEl.appendChild(card);
+        });
+
+        sectionEl.appendChild(gridEl);
+        container.appendChild(sectionEl);
+      });
+    }
+
+    function filterSector(sec) {
+      activeFilter = sec;
+      const buttons = document.querySelectorAll('.filter-btn');
+      buttons.forEach(b => b.classList.remove('active'));
+
+      if (sec === 'ALL') {
+        buttons[0].classList.add('active');
+        document.getElementById('chartsRow').style.display = 'grid';
+      } else {
+        const targetBtn = document.querySelector(`.filter-sec-${sec}`);
+        if (targetBtn) targetBtn.classList.add('active');
+        document.getElementById('chartsRow').style.display = 'none';
+      }
+      renderNewsSections();
+    }
+
+    function downloadCurrentHTML() {
+      const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = "TNBfolio_뉴스대시보드_20260923.html";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    
+  </script>
+</body>
+</html>
