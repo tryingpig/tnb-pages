@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+    <script>
+      (function() {
+        // Capture host references before any artifact code runs: Window.parent
+        // is [Replaceable] (a top-level `var parent` in artifact code would
+        // replace the accessor with a data property), and a top-level
+        // `const crypto` would shadow the global — either would otherwise
+        // silently break the bridge for artifacts that worked before.
+        const realParent = window.parent;
+        const cryptoObj = window.crypto;
+        const RealURL = URL;
+        // html-to-image is only used by takeScreenshot: fetched on first use, not as a
+        // parser-blocking tag. Native fetch, captured before the proxy override below.
+        const realFetch = typeof window.fetch === 'function' ? window.fetch.bind(window) : null;
+        const HTML_TO_IMAGE_SRC = "https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.13/html-to-image.min.js";
+        const HTML_TO_IMAGE_INTEGRITY = "sha512-iZ2ORl595Wx6miw+GuadDet4WQbdSWS3JLMoNfY8cRGoEFy6oT3G9IbcrBeL6AfkgpA51ETt/faX6yLV+/gFJg==";
+        let htmlToImageLoad = null;
+        const loadHtmlToImage = () => {
+          if (!htmlToImageLoad) {
+            htmlToImageLoad = (realFetch
+              ? realFetch(HTML_TO_IMAGE_SRC, { integrity: HTML_TO_IMAGE_INTEGRITY, credentials: 'omit', referrerPolicy: 'no-referrer' })
+              : Promise.reject(new Error('fetch unavailable'))
+            )
+              .then((res) => {
+                if (!res.ok) throw new Error('html-to-image failed to load (' + res.status + ')');
+                return res.text();
+              })
+              .then((source) => {
+                // UMD bundle: hide the artifact's AMD/CommonJS globals so it takes the
+                // window-global branch; inline script text runs synchronously on insert.
+                const hidden = ['define', 'module', 'exports'].map((k) => {
+                  const entry = { k, own: Object.prototype.hasOwnProperty.call(window, k), v: window[k] };
+                  try { window[k] = undefined; } catch (e) {}
+                  return entry;
+                });
+                try {
+                  const el = document.createElement('script');
+                  el.text = source;
+                  (document.head || document.documentElement).appendChild(el);
+                } finally {
+                  hidden.forEach(({ k, own, v }) => {
+                    try { if (own) { window[k] = v; } else { delete window[k]; } } catch (e) {}
+                  });
+                }
+                if (!window.htmlToImage) throw new Error('html-to-image unavailable after load');
+                return window.htmlToImage;
+              });
+            // A failed load may be transient; let the next screenshot retry.
+            htmlToImageLoad.catch(() => { htmlToImageLoad = null; });
+          }
+          return htmlToImageLoad;
+        };
+        // crypto.randomUUID exists only in Secure Contexts; fall back to a
+        // unique non-crypto id elsewhere (http://LAN-IP dev flows) —
+        // uniqueness is what the bridge needs, unpredictability is
+        // defense-in-depth on top of the source guards.
+        const newRequestId =
+          cryptoObj && typeof cryptoObj.randomUUID === "function"
+            ? function () { return cryptoObj.randomUUID(); }
+            : function () { return Date.now() + "-" + Math.random(); };
+        const originalConsole = window.console;
+        window.console = {
+          log: (...args) => {
+            originalConsole.log(...args);
+            realParent.postMessage({ type: 'console', message: args.join(' ') }, '*');
+          },
+          error: (...args) => {
+            originalConsole.error(...args);
+            realParent.postMessage({ type: 'console', message: 'Error: ' + args.join(' ') }, '*');
+          },
+          warn: (...args) => {
+            originalConsole.warn(...args);
+            realParent.postMessage({ type: 'console', message: 'Warning: ' + args.join(' ') }, '*');
+          }
+        };
+
+        // Bridge request ids are crypto-random (not sequential) so they
+        // cannot be predicted by other frames in the tab.
+        let callbacksMap = new Map();
+        let streamControllers = new Map();
+        
+        window.claude = {
+          complete: (prompt) => {
+            return new Promise((resolve, reject) => {
+              const id = newRequestId();
+              callbacksMap.set(id, { resolve, reject });
+              realParent.postMessage({ type: 'claudeComplete', id, prompt }, '*');
+            });
+          }
+        };
+
+        window.storage = {
+          get: (key, shared = false) => {
+            return new Promise((resolve, reject) => {
+              const id = newRequestId();
+              callbacksMap.set(id, { resolve, reject });
+              realParent.postMessage({ type: 'storageGet', id, key, shared }, '*');
+            });
+          },
+          set: (key, value, shared = false) => {
+            return new Promise((resolve, reject) => {
+              const id = newRequestId();
+              callbacksMap.set(id, { resolve, reject });
+              realParent.postMessage({ type: 'storageSet', id, key, value, shared }, '*');
+            });
+          },
+          delete: (key, shared = false) => {
+            return new Promise((resolve, reject) => {
+              const id = newRequestId();
+              callbacksMap.set(id, { resolve, reject });
+              realParent.postMessage({ type: 'storageDelete', id, key, shared }, '*');
+            });
+          },
+          list: (prefix, shared = false) => {
+            return new Promise((resolve, reject) => {
+              const id = newRequestId();
+              callbacksMap.set(id, { resolve, reject });
+              realParent.postMessage({ type: 'storageList', id, prefix, shared }, '*');
+            });
+          }
+        };
+
+        let pendingBlobs = new Map();
+        URL.createObjectURL = (blob) => {
+          // Store the blob and create an ID and URL for it
+          const blobId = `blob-${Date.now()}-${Math.random()}`;
+          pendingBlobs.set(blobId, blob);
+          return `blob-request://${blobId}`;
+        };
+
+        URL.revokeObjectURL = (url) => {
+          // Remove the blob from our store
+          const blobId = url.replace("blob-request://", "");
+          pendingBlobs.delete(blobId);
+        };
+
+        const getBlobFromURL = (url) => {
+          const blobId = url.replace("blob-request://", "");
+          return pendingBlobs.get(blobId);
+        };
+
+        // Override global fetch with streaming support
+        window.fetch = (url, init = {}) => {
+          return new Promise((resolve, reject) => {
+            const id = newRequestId();
+            const channelId = `fetch-${id}-${Date.now()}`;
+            
+            callbacksMap.set(id, { 
+              resolve: (response) => {
+                // Null-body statuses: Response(stream, {status: 204}) throws
+                // per the Fetch spec, which would escape this resolver and
+                // hang the artifact's await forever.
+                if (response.status === 204 || response.status === 205 || response.status === 304) {
+                  try {
+                    resolve(new Response(null, {
+                      status: response.status,
+                      statusText: response.statusText,
+                      headers: response.headers
+                    }));
+                  } catch (err) {
+                    // Invalid statusText/header bytes can throw here too.
+                    reject(new TypeError(
+                      'Bridge fetch: unconstructable response (status ' + response.status + ')'
+                    ));
+                  }
+                  return;
+                }
+                // Create a ReadableStream for the response body
+                const stream = new ReadableStream({
+                  start(controller) {
+                    streamControllers.set(channelId, controller);
+                  },
+                  cancel() {
+                    streamControllers.delete(channelId);
+                  }
+                });
+                
+                // Create and return the Response with the stream. Response()
+                // requires status in [200, 599]; an opaque/no-cors fetch
+                // forwards status 0, which would throw here and escape the
+                // resolver, hanging the artifact's await. Surface it as a
+                // network-error-shaped rejection instead.
+                try {
+                  resolve(new Response(stream, {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: response.headers
+                  }));
+                } catch (err) {
+                  streamControllers.delete(channelId);
+                  reject(new TypeError(
+                    'Bridge fetch: unconstructable response (status ' + response.status + ')'
+                  ));
+                }
+              },
+              reject,
+              channelId
+            });
+            
+            realParent.postMessage({
+              type: 'proxyFetch',
+              id,
+              url,
+              init,
+              channelId
+            }, '*');
+          });
+        };
+
+        window.addEventListener('message', async (event) => {
+          // Only the embedding parent may drive the bridge — sibling and
+          // nested frames can also postMessage into this window.
+          if (event.source !== realParent) return;
+          if (event.data.type === 'takeScreenshot') {
+            // Echo the request's nonce so the requester can correlate the
+            // reply to ITS request — a reply without the expected nonce
+            // (e.g. from a stale pre-remount artifact) is ignored upstream.
+            const screenshotNonce = event.data.nonce;
+            const rootElement = document.getElementById('artifacts-component-root-html');
+            if (!rootElement) {
+              realParent.postMessage({
+                type: 'screenshotError',
+                nonce: screenshotNonce,
+                error: new Error('Root element not found'),
+              }, '*');
+              return;
+            }
+            // Catch CDN load failures and toPng errors so the parent always
+            // gets a response instead of hanging forever.
+            try {
+              const htmlToImage = await loadHtmlToImage();
+              const screenshot = await htmlToImage.toPng(rootElement, {
+                imagePlaceholder:
+                  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdjePDgwX8ACOQDoNsk0PMAAAAASUVORK5CYII=",
+              });
+              realParent.postMessage({
+                type: 'screenshotData',
+                nonce: screenshotNonce,
+                data: screenshot,
+              }, '*');
+            } catch (err) {
+              realParent.postMessage({
+                type: 'screenshotError',
+                nonce: screenshotNonce,
+                error: err instanceof Error ? err : new Error(String(err)),
+              }, '*');
+            }
+          } else if (event.data.type === 'claudeComplete') {
+            const callback = callbacksMap.get(event.data.id);
+            if (!callback) return;
+            if (event.data.error) {
+              callback.reject(new Error(event.data.error));
+            } else {
+              callback.resolve(event.data.completion);
+            }
+            callbacksMap.delete(event.data.id);
+          } else if (event.data.type === 'proxyFetchResponse') {
+            const callback = callbacksMap.get(event.data.id);
+            if (!callback) return;
+            if (event.data.error) {
+              callback.reject(new Error(event.data.error));
+              callbacksMap.delete(event.data.id);
+            } else {
+              // Initial response with headers, status, etc.
+              callback.resolve({
+                status: event.data.status,
+                statusText: event.data.statusText,
+                headers: event.data.headers
+              });
+              // Don't delete the callback yet if streaming
+              if (!event.data.body) {
+                callbacksMap.delete(event.data.id);
+              }
+            }
+          } else if (event.data.type === 'proxyFetchStream') {
+            // Handle streaming data chunks
+            const controller = streamControllers.get(event.data.channelId);
+            if (controller) {
+              if (event.data.error) {
+                controller.error(new Error(event.data.error));
+                streamControllers.delete(event.data.channelId);
+              } else if (event.data.done) {
+                controller.close();
+                streamControllers.delete(event.data.channelId);
+                // Clean up the callback
+                const callback = Array.from(callbacksMap.entries()).find(
+                  ([_, value]) => value.channelId === event.data.channelId
+                );
+                if (callback) {
+                  callbacksMap.delete(callback[0]);
+                }
+              } else if (event.data.chunk) {
+                controller.enqueue(new Uint8Array(event.data.chunk));
+              }
+            }
+          } else if (event.data.type === 'storageGet') {
+            const callback = callbacksMap.get(event.data.id);
+            if (!callback) return;
+            if (event.data.error) {
+              callback.reject(new Error(event.data.error));
+            } else {
+              callback.resolve(event.data.result);
+            }
+            callbacksMap.delete(event.data.id);
+          } else if (event.data.type === 'storageSet') {
+            const callback = callbacksMap.get(event.data.id);
+            if (!callback) return;
+            if (event.data.error) {
+              callback.reject(new Error(event.data.error));
+            } else {
+              callback.resolve(event.data.result);
+            }
+            callbacksMap.delete(event.data.id);
+          } else if (event.data.type === 'storageDelete') {
+            const callback = callbacksMap.get(event.data.id);
+            if (!callback) return;
+            if (event.data.error) {
+              callback.reject(new Error(event.data.error));
+            } else {
+              callback.resolve(event.data.result);
+            }
+            callbacksMap.delete(event.data.id);
+          } else if (event.data.type === 'storageList') {
+            const callback = callbacksMap.get(event.data.id);
+            if (!callback) return;
+            if (event.data.error) {
+              callback.reject(new Error(event.data.error));
+            } else {
+              callback.resolve(event.data.result);
+            }
+            callbacksMap.delete(event.data.id);
+          }
+        });
+
+        // An SVG <a> exposes href as an SVGAnimatedString; its baseVal is the attribute
+        // as written, so resolve it against the base URL as the browser does for an HTML <a>.
+        const resolvedHref = (linkEl) => {
+          if (typeof linkEl.href === "string") return linkEl.href;
+          const written = linkEl.href?.baseVal;
+          // A same-document SVG link, such as one that begins an animation, stays with the browser.
+          if (!written || written.trim().startsWith("#")) return "";
+          try {
+            return new RealURL(written, linkEl.baseURI).href;
+          } catch (error) {
+            return written;
+          }
+        };
+
+        window.addEventListener('click', (event) => {
+          // Not instanceof Element: an artifact's own top-level class Element shadows the global.
+          if (typeof event.target?.closest !== "function") return;
+    
+          const linkEl = event.target.closest("a");
+          const href = linkEl && resolvedHref(linkEl);
+          if (!href) return;
+          const filename = linkEl.getAttribute("download") ?? "";
+    
+          event.preventDefault();
+          event.stopImmediatePropagation();
+    
+          if (href.startsWith("blob-request:")) {
+            const blob = getBlobFromURL(href);
+            if (!blob) return;
+            void blob.arrayBuffer().then((data) => {
+              realParent.postMessage({
+                type: "downloadFile",
+                filename,
+                data,
+                mimeType: blob.type || "application/octet-stream",
+              });
+            });
+          } else if (href.startsWith("data:")) {
+            const [header, base64Data] = href.split(",");
+            const mimeMatch = header.match(/data:([^;]+)/);
+            const mimeType = mimeMatch ? mimeMatch[1] : "application/octet-stream";
+            const binaryString = atob(base64Data);
+            const data = Uint8Array.from(binaryString, (c) =>
+              c.charCodeAt(0),
+            ).buffer;
+            realParent.postMessage({
+              type: "downloadFile",
+              filename,
+              data,
+              mimeType,
+            });
+          } else {
+            let linkUrl;
+            try {
+              linkUrl = new URL(href);
+            } catch (error) {
+              return;
+            }
+    
+            if (linkUrl.hostname === window.location.hostname) return;
+      
+            realParent.postMessage({
+              type: 'openExternal',
+              href,
+            }, '*');
+          }
+      });
+
+        const originalOpen = window.open;
+        window.open = function (url) {
+          realParent.postMessage({
+            type: "openExternal",
+            href: url,
+          }, "*");
+        };
+
+        window.addEventListener('error', (event) => {
+          realParent.postMessage({ type: 'console', message: 'Uncaught Error: ' + event.message }, '*');
+        });
+      })();
+    </script>
+  <style id="claude-scrollbar">@layer claude-scrollbar{*{scrollbar-width:thin}html{scrollbar-color:rgb(128 128 128 / 50%) transparent}}</style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TNBfolio · PCE 2026년 8월</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&amp;family=JetBrains+Mono:wght@400;500;700&amp;family=Noto+Serif+KR:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1A1714; --paper:#F8F7F5; --white:#FFFFFF; --line:#E7E3DC; --muted:#6B7280;
+  --navy:#1B2A4A; --gold:#9A7B2F; --blue:#1A5C9E;
+  --red:#EF4444; --red-t:#B91C1C; --grn:#10B981; --grn-t:#047857; --neu:#6B7280;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#FFFFFF;color:var(--ink)}
+body{font-family:'Noto Serif KR',serif;line-height:1.7;font-size:15px;-webkit-font-smoothing:antialiased}
+.mono{font-family:'JetBrains Mono',monospace}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+section{padding:44px 0 8px}
+.sec-h{display:flex;align-items:baseline;gap:12px;border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:20px}
+.sec-h .no{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--gold);font-weight:700}
+.sec-h h2{font-family:'DM Serif Display','Noto Serif KR',serif;font-weight:400;font-size:26px;letter-spacing:-.01em}
+.sec-h h2 small{font-family:'Noto Serif KR',serif;font-size:14px;color:var(--muted);font-weight:500;margin-left:8px}
+.sub-h{font-family:'DM Serif Display','Noto Serif KR',serif;font-size:19px;font-weight:400;margin:30px 0 12px;display:flex;gap:10px;align-items:baseline}
+.sub-h .no{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold);font-weight:700}
+.note{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.65}
+.note p{margin-top:3px}
+sup{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--gold)}
+
+/* ① header */
+header.cover{background:var(--paper);border-bottom:1px solid var(--line)}
+.cover-in{display:flex;justify-content:space-between;gap:28px;padding:34px 0 30px;flex-wrap:wrap}
+.brand{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.22em;color:var(--gold);font-weight:700}
+.brand b{color:var(--ink)}
+h1{font-family:'DM Serif Display',serif;font-weight:400;font-size:44px;line-height:1.08;margin:14px 0 6px;letter-spacing:-.015em}
+h1 em{font-style:italic;color:var(--navy)}
+.kr-sub{font-size:18px;font-weight:600;color:#3F3A34}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;align-items:center}
+.chip{font-family:'JetBrains Mono',monospace;font-size:11px;border:1px solid var(--line);background:#fff;padding:4px 10px;border-radius:3px;color:#3F3A34}
+.badge{font-size:12px;font-weight:700;background:var(--ink);color:#F8F7F5;padding:4px 11px;border-radius:3px}
+.dl-cluster{display:flex;flex-direction:column;align-items:flex-end;gap:10px;min-width:220px}
+.dl-btn{font-family:'Noto Serif KR',serif;font-weight:700;font-size:13px;background:var(--navy);color:#fff;border:none;padding:11px 18px;border-radius:4px;cursor:pointer;transition:background .15s}
+.dl-btn:hover{background:#0F1A30}
+.switch-row{display:flex;align-items:center;gap:8px;font-size:12px;color:#3F3A34}
+.switch{position:relative;width:40px;height:22px;display:inline-block}
+.switch input{opacity:0;width:0;height:0}
+.switch-track{position:absolute;inset:0;background:#D1CCC4;border-radius:22px;cursor:pointer;transition:.2s}
+.switch-track:before{content:"";position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.switch input:checked + .switch-track{background:var(--grn)}
+.switch input:checked + .switch-track:before{transform:translateX(18px)}
+.switch-status{font-size:11px;font-weight:700;min-width:26px}
+.lede{padding:22px 0 0;font-size:16px;line-height:1.85;color:#2A2622;max-width:900px}
+.lede b{background:linear-gradient(transparent 62%,rgba(154,123,47,.22) 62%)}
+
+/* ② surprise */
+.surprise{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.sp{padding:20px 22px;border-top:5px solid var(--neu);background:#fff}
+.sp + .sp{border-left:1px solid var(--line)}
+.sp .lab{font-size:12px;color:var(--muted);font-weight:600}
+.sp .val{font-family:'JetBrains Mono',monospace;font-size:34px;font-weight:700;margin-top:6px;line-height:1.1}
+.sp .val.na{font-family:'Noto Serif KR',serif;font-size:20px;color:var(--neu);padding-top:8px}
+.sp .aux{font-size:12px;color:var(--muted);margin-top:6px}
+.sp.actual{border-top-color:var(--red)}
+.sp.actual .val{color:var(--red-t)}
+.sp.good{border-top-color:var(--grn)}
+.sp.good .val{color:var(--grn-t)}
+
+/* ③ KPI */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.kpis.k3{grid-template-columns:repeat(3,1fr)}
+.kpi{border:1px solid var(--line);border-radius:6px;padding:18px;background:#fff;position:relative}
+.kpi:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:6px 0 0 6px;background:var(--neu)}
+.kpi.bad:before{background:var(--red)} .kpi.good:before{background:var(--grn)} .kpi.flat:before{background:var(--neu)}
+.kpi .t{font-size:12.5px;font-weight:700;color:#3F3A34}
+.kpi .t span{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);font-weight:500;margin-left:4px}
+.kpi .v{font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:700;margin:6px 0 4px;line-height:1.1}
+.kpi.bad .v{color:var(--red-t)} .kpi.good .v{color:var(--grn-t)} .kpi.flat .v{color:var(--ink)}
+.kpi .p{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)}
+.kpi .p b{font-weight:700}
+.kpi .p .up{color:var(--red-t)} .kpi .p .dn{color:var(--grn-t)} .kpi .p .eq{color:var(--neu)}
+.kpi.g-good .p .dn{color:var(--red-t)} .kpi.g-good .p .up{color:var(--grn-t)}
+.kpi .d{font-size:12px;color:#4B4640;margin-top:8px;line-height:1.55}
+
+/* charts */
+.chart-box{border:1px solid var(--line);border-radius:6px;padding:18px 16px 12px;background:#fff}
+.chart-box svg{width:100%;height:auto;display:block}
+.ax{font-family:'JetBrains Mono',monospace;font-size:11px;fill:#6B7280}
+.ax.yr{font-weight:700;fill:#3F3A34}
+.lbl{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700}
+.bl{font-family:'Noto Serif KR',serif;font-size:12.5px;fill:#2A2622}
+.bv{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:12px;color:#3F3A34;margin:0 0 8px 6px;align-items:center}
+.legend i{display:inline-block;width:14px;height:4px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.legend i.hl{height:12px;width:12px;background:rgba(154,123,47,.18);border:1px solid rgba(154,123,47,.4)}
+.legend i.sq{height:10px;width:10px}
+.legend .unit{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* table */
+.tbl-wrap{border:1px solid var(--line);border-radius:6px;max-height:640px;overflow:auto}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+thead th{position:sticky;top:0;z-index:2;background:#1A1714;color:#fff;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.06em;text-align:right;padding:11px 12px;white-space:nowrap}
+thead th:first-child{text-align:left}
+tbody td{padding:8px 12px;border-bottom:1px solid #EFEBE4}
+tbody tr:nth-child(even){background:#F8F7F5}
+td.num{font-family:'JetBrains Mono',monospace;text-align:right;font-weight:600}
+td.ctr{text-align:center}
+td.na{text-align:right;color:var(--neu);font-size:12px}
+td.nm{white-space:nowrap}
+tr.lv0 td.nm{font-weight:900}
+tr.lv1 td.nm{font-weight:700;padding-left:18px}
+tr.lv2 td.nm{font-weight:600;padding-left:32px}
+tr.lv3 td.nm{padding-left:48px;color:#3F3A34}
+tr.lv0{background:#EFEBE3 !important}
+tr.sep td{background:#FBF7EC;font-weight:700;font-size:12px;color:var(--gold);letter-spacing:.04em}
+.c-red{color:var(--red-t)} .c-grn{color:var(--grn-t)} .c-neu{color:var(--neu)}
+.ar{font-size:11px;font-weight:700}
+.ar.up-bad{color:var(--red-t)} .ar.dn-good{color:var(--grn-t)} .ar.flat{color:var(--neu)}
+
+/* ⑦ impact */
+.impact{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.imp{border:1px solid var(--line);border-radius:6px;padding:20px;background:#fff;border-top:4px solid var(--neu)}
+.imp.bad{border-top-color:var(--red)} .imp.good{border-top-color:var(--grn)} .imp.mix{border-top-color:var(--gold)}
+.imp .tag{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:var(--muted)}
+.imp h3{font-size:16.5px;font-weight:700;margin:4px 0 6px}
+.imp .fig{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;margin-bottom:6px}
+.imp.bad .fig{color:var(--red-t)} .imp.good .fig{color:var(--grn-t)} .imp.mix .fig{color:var(--gold)}
+.imp p{font-size:13.5px;color:#3F3A34;line-height:1.75}
+
+/* ⑧ fedwatch */
+.fw thead th{text-align:center}
+.fw td{text-align:center;font-family:'JetBrains Mono',monospace;font-size:12.5px}
+.fw td.na{text-align:center}
+.fw .hl{color:#B91C1C;font-weight:700}
+
+/* ⑨ market */
+.mkt{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.m{border:1px dashed #D1CCC4;border-radius:6px;padding:16px;background:var(--paper)}
+.m .h{font-size:13px;font-weight:700}
+.m .h span{display:block;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);font-weight:500}
+.m .row{display:flex;justify-content:space-between;font-size:12px;margin-top:8px;border-top:1px solid var(--line);padding-top:6px}
+.m .row .na{color:var(--neu)}
+
+/* ⑩ conclusion */
+.concl{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.cc{border-left:3px solid var(--gold);padding:4px 0 4px 16px}
+.cc .n{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold);font-weight:700}
+.cc h4{font-size:15.5px;font-weight:700;margin:4px 0 6px;line-height:1.5}
+.cc p{font-size:13.5px;color:#3F3A34}
+.policy{margin-top:22px;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:20px 22px}
+.policy h4{font-family:'DM Serif Display','Noto Serif KR',serif;font-weight:400;font-size:18px;margin-bottom:8px}
+.policy p{font-size:14px;color:#2A2622}
+.next{margin-top:14px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.nx{border:1px solid var(--line);border-radius:6px;padding:14px;background:#fff}
+.nx .d{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold);font-weight:700}
+.nx .t{font-size:14px;font-weight:700;margin-top:2px}
+.nx .x{font-size:12.5px;color:#4B4640;margin-top:4px}
+
+footer{margin-top:52px;border-top:2px solid var(--ink);background:var(--paper)}
+footer .wrap{padding-top:22px;padding-bottom:30px;font-size:12px;color:var(--muted)}
+footer .fb{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink);margin-bottom:10px}
+
+@media (max-width:860px){
+  h1{font-size:34px}
+  .kpis,.kpis.k3,.mkt{grid-template-columns:repeat(2,1fr)}
+  .impact,.concl,.next,.two{grid-template-columns:1fr}
+  .dl-cluster{align-items:flex-start}
+}
+@media (max-width:560px){
+  .wrap{padding:0 16px}
+  .surprise{grid-template-columns:1fr}
+  .sp + .sp{border-left:none;border-top-width:5px}
+  .kpis,.kpis.k3,.mkt{grid-template-columns:1fr}
+  .sp .val{font-size:28px}
+}
+</style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body id="artifacts-component-root-html">
+
+<!-- ① 헤더 커버 -->
+<header class="cover">
+  <div class="wrap">
+    <div class="cover-in">
+      <div>
+        <div class="brand">TNB<b>FOLIO</b> · US MACRO INDICATOR</div>
+        <h1>Personal Income <em>&amp;</em> Outlays<br>PCE Price Index</h1>
+        <div class="kr-sub">미국 개인소득·지출 및 PCE 물가지수 — 2026년 8월분</div>
+        <div class="meta">
+          <span class="chip">발표 2026-09-30 08:30 EDT</span>
+          <span class="chip">한국시간 2026-09-30 21:30</span>
+          <span class="chip">BEA 26–43</span>
+          <span class="badge">채널 자체 분석</span>
+        </div>
+      </div>
+      <div class="dl-cluster">
+        <button class="dl-btn" onclick="downloadReport()">⬇ 리포트 다운로드 (HTML)</button>
+        <div class="switch-row">
+          <span class="switch-label">자동 다운로드</span>
+          <label class="switch">
+            <input type="checkbox" id="autoDlToggle" checked="" onchange="handleToggleChange(this.checked)">
+            <span class="switch-track"></span>
+          </label>
+          <span class="switch-status mono" id="switchStatus">ON</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="wrap" style="padding-bottom:28px">
+    <p class="lede">8월 근원 PCE는 전월비 <b>0.2%</b>, 전년비 <b>3.0%</b>로 전망치(0.3%·3.3%)를 모두 밑돌았다. 헤드라인은 전월비 <b>0.3%</b>로 전망에 부합했으나 전년비 <b>3.4%</b>는 전망(3.7%)보다 0.3%p 낮았다. 방법론 개편을 포함한 연례 개정이 최근 물가 수준을 끌어내린 결과로 평가된다. 발표 후 10월 FOMC 인상 확률은 전일 약 50%에서 <b>34.9%</b>로 낮아졌고, 시장은 다음 인상 시점을 12월로 미뤘다. 한편 실질 소비는 <b>0.6%</b> 늘어 2025년 3월 이후 최대 폭을 기록했지만 실질 가처분소득은 제자리였고 저축률은 4.1%로 2022년 이후 최저로 떨어졌다.</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- ② 서프라이즈 배너 -->
+<section>
+  <div class="sec-h"><span class="no">②</span><h2>Surprise Banner<small>근원 PCE 물가 MoM 기준</small></h2></div>
+  <div class="surprise">
+    <div class="sp good">
+      <div class="lab">발표치 · 근원 PCE MoM</div>
+      <div class="val">0.2%</div>
+      <div class="aux mono">전월 0.1% · YoY 3.0% (전월 3.0%)</div>
+    </div>
+    <div class="sp">
+      <div class="lab">전망치 (시장 컨센서스)</div>
+      <div class="val" style="color:#3F3A34">0.3%</div>
+      <div class="aux mono">YoY 전망 3.3%</div>
+    </div>
+    <div class="sp good">
+      <div class="lab">서프라이즈 (발표 − 전망)</div>
+      <div class="val">−0.1%p</div>
+      <div class="aux">예상 하회 · 물가 완화 서프라이즈</div>
+    </div>
+  </div>
+  <div class="note"><p>상단 색상 바: 물가지표 로직상 전망 하회는 초록(완화)으로 처리했다. 전망치는 Bloomberg 서베이·Dow Jones 서베이 공통 수치다.</p></div>
+
+  <div class="sub-h"><span class="no">②-1</span>컨센서스 대비 전 항목</div>
+  <div class="tbl-wrap" style="max-height:none">
+    <table>
+      <thead><tr><th>항목</th><th>발표치</th><th>전망치</th><th>서프라이즈</th><th>판정</th></tr></thead>
+      <tbody>
+        <tr><td class="nm">PCE 물가 MoM</td><td class="num">0.3%</td><td class="num">0.3%</td><td class="num c-neu">0.0%p</td><td class="ctr c-neu">부합</td></tr>
+        <tr><td class="nm">PCE 물가 YoY</td><td class="num">3.4%</td><td class="num">3.7%</td><td class="num c-grn">−0.3%p</td><td class="ctr c-grn">하회 (완화)</td></tr>
+        <tr><td class="nm">근원 PCE 물가 MoM</td><td class="num">0.2%</td><td class="num">0.3%</td><td class="num c-grn">−0.1%p</td><td class="ctr c-grn">하회 (완화)</td></tr>
+        <tr><td class="nm">근원 PCE 물가 YoY</td><td class="num">3.0%</td><td class="num">3.3%</td><td class="num c-grn">−0.3%p</td><td class="ctr c-grn">하회 (완화)</td></tr>
+        <tr class="sep"><td colspan="5">소득·지출 (성장 지표 로직: 상회=초록 · 하회=빨강)</td></tr>
+        <tr><td class="nm">개인소득 MoM</td><td class="num">0.2%</td><td class="num">0.4%</td><td class="num c-red">−0.2%p</td><td class="ctr c-red">하회</td></tr>
+        <tr><td class="nm">개인지출 MoM</td><td class="num">0.9%</td><td class="num">0.8%</td><td class="num c-grn">+0.1%p</td><td class="ctr c-grn">상회</td></tr>
+        <tr><td class="nm">실질 개인소비 MoM</td><td class="num">0.6%</td><td class="na">데이터 미제공</td><td class="na">데이터 미제공</td><td class="ctr c-neu">―</td></tr>
+        <tr><td class="nm">2분기 GDP 확정치 (연율)</td><td class="num">2.2%</td><td class="num">1.5%<sup>*</sup></td><td class="num c-grn">+0.7%p</td><td class="ctr c-grn">상회</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note"><p>서프라이즈 = 발표치 − 전망치 (원문 수치 단순 차감). 개인소득·지출 전망치는 Dow Jones 서베이 기준이다.</p><p>* GDP 1.5%는 Bloomberg 표에 전망치(Estimate)로, CNBC 기사에 직전 추정치(prior estimate)로 각각 기재돼 있다. 두 표기를 모두 남긴다.</p></div>
+</section>
+
+<!-- ③ KPI -->
+<section>
+  <div class="sec-h"><span class="no">③</span><h2>Key Metrics<small>물가 핵심 지표</small></h2></div>
+  <div class="kpis">
+    <div class="kpi flat">
+      <div class="t">근원 PCE 물가<span>YoY</span></div>
+      <div class="v">3.0%</div>
+      <div class="p">전월 3.0% <b class="eq">― 보합</b></div>
+      <div class="d">3개월 연속 3.0%다. 7월치는 3.3%에서 3.0%로 하향 수정됐다.</div>
+    </div>
+    <div class="kpi bad">
+      <div class="t">근원 PCE 물가<span>MoM</span></div>
+      <div class="v">0.2%</div>
+      <div class="p">전월 0.1% <b class="up">▲ 상승</b></div>
+      <div class="d">전망 0.3%를 하회했다. 7월치도 하향 수정됐다.</div>
+    </div>
+    <div class="kpi flat">
+      <div class="t">PCE 물가<span>YoY</span></div>
+      <div class="v">3.4%</div>
+      <div class="p">전월 3.4% <b class="eq">― 보합</b></div>
+      <div class="d">전망 3.7%를 0.3%p 하회했다. 5월 고점은 3.8%였다.</div>
+    </div>
+    <div class="kpi bad">
+      <div class="t">PCE 물가<span>MoM</span></div>
+      <div class="v">0.3%</div>
+      <div class="p">전월 0.1% <b class="up">▲ 상승</b></div>
+      <div class="d">전망 부합. 에너지 상품·서비스 +2.3%가 견인했다.</div>
+    </div>
+  </div>
+
+  <div class="sub-h"><span class="no">③-1</span>소득·지출 지표 <small class="note" style="margin:0">— 성장 지표 색상 로직: 증가=초록(견조) · 감소=빨강(둔화)</small></div>
+  <div class="kpis k3">
+    <div class="kpi good g-good">
+      <div class="t">개인지출 (명목 PCE)<span>MoM · 8월</span></div>
+      <div class="v">0.9%</div>
+      <div class="p">전월 0.1% <b class="up">▲ 급증</b></div>
+      <div class="d">전망 0.8% 상회 · +$190.8B (상품 +$114.1B · 서비스 +$76.7B)</div>
+    </div>
+    <div class="kpi good g-good">
+      <div class="t">실질 개인소비<span>MoM · 8월</span></div>
+      <div class="v">0.6%</div>
+      <div class="p">전월 0.1% <b class="up">▲ 급증</b></div>
+      <div class="d">2025년 3월 이후 최대 · +$92.8B · 실질 상품 1.3% / 서비스 0.2%</div>
+    </div>
+    <div class="kpi bad g-good">
+      <div class="t">개인소득<span>MoM · 8월</span></div>
+      <div class="v">0.2%</div>
+      <div class="p">전월 0.3% <b class="dn">▼ 둔화</b></div>
+      <div class="d">전망 0.4% 하회 · +$66.6B · 실질 DPI 0.0% · 저축률 4.1%(2022년 이후 최저)</div>
+    </div>
+  </div>
+  <div class="note"><p>출처: BEA Personal Income and Outlays, August 2026 (Personal Income and Related Measures 표). 실질 상품·서비스 증가율은 BEA Table 2.8.1.</p></div>
+</section>
+
+<!-- ④ 트렌드 -->
+<section>
+  <div class="sec-h"><span class="no">④</span><h2>Inflation Trend<small>PCE vs 근원 PCE, 전년동월비</small></h2></div>
+  <div class="chart-box"><div class="legend"><span><i style="background:#C8392B"></i>PCE 물가 YoY</span><span><i style="background:#1B2A4A"></i>근원 PCE 물가 YoY</span><span><i class="hl"></i>2026년 8월(당월)</span><span class="unit">단위: %, 전년동월비</span></div><svg id="cYoy" viewBox="0 0 920 330" role="img" preserveAspectRatio="xMidYMid meet"><line x1="48" x2="850" y1="286.0" y2="286.0" stroke="#E7E3DC" stroke-width="1"></line><text x="40" y="290.0" text-anchor="end" class="ax">2.0</text><line x1="48" x2="850" y1="220.5" y2="220.5" stroke="#E7E3DC" stroke-width="1"></line><text x="40" y="224.5" text-anchor="end" class="ax">2.5</text><line x1="48" x2="850" y1="155.0" y2="155.0" stroke="#E7E3DC" stroke-width="1"></line><text x="40" y="159.0" text-anchor="end" class="ax">3.0</text><line x1="48" x2="850" y1="89.5" y2="89.5" stroke="#E7E3DC" stroke-width="1"></line><text x="40" y="93.5" text-anchor="end" class="ax">3.5</text><line x1="48" x2="850" y1="24.0" y2="24.0" stroke="#E7E3DC" stroke-width="1"></line><text x="40" y="28.0" text-anchor="end" class="ax">4.0</text><text x="48.0" y="304" text-anchor="middle" class="ax">25.1</text><text x="90.2" y="304" text-anchor="middle" class="ax">2</text><text x="132.4" y="304" text-anchor="middle" class="ax">3</text><text x="174.6" y="304" text-anchor="middle" class="ax">4</text><text x="216.8" y="304" text-anchor="middle" class="ax">5</text><text x="259.1" y="304" text-anchor="middle" class="ax">6</text><text x="301.3" y="304" text-anchor="middle" class="ax">7</text><text x="343.5" y="304" text-anchor="middle" class="ax">8</text><text x="385.7" y="304" text-anchor="middle" class="ax">9</text><text x="427.9" y="304" text-anchor="middle" class="ax">10</text><text x="470.1" y="304" text-anchor="middle" class="ax">11</text><text x="512.3" y="304" text-anchor="middle" class="ax">12</text><text x="554.5" y="304" text-anchor="middle" class="ax">26.1</text><text x="596.7" y="304" text-anchor="middle" class="ax">2</text><text x="638.9" y="304" text-anchor="middle" class="ax">3</text><text x="681.2" y="304" text-anchor="middle" class="ax">4</text><text x="723.4" y="304" text-anchor="middle" class="ax">5</text><text x="765.6" y="304" text-anchor="middle" class="ax">6</text><text x="807.8" y="304" text-anchor="middle" class="ax">7</text><text x="850.0" y="304" text-anchor="middle" class="ax">8</text><line x1="533.4" x2="533.4" y1="24" y2="286" stroke="#D6D0C6" stroke-dasharray="3 4"></line><text x="259.1" y="324" text-anchor="middle" class="ax yr">2025</text><text x="702.3" y="324" text-anchor="middle" class="ax yr">2026</text><path d="M48.0,207.4 L90.2,207.4 L132.4,246.7 L174.6,246.7 L216.8,220.5 L259.1,207.4 L301.3,207.4 L343.5,194.3 L385.7,181.2 L427.9,194.3 L470.1,194.3 L512.3,181.2 L554.5,194.3 L596.7,181.2 L638.9,102.6 L681.2,76.4 L723.4,50.2 L765.6,89.5 L807.8,102.6 L850.0,102.6" fill="none" stroke="#C8392B" stroke-width="2.6" stroke-linejoin="round"></path><circle cx="48.0" cy="207.4" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2025-01: 2.6%</title></circle><circle cx="90.2" cy="207.4" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2025-02: 2.6%</title></circle><circle cx="132.4" cy="246.7" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2025-03: 2.3%</title></circle><circle cx="174.6" cy="246.7" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2025-04: 2.3%</title></circle><circle cx="216.8" cy="220.5" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2025-05: 2.5%</title></circle><circle cx="259.1" cy="207.4" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2025-06: 2.6%</title></circle><circle cx="301.3" cy="207.4" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2025-07: 2.6%</title></circle><circle cx="343.5" cy="194.3" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2025-08: 2.7%</title></circle><circle cx="385.7" cy="181.2" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2025-09: 2.8%</title></circle><circle cx="427.9" cy="194.3" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2025-10: 2.7%</title></circle><circle cx="470.1" cy="194.3" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2025-11: 2.7%</title></circle><circle cx="512.3" cy="181.2" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2025-12: 2.8%</title></circle><circle cx="554.5" cy="194.3" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2026-01: 2.7%</title></circle><circle cx="596.7" cy="181.2" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2026-02: 2.8%</title></circle><circle cx="638.9" cy="102.6" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2026-03: 3.4%</title></circle><circle cx="681.2" cy="76.4" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2026-04: 3.6%</title></circle><circle cx="723.4" cy="50.2" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2026-05: 3.8%</title></circle><circle cx="765.6" cy="89.5" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2026-06: 3.5%</title></circle><circle cx="807.8" cy="102.6" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2026-07: 3.4%</title></circle><path d="M48.0,181.2 L90.2,181.2 L132.4,207.4 L174.6,194.3 L216.8,181.2 L259.1,181.2 L301.3,181.2 L343.5,168.1 L385.7,181.2 L427.9,194.3 L470.1,194.3 L512.3,168.1 L554.5,168.1 L596.7,155.0 L638.9,141.9 L681.2,141.9 L723.4,128.8 L765.6,155.0 L807.8,155.0 L850.0,155.0" fill="none" stroke="#1B2A4A" stroke-width="2.6" stroke-linejoin="round"></path><circle cx="48.0" cy="181.2" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2025-01: 2.8%</title></circle><circle cx="90.2" cy="181.2" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2025-02: 2.8%</title></circle><circle cx="132.4" cy="207.4" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2025-03: 2.6%</title></circle><circle cx="174.6" cy="194.3" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2025-04: 2.7%</title></circle><circle cx="216.8" cy="181.2" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2025-05: 2.8%</title></circle><circle cx="259.1" cy="181.2" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2025-06: 2.8%</title></circle><circle cx="301.3" cy="181.2" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2025-07: 2.8%</title></circle><circle cx="343.5" cy="168.1" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2025-08: 2.9%</title></circle><circle cx="385.7" cy="181.2" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2025-09: 2.8%</title></circle><circle cx="427.9" cy="194.3" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2025-10: 2.7%</title></circle><circle cx="470.1" cy="194.3" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2025-11: 2.7%</title></circle><circle cx="512.3" cy="168.1" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2025-12: 2.9%</title></circle><circle cx="554.5" cy="168.1" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2026-01: 2.9%</title></circle><circle cx="596.7" cy="155.0" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2026-02: 3.0%</title></circle><circle cx="638.9" cy="141.9" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2026-03: 3.1%</title></circle><circle cx="681.2" cy="141.9" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2026-04: 3.1%</title></circle><circle cx="723.4" cy="128.8" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2026-05: 3.2%</title></circle><circle cx="765.6" cy="155.0" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2026-06: 3.0%</title></circle><circle cx="807.8" cy="155.0" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2026-07: 3.0%</title></circle><rect x="834.0" y="24" width="32" height="262" fill="#9A7B2F" opacity=".08"></rect><circle cx="850.0" cy="102.6" r="6" fill="#C8392B" stroke="#fff" stroke-width="2"><title>2026-08 PCE 물가 YoY: 3.4%</title></circle><circle cx="850.0" cy="155.0" r="6" fill="#1B2A4A" stroke="#fff" stroke-width="2"><title>2026-08 근원 PCE 물가 YoY: 3.0%</title></circle><text x="862.0" y="107.6" class="lbl" fill="#C8392B">3.4%</text><text x="862.0" y="160.0" class="lbl" fill="#1B2A4A">3.0%</text></svg></div>
+  <div class="note">
+    <p>¹ BEA Table 2.8.11 (Line 32·37) 실측치, 2025년 1월~2026년 8월 20개월. 추정치는 사용하지 않았다.</p>
+    <p>² 이번 발표는 국민계정 연례 개정(annual update)을 반영했으며 2021년 1월 이후 수치가 수정됐다. 과거 발표 당시 수치와 다를 수 있다.</p>
+  </div>
+
+  <div class="sub-h"><span class="no">④-1</span>월간 모멘텀 — 전월비</div>
+  <div class="chart-box"><div class="legend"><span><i style="background:#C8392B"></i>PCE 물가 MoM</span><span><i style="background:#1B2A4A"></i>근원 PCE 물가 MoM</span><span><i class="hl"></i>2026년 8월(당월)</span><span class="unit">단위: %, 전월비</span></div><svg id="cMom" viewBox="0 0 920 330" role="img" preserveAspectRatio="xMidYMid meet"><line x1="48" x2="850" y1="286.0" y2="286.0" stroke="#E7E3DC" stroke-width="1"></line><text x="40" y="290.0" text-anchor="end" class="ax">-0.2</text><line x1="48" x2="850" y1="256.9" y2="256.9" stroke="#E7E3DC" stroke-width="1"></line><text x="40" y="260.9" text-anchor="end" class="ax">-0.1</text><line x1="48" x2="850" y1="227.8" y2="227.8" stroke="#9CA3AF" stroke-width="1"></line><text x="40" y="231.8" text-anchor="end" class="ax">0.0</text><line x1="48" x2="850" y1="198.7" y2="198.7" stroke="#E7E3DC" stroke-width="1"></line><text x="40" y="202.7" text-anchor="end" class="ax">0.1</text><line x1="48" x2="850" y1="169.6" y2="169.6" stroke="#E7E3DC" stroke-width="1"></line><text x="40" y="173.6" text-anchor="end" class="ax">0.2</text><line x1="48" x2="850" y1="140.4" y2="140.4" stroke="#E7E3DC" stroke-width="1"></line><text x="40" y="144.4" text-anchor="end" class="ax">0.3</text><line x1="48" x2="850" y1="111.3" y2="111.3" stroke="#E7E3DC" stroke-width="1"></line><text x="40" y="115.3" text-anchor="end" class="ax">0.4</text><line x1="48" x2="850" y1="82.2" y2="82.2" stroke="#E7E3DC" stroke-width="1"></line><text x="40" y="86.2" text-anchor="end" class="ax">0.5</text><line x1="48" x2="850" y1="53.1" y2="53.1" stroke="#E7E3DC" stroke-width="1"></line><text x="40" y="57.1" text-anchor="end" class="ax">0.6</text><line x1="48" x2="850" y1="24.0" y2="24.0" stroke="#E7E3DC" stroke-width="1"></line><text x="40" y="28.0" text-anchor="end" class="ax">0.7</text><text x="48.0" y="304" text-anchor="middle" class="ax">25.1</text><text x="90.2" y="304" text-anchor="middle" class="ax">2</text><text x="132.4" y="304" text-anchor="middle" class="ax">3</text><text x="174.6" y="304" text-anchor="middle" class="ax">4</text><text x="216.8" y="304" text-anchor="middle" class="ax">5</text><text x="259.1" y="304" text-anchor="middle" class="ax">6</text><text x="301.3" y="304" text-anchor="middle" class="ax">7</text><text x="343.5" y="304" text-anchor="middle" class="ax">8</text><text x="385.7" y="304" text-anchor="middle" class="ax">9</text><text x="427.9" y="304" text-anchor="middle" class="ax">10</text><text x="470.1" y="304" text-anchor="middle" class="ax">11</text><text x="512.3" y="304" text-anchor="middle" class="ax">12</text><text x="554.5" y="304" text-anchor="middle" class="ax">26.1</text><text x="596.7" y="304" text-anchor="middle" class="ax">2</text><text x="638.9" y="304" text-anchor="middle" class="ax">3</text><text x="681.2" y="304" text-anchor="middle" class="ax">4</text><text x="723.4" y="304" text-anchor="middle" class="ax">5</text><text x="765.6" y="304" text-anchor="middle" class="ax">6</text><text x="807.8" y="304" text-anchor="middle" class="ax">7</text><text x="850.0" y="304" text-anchor="middle" class="ax">8</text><line x1="533.4" x2="533.4" y1="24" y2="286" stroke="#D6D0C6" stroke-dasharray="3 4"></line><text x="259.1" y="324" text-anchor="middle" class="ax yr">2025</text><text x="702.3" y="324" text-anchor="middle" class="ax yr">2026</text><path d="M48.0,111.3 L90.2,140.4 L132.4,198.7 L174.6,169.6 L216.8,169.6 L259.1,140.4 L301.3,198.7 L343.5,140.4 L385.7,140.4 L427.9,198.7 L470.1,169.6 L512.3,140.4 L554.5,140.4 L596.7,140.4 L638.9,53.1 L681.2,111.3 L723.4,111.3 L765.6,256.9 L807.8,198.7 L850.0,140.4" fill="none" stroke="#C8392B" stroke-width="2.6" stroke-linejoin="round"></path><circle cx="48.0" cy="111.3" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2025-01: 0.4%</title></circle><circle cx="90.2" cy="140.4" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2025-02: 0.3%</title></circle><circle cx="132.4" cy="198.7" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2025-03: 0.1%</title></circle><circle cx="174.6" cy="169.6" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2025-04: 0.2%</title></circle><circle cx="216.8" cy="169.6" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2025-05: 0.2%</title></circle><circle cx="259.1" cy="140.4" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2025-06: 0.3%</title></circle><circle cx="301.3" cy="198.7" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2025-07: 0.1%</title></circle><circle cx="343.5" cy="140.4" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2025-08: 0.3%</title></circle><circle cx="385.7" cy="140.4" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2025-09: 0.3%</title></circle><circle cx="427.9" cy="198.7" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2025-10: 0.1%</title></circle><circle cx="470.1" cy="169.6" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2025-11: 0.2%</title></circle><circle cx="512.3" cy="140.4" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2025-12: 0.3%</title></circle><circle cx="554.5" cy="140.4" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2026-01: 0.3%</title></circle><circle cx="596.7" cy="140.4" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2026-02: 0.3%</title></circle><circle cx="638.9" cy="53.1" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2026-03: 0.6%</title></circle><circle cx="681.2" cy="111.3" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2026-04: 0.4%</title></circle><circle cx="723.4" cy="111.3" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2026-05: 0.4%</title></circle><circle cx="765.6" cy="256.9" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2026-06: −0.1%</title></circle><circle cx="807.8" cy="198.7" r="2.6" fill="#fff" stroke="#C8392B" stroke-width="1.6"><title>2026-07: 0.1%</title></circle><path d="M48.0,140.4 L90.2,140.4 L132.4,198.7 L174.6,140.4 L216.8,169.6 L259.1,140.4 L301.3,169.6 L343.5,169.6 L385.7,169.6 L427.9,169.6 L470.1,169.6 L512.3,140.4 L554.5,111.3 L596.7,140.4 L638.9,140.4 L681.2,140.4 L723.4,140.4 L765.6,198.7 L807.8,198.7 L850.0,169.6" fill="none" stroke="#1B2A4A" stroke-width="2.6" stroke-linejoin="round"></path><circle cx="48.0" cy="140.4" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2025-01: 0.3%</title></circle><circle cx="90.2" cy="140.4" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2025-02: 0.3%</title></circle><circle cx="132.4" cy="198.7" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2025-03: 0.1%</title></circle><circle cx="174.6" cy="140.4" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2025-04: 0.3%</title></circle><circle cx="216.8" cy="169.6" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2025-05: 0.2%</title></circle><circle cx="259.1" cy="140.4" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2025-06: 0.3%</title></circle><circle cx="301.3" cy="169.6" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2025-07: 0.2%</title></circle><circle cx="343.5" cy="169.6" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2025-08: 0.2%</title></circle><circle cx="385.7" cy="169.6" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2025-09: 0.2%</title></circle><circle cx="427.9" cy="169.6" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2025-10: 0.2%</title></circle><circle cx="470.1" cy="169.6" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2025-11: 0.2%</title></circle><circle cx="512.3" cy="140.4" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2025-12: 0.3%</title></circle><circle cx="554.5" cy="111.3" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2026-01: 0.4%</title></circle><circle cx="596.7" cy="140.4" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2026-02: 0.3%</title></circle><circle cx="638.9" cy="140.4" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2026-03: 0.3%</title></circle><circle cx="681.2" cy="140.4" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2026-04: 0.3%</title></circle><circle cx="723.4" cy="140.4" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2026-05: 0.3%</title></circle><circle cx="765.6" cy="198.7" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2026-06: 0.1%</title></circle><circle cx="807.8" cy="198.7" r="2.6" fill="#fff" stroke="#1B2A4A" stroke-width="1.6"><title>2026-07: 0.1%</title></circle><rect x="834.0" y="24" width="32" height="262" fill="#9A7B2F" opacity=".08"></rect><circle cx="850.0" cy="140.4" r="6" fill="#C8392B" stroke="#fff" stroke-width="2"><title>2026-08 PCE 물가 MoM: 0.3%</title></circle><circle cx="850.0" cy="169.6" r="6" fill="#1B2A4A" stroke="#fff" stroke-width="2"><title>2026-08 근원 PCE 물가 MoM: 0.2%</title></circle><text x="862.0" y="145.4" class="lbl" fill="#C8392B">0.3%</text><text x="862.0" y="174.6" class="lbl" fill="#1B2A4A">0.2%</text></svg></div>
+  <div class="note"><p>³ BEA Table 2.8.7 (Line 1·25) 실측치. 2026년 3월 헤드라인 0.6%는 에너지 상품(휘발유 +20.9%) 급등 구간이다.</p></div>
+</section>
+
+<!-- ⑤ 세부 항목 -->
+<section>
+  <div class="sec-h"><span class="no">⑤</span><h2>Component Breakdown<small>품목별 가격 변화, 8월 MoM</small></h2></div>
+  <div class="chart-box">
+    <div class="legend"><span><i class="sq" style="background:#EF4444"></i>가격 상승 (물가 심화)</span><span><i class="sq" style="background:#10B981"></i>가격 하락 (물가 완화)</span><span><i class="sq" style="background:#9CA3AF"></i>보합</span><span class="unit">단위: %, 전월비</span></div>
+    <svg id="cCat" viewBox="0 0 920 426" role="img" preserveAspectRatio="xMidYMid meet"><line x1="353.2" x2="353.2" y1="6" y2="404" stroke="#9CA3AF"></line><text x="200" y="27.0" text-anchor="end" class="bl">휘발유·기타 에너지재</text><rect x="353.2" y="15" width="484.7" height="16" rx="2" fill="#EF4444"><title>휘발유·기타 에너지재: +4.4%</title></rect><text x="844.0" y="27.0" class="bv" fill="#EF4444">+4.4%</text><text x="200" y="53.0" text-anchor="end" class="bl">운송 서비스</text><rect x="353.2" y="41" width="154.2" height="16" rx="2" fill="#EF4444"><title>운송 서비스: +1.4%</title></rect><text x="513.5" y="53.0" class="bv" fill="#EF4444">+1.4%</text><text x="200" y="79.0" text-anchor="end" class="bl">기타 서비스</text><rect x="353.2" y="67" width="99.2" height="16" rx="2" fill="#EF4444"><title>기타 서비스: +0.9%</title></rect><text x="458.4" y="79.0" class="bv" fill="#EF4444">+0.9%</text><text x="200" y="105.0" text-anchor="end" class="bl">외식·숙박</text><rect x="353.2" y="93" width="55.1" height="16" rx="2" fill="#EF4444"><title>외식·숙박: +0.5%</title></rect><text x="414.3" y="105.0" class="bv" fill="#EF4444">+0.5%</text><text x="200" y="131.0" text-anchor="end" class="bl">레저용품·레저차량</text><rect x="353.2" y="119" width="44.1" height="16" rx="2" fill="#EF4444"><title>레저용품·레저차량: +0.4%</title></rect><text x="403.3" y="131.0" class="bv" fill="#EF4444">+0.4%</text><text x="200" y="157.0" text-anchor="end" class="bl">의류·신발</text><rect x="353.2" y="145" width="22.0" height="16" rx="2" fill="#EF4444"><title>의류·신발: +0.2%</title></rect><text x="381.3" y="157.0" class="bv" fill="#EF4444">+0.2%</text><text x="200" y="183.0" text-anchor="end" class="bl">의료</text><rect x="353.2" y="171" width="22.0" height="16" rx="2" fill="#EF4444"><title>의료: +0.2%</title></rect><text x="381.3" y="183.0" class="bv" fill="#EF4444">+0.2%</text><text x="200" y="209.0" text-anchor="end" class="bl">금융서비스·보험</text><rect x="353.2" y="197" width="22.0" height="16" rx="2" fill="#EF4444"><title>금융서비스·보험: +0.2%</title></rect><text x="381.3" y="209.0" class="bv" fill="#EF4444">+0.2%</text><text x="200" y="235.0" text-anchor="end" class="bl">주거·공공요금</text><rect x="353.2" y="223" width="11.0" height="16" rx="2" fill="#EF4444"><title>주거·공공요금: +0.1%</title></rect><text x="370.2" y="235.0" class="bv" fill="#EF4444">+0.1%</text><text x="200" y="261.0" text-anchor="end" class="bl">자동차·부품</text><rect x="353.2" y="249" width="1.5" height="16" rx="2" fill="#9CA3AF"><title>자동차·부품: 0.0%</title></rect><text x="359.2" y="261.0" class="bv" fill="#6B7280">0.0%</text><text x="200" y="287.0" text-anchor="end" class="bl">가구·내구 가정용품</text><rect x="353.2" y="275" width="1.5" height="16" rx="2" fill="#9CA3AF"><title>가구·내구 가정용품: 0.0%</title></rect><text x="359.2" y="287.0" class="bv" fill="#6B7280">0.0%</text><text x="200" y="313.0" text-anchor="end" class="bl">식료품·음료(가정 내 소비)</text><rect x="353.2" y="301" width="1.5" height="16" rx="2" fill="#9CA3AF"><title>식료품·음료(가정 내 소비): 0.0%</title></rect><text x="359.2" y="313.0" class="bv" fill="#6B7280">0.0%</text><text x="200" y="339.0" text-anchor="end" class="bl">레저 서비스</text><rect x="353.2" y="327" width="1.5" height="16" rx="2" fill="#9CA3AF"><title>레저 서비스: 0.0%</title></rect><text x="359.2" y="339.0" class="bv" fill="#6B7280">0.0%</text><text x="200" y="365.0" text-anchor="end" class="bl">기타 비내구재</text><rect x="342.2" y="353" width="11.0" height="16" rx="2" fill="#10B981"><title>기타 비내구재: −0.1%</title></rect><text x="336.2" y="365.0" text-anchor="end" class="bv" fill="#10B981">−0.1%</text><text x="200" y="391.0" text-anchor="end" class="bl">기타 내구재</text><rect x="320.2" y="379" width="33.1" height="16" rx="2" fill="#10B981"><title>기타 내구재: −0.3%</title></rect><text x="314.2" y="391.0" text-anchor="end" class="bv" fill="#10B981">−0.3%</text></svg>
+  </div>
+  <div class="note"><p>⁴ BEA Table 2.8.7 세부 품목(Line 4–7, 9–12, 15–21). 휘발유·기타 에너지재 +4.4%, 운송 서비스 +1.4%, 기타 서비스 +0.9%가 상위 3개 품목이다.</p></div>
+
+  <div class="sub-h"><span class="no">⑤-1</span>명목 소비지출 증감 — 8월 품목별</div>
+  <div class="chart-box">
+    <div class="legend"><span><i class="sq" style="background:#9A7B2F"></i>상품</span><span><i class="sq" style="background:#1A5C9E"></i>서비스</span><span class="unit">단위: 십억 달러, 계절조정 연율</span></div>
+    <svg id="cDol" viewBox="0 0 920 452" role="img" preserveAspectRatio="xMidYMid meet"><line x1="464.3" x2="464.3" y1="6" y2="430" stroke="#9CA3AF"></line><text x="200" y="27.0" text-anchor="end" class="bl">기타 비내구재</text><rect x="464.3" y="15" width="349.0" height="16" rx="2" fill="#9A7B2F"><title>기타 비내구재: +24.7</title></rect><text x="819.4" y="27.0" class="bv" fill="#9A7B2F">+24.7</text><text x="200" y="53.0" text-anchor="end" class="bl">휘발유·기타 에너지재</text><rect x="464.3" y="41" width="295.3" height="16" rx="2" fill="#9A7B2F"><title>휘발유·기타 에너지재: +20.9</title></rect><text x="765.7" y="53.0" class="bv" fill="#9A7B2F">+20.9</text><text x="200" y="79.0" text-anchor="end" class="bl">외식·숙박</text><rect x="464.3" y="67" width="291.1" height="16" rx="2" fill="#1A5C9E"><title>외식·숙박: +20.6</title></rect><text x="761.4" y="79.0" class="bv" fill="#1A5C9E">+20.6</text><text x="200" y="105.0" text-anchor="end" class="bl">자동차·부품</text><rect x="464.3" y="93" width="284.0" height="16" rx="2" fill="#9A7B2F"><title>자동차·부품: +20.1</title></rect><text x="754.4" y="105.0" class="bv" fill="#9A7B2F">+20.1</text><text x="200" y="131.0" text-anchor="end" class="bl">기타 서비스</text><rect x="464.3" y="119" width="264.2" height="16" rx="2" fill="#1A5C9E"><title>기타 서비스: +18.7</title></rect><text x="734.6" y="131.0" class="bv" fill="#1A5C9E">+18.7</text><text x="200" y="157.0" text-anchor="end" class="bl">레저용품·레저차량</text><rect x="464.3" y="145" width="240.2" height="16" rx="2" fill="#9A7B2F"><title>레저용품·레저차량: +17.0</title></rect><text x="710.6" y="157.0" class="bv" fill="#9A7B2F">+17.0</text><text x="200" y="183.0" text-anchor="end" class="bl">의료</text><rect x="464.3" y="171" width="213.4" height="16" rx="2" fill="#1A5C9E"><title>의료: +15.1</title></rect><text x="683.7" y="183.0" class="bv" fill="#1A5C9E">+15.1</text><text x="200" y="209.0" text-anchor="end" class="bl">운송 서비스</text><rect x="464.3" y="197" width="178.0" height="16" rx="2" fill="#1A5C9E"><title>운송 서비스: +12.6</title></rect><text x="648.4" y="209.0" class="bv" fill="#1A5C9E">+12.6</text><text x="200" y="235.0" text-anchor="end" class="bl">식료품·음료</text><rect x="464.3" y="223" width="163.9" height="16" rx="2" fill="#9A7B2F"><title>식료품·음료: +11.6</title></rect><text x="634.3" y="235.0" class="bv" fill="#9A7B2F">+11.6</text><text x="200" y="261.0" text-anchor="end" class="bl">주거·공공요금</text><rect x="464.3" y="249" width="145.5" height="16" rx="2" fill="#1A5C9E"><title>주거·공공요금: +10.3</title></rect><text x="615.9" y="261.0" class="bv" fill="#1A5C9E">+10.3</text><text x="200" y="287.0" text-anchor="end" class="bl">의류·신발</text><rect x="464.3" y="275" width="127.2" height="16" rx="2" fill="#9A7B2F"><title>의류·신발: +9.0</title></rect><text x="597.5" y="287.0" class="bv" fill="#9A7B2F">+9.0</text><text x="200" y="313.0" text-anchor="end" class="bl">금융서비스·보험</text><rect x="464.3" y="301" width="120.1" height="16" rx="2" fill="#1A5C9E"><title>금융서비스·보험: +8.5</title></rect><text x="590.5" y="313.0" class="bv" fill="#1A5C9E">+8.5</text><text x="200" y="339.0" text-anchor="end" class="bl">가구·내구 가정용품</text><rect x="464.3" y="327" width="91.8" height="16" rx="2" fill="#9A7B2F"><title>가구·내구 가정용품: +6.5</title></rect><text x="562.2" y="339.0" class="bv" fill="#9A7B2F">+6.5</text><text x="200" y="365.0" text-anchor="end" class="bl">기타 내구재</text><rect x="464.3" y="353" width="60.8" height="16" rx="2" fill="#9A7B2F"><title>기타 내구재: +4.3</title></rect><text x="531.1" y="365.0" class="bv" fill="#9A7B2F">+4.3</text><text x="200" y="391.0" text-anchor="end" class="bl">비영리단체 최종소비</text><rect x="464.3" y="379" width="15.5" height="16" rx="2" fill="#1A5C9E"><title>비영리단체 최종소비: +1.1</title></rect><text x="485.9" y="391.0" class="bv" fill="#1A5C9E">+1.1</text><text x="200" y="417.0" text-anchor="end" class="bl">레저 서비스</text><rect x="318.8" y="405" width="145.5" height="16" rx="2" fill="#1A5C9E"><title>레저 서비스: −10.3</title></rect><text x="312.8" y="417.0" text-anchor="end" class="bv" fill="#1A5C9E">−10.3</text></svg>
+  </div>
+  <div class="note"><p>⁵ BEA 발표문 "Changes in Monthly Consumer Spending, August 2026" 차트 수치. 지출 규모 지표이므로 물가 색상 로직 대신 상품/서비스 구분색을 적용했다.</p></div>
+</section>
+
+<!-- ⑥ 테이블 -->
+<section>
+  <div class="sec-h"><span class="no">⑥</span><h2>Full Data Table<small>PCE 가격지수 품목별</small></h2></div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>항목 (PRICE INDEX)</th><th>2026.08 MoM %</th><th>2026.07 MoM %</th><th>방향</th><th>YoY % (2026.08)</th></tr></thead>
+      <tbody>
+<tr class="lv0"><td class="nm">개인소비지출(PCE) 전체</td><td class="num c-red">0.3</td><td class="num c-red">0.1</td><td class="ctr"><span class="ar up-bad">▲</span></td><td class="num c-red">3.4</td></tr>
+<tr class="lv1"><td class="nm">상품</td><td class="num c-red">0.3</td><td class="num c-grn">−0.1</td><td class="ctr"><span class="ar up-bad">▲</span></td><td class="num c-red">3.6</td></tr>
+<tr class="lv2"><td class="nm">내구재</td><td class="num c-red">0.1</td><td class="num c-red">0.4</td><td class="ctr"><span class="ar dn-good">▼</span></td><td class="num c-red">2.6</td></tr>
+<tr class="lv3"><td class="nm">자동차·부품</td><td class="num c-neu">0.0</td><td class="num c-red">0.4</td><td class="ctr"><span class="ar dn-good">▼</span></td><td class="na">데이터 미제공</td></tr>
+<tr class="lv3"><td class="nm">가구·내구 가정용품</td><td class="num c-neu">0.0</td><td class="num c-grn">−0.9</td><td class="ctr"><span class="ar up-bad">▲</span></td><td class="na">데이터 미제공</td></tr>
+<tr class="lv3"><td class="nm">레저용품·레저차량</td><td class="num c-red">0.4</td><td class="num c-red">1.2</td><td class="ctr"><span class="ar dn-good">▼</span></td><td class="na">데이터 미제공</td></tr>
+<tr class="lv3"><td class="nm">기타 내구재</td><td class="num c-grn">−0.3</td><td class="num c-red">0.6</td><td class="ctr"><span class="ar dn-good">▼</span></td><td class="na">데이터 미제공</td></tr>
+<tr class="lv2"><td class="nm">비내구재</td><td class="num c-red">0.5</td><td class="num c-grn">−0.4</td><td class="ctr"><span class="ar up-bad">▲</span></td><td class="num c-red">4.1</td></tr>
+<tr class="lv3"><td class="nm">식료품·음료(가정 내 소비)</td><td class="num c-neu">0.0</td><td class="num c-grn">−0.1</td><td class="ctr"><span class="ar up-bad">▲</span></td><td class="na">데이터 미제공</td></tr>
+<tr class="lv3"><td class="nm">의류·신발</td><td class="num c-red">0.2</td><td class="num c-grn">−0.1</td><td class="ctr"><span class="ar up-bad">▲</span></td><td class="na">데이터 미제공</td></tr>
+<tr class="lv3"><td class="nm">휘발유·기타 에너지재</td><td class="num c-red">4.4</td><td class="num c-grn">−2.7</td><td class="ctr"><span class="ar up-bad">▲</span></td><td class="na">데이터 미제공</td></tr>
+<tr class="lv3"><td class="nm">기타 비내구재</td><td class="num c-grn">−0.1</td><td class="num c-neu">0.0</td><td class="ctr"><span class="ar dn-good">▼</span></td><td class="na">데이터 미제공</td></tr>
+<tr class="lv1"><td class="nm">서비스</td><td class="num c-red">0.3</td><td class="num c-red">0.1</td><td class="ctr"><span class="ar up-bad">▲</span></td><td class="num c-red">3.4</td></tr>
+<tr class="lv2"><td class="nm">가계 서비스 소비</td><td class="num c-red">0.4</td><td class="num c-red">0.1</td><td class="ctr"><span class="ar up-bad">▲</span></td><td class="na">데이터 미제공</td></tr>
+<tr class="lv3"><td class="nm">주거·공공요금</td><td class="num c-red">0.1</td><td class="num c-red">0.3</td><td class="ctr"><span class="ar dn-good">▼</span></td><td class="na">데이터 미제공</td></tr>
+<tr class="lv3"><td class="nm">의료</td><td class="num c-red">0.2</td><td class="num c-red">0.2</td><td class="ctr"><span class="ar flat">―</span></td><td class="na">데이터 미제공</td></tr>
+<tr class="lv3"><td class="nm">운송 서비스</td><td class="num c-red">1.4</td><td class="num c-red">0.1</td><td class="ctr"><span class="ar up-bad">▲</span></td><td class="na">데이터 미제공</td></tr>
+<tr class="lv3"><td class="nm">레저 서비스</td><td class="num c-neu">0.0</td><td class="num c-neu">0.0</td><td class="ctr"><span class="ar flat">―</span></td><td class="na">데이터 미제공</td></tr>
+<tr class="lv3"><td class="nm">외식·숙박</td><td class="num c-red">0.5</td><td class="num c-grn">−0.1</td><td class="ctr"><span class="ar up-bad">▲</span></td><td class="na">데이터 미제공</td></tr>
+<tr class="lv3"><td class="nm">금융서비스·보험</td><td class="num c-red">0.2</td><td class="num c-neu">0.0</td><td class="ctr"><span class="ar up-bad">▲</span></td><td class="na">데이터 미제공</td></tr>
+<tr class="lv3"><td class="nm">기타 서비스</td><td class="num c-red">0.9</td><td class="num c-neu">0.0</td><td class="ctr"><span class="ar up-bad">▲</span></td><td class="na">데이터 미제공</td></tr>
+<tr class="lv2"><td class="nm">비영리단체(NPISH) 최종소비</td><td class="num c-grn">−0.9</td><td class="num c-red">0.1</td><td class="ctr"><span class="ar dn-good">▼</span></td><td class="na">데이터 미제공</td></tr>
+<tr class="sep"><td colspan="5">보조지표 (Addenda)</td></tr>
+<tr class="lv1"><td class="nm">근원 PCE (식품·에너지 제외)</td><td class="num c-red">0.2</td><td class="num c-red">0.1</td><td class="ctr"><span class="ar up-bad">▲</span></td><td class="num c-red">3.0</td></tr>
+<tr class="lv1"><td class="nm">식품·에너지·주거 제외</td><td class="num c-red">0.3</td><td class="num c-red">0.1</td><td class="ctr"><span class="ar up-bad">▲</span></td><td class="num c-red">3.0</td></tr>
+<tr class="lv1"><td class="nm">서비스(에너지·주거 제외) — 슈퍼코어</td><td class="num c-red">0.4</td><td class="num c-red">0.1</td><td class="ctr"><span class="ar up-bad">▲</span></td><td class="num c-red">3.5</td></tr>
+<tr class="lv1"><td class="nm">주거</td><td class="num c-red">0.2</td><td class="num c-red">0.3</td><td class="ctr"><span class="ar dn-good">▼</span></td><td class="num c-red">3.0</td></tr>
+<tr class="lv1"><td class="nm">에너지 상품·서비스</td><td class="num c-red">2.3</td><td class="num c-grn">−1.4</td><td class="ctr"><span class="ar up-bad">▲</span></td><td class="num c-red">16.8</td></tr>
+<tr class="lv1"><td class="nm">시장기반 PCE</td><td class="num c-red">0.4</td><td class="num c-red">0.1</td><td class="ctr"><span class="ar up-bad">▲</span></td><td class="na">데이터 미제공</td></tr>
+<tr class="lv1"><td class="nm">시장기반 근원 PCE</td><td class="num c-red">0.3</td><td class="num c-red">0.1</td><td class="ctr"><span class="ar up-bad">▲</span></td><td class="na">데이터 미제공</td></tr>
+<tr class="lv1"><td class="nm">식품 (Food)</td><td class="na">데이터 미제공</td><td class="na">데이터 미제공</td><td class="ctr">―</td><td class="num c-red">1.9</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">
+    <p>⁶ MoM: BEA Table 2.8.7 / YoY: BEA Table 2.8.11 Line 32–42. Table 2.8.11은 세부 품목의 가격 YoY를 제공하지 않아 해당 칸은 "데이터 미제공"으로 표기했다. 식품(Food) MoM은 Table 2.8.7에 없다.</p>
+    <p>색상: 상승=빨강(물가 심화) · 하락=초록(물가 완화) · 보합=회색.</p>
+  </div>
+
+  <div class="sub-h"><span class="no">⑥-1</span>실질 개인소비 — 품목별</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>항목 (REAL PCE)</th><th>2026.08 MoM %</th><th>2026.07 MoM %</th><th>방향</th><th>YoY % (2026.08)</th></tr></thead>
+      <tbody>
+<tr class="lv0"><td class="nm">개인소비지출(PCE) 전체</td><td class="num c-grn">0.6</td><td class="num c-grn">0.1</td><td class="ctr"><span class="ar dn-good">▲</span></td><td class="num c-grn">2.6</td></tr>
+<tr class="lv1"><td class="nm">상품</td><td class="num c-grn">1.3</td><td class="num c-red">−0.5</td><td class="ctr"><span class="ar dn-good">▲</span></td><td class="num c-grn">2.7</td></tr>
+<tr class="lv2"><td class="nm">내구재</td><td class="num c-grn">1.9</td><td class="num c-red">−1.1</td><td class="ctr"><span class="ar dn-good">▲</span></td><td class="num c-grn">4.6</td></tr>
+<tr class="lv3"><td class="nm">자동차·부품</td><td class="num c-grn">2.6</td><td class="num c-red">−0.8</td><td class="ctr"><span class="ar dn-good">▲</span></td><td class="num c-grn">7.6</td></tr>
+<tr class="lv3"><td class="nm">가구·내구 가정용품</td><td class="num c-grn">1.2</td><td class="num c-grn">0.1</td><td class="ctr"><span class="ar dn-good">▲</span></td><td class="num c-grn">5.3</td></tr>
+<tr class="lv3"><td class="nm">레저용품·레저차량</td><td class="num c-grn">1.9</td><td class="num c-red">−2.7</td><td class="ctr"><span class="ar dn-good">▲</span></td><td class="num c-grn">1.0</td></tr>
+<tr class="lv3"><td class="nm">기타 내구재</td><td class="num c-grn">1.6</td><td class="num c-red">−0.1</td><td class="ctr"><span class="ar dn-good">▲</span></td><td class="num c-grn">4.9</td></tr>
+<tr class="lv2"><td class="nm">비내구재</td><td class="num c-grn">1.0</td><td class="num c-red">−0.1</td><td class="ctr"><span class="ar dn-good">▲</span></td><td class="num c-grn">1.8</td></tr>
+<tr class="lv3"><td class="nm">식료품·음료(가정 내 소비)</td><td class="num c-grn">0.7</td><td class="num c-red">−0.1</td><td class="ctr"><span class="ar dn-good">▲</span></td><td class="num c-grn">0.5</td></tr>
+<tr class="lv3"><td class="nm">의류·신발</td><td class="num c-grn">1.3</td><td class="num c-red">−0.1</td><td class="ctr"><span class="ar dn-good">▲</span></td><td class="num c-grn">3.5</td></tr>
+<tr class="lv3"><td class="nm">휘발유·기타 에너지재</td><td class="num c-neu">0.0</td><td class="num c-grn">0.3</td><td class="ctr"><span class="ar up-bad">▼</span></td><td class="num c-red">−3.5</td></tr>
+<tr class="lv3"><td class="nm">기타 비내구재</td><td class="num c-grn">1.5</td><td class="num c-red">−0.3</td><td class="ctr"><span class="ar dn-good">▲</span></td><td class="num c-grn">3.8</td></tr>
+<tr class="lv1"><td class="nm">서비스</td><td class="num c-grn">0.2</td><td class="num c-grn">0.3</td><td class="ctr"><span class="ar up-bad">▼</span></td><td class="num c-grn">2.5</td></tr>
+<tr class="lv2"><td class="nm">가계 서비스 소비</td><td class="num c-grn">0.2</td><td class="num c-grn">0.3</td><td class="ctr"><span class="ar up-bad">▼</span></td><td class="num c-grn">2.3</td></tr>
+<tr class="lv3"><td class="nm">주거·공공요금</td><td class="num c-grn">0.1</td><td class="num c-grn">0.1</td><td class="ctr"><span class="ar flat">―</span></td><td class="num c-grn">1.3</td></tr>
+<tr class="lv3"><td class="nm">의료</td><td class="num c-grn">0.2</td><td class="num c-grn">0.3</td><td class="ctr"><span class="ar up-bad">▼</span></td><td class="num c-grn">3.5</td></tr>
+<tr class="lv3"><td class="nm">운송 서비스</td><td class="num c-grn">0.2</td><td class="num c-grn">0.4</td><td class="ctr"><span class="ar up-bad">▼</span></td><td class="num c-grn">0.7</td></tr>
+<tr class="lv3"><td class="nm">레저 서비스</td><td class="num c-red">−1.1</td><td class="num c-grn">0.2</td><td class="ctr"><span class="ar up-bad">▼</span></td><td class="num c-grn">2.9</td></tr>
+<tr class="lv3"><td class="nm">외식·숙박</td><td class="num c-grn">0.8</td><td class="num c-grn">0.4</td><td class="ctr"><span class="ar dn-good">▲</span></td><td class="num c-grn">1.9</td></tr>
+<tr class="lv3"><td class="nm">금융서비스·보험</td><td class="num c-grn">0.3</td><td class="num c-red">−0.1</td><td class="ctr"><span class="ar dn-good">▲</span></td><td class="num c-grn">3.1</td></tr>
+<tr class="lv3"><td class="nm">기타 서비스</td><td class="num c-grn">0.2</td><td class="num c-grn">0.9</td><td class="ctr"><span class="ar up-bad">▼</span></td><td class="num c-grn">2.0</td></tr>
+<tr class="lv2"><td class="nm">비영리단체(NPISH) 최종소비</td><td class="num c-grn">1.0</td><td class="num c-grn">0.3</td><td class="ctr"><span class="ar dn-good">▲</span></td><td class="num c-grn">6.5</td></tr>
+<tr class="lv1"><td class="nm">근원(식품·에너지 제외)</td><td class="num c-grn">0.6</td><td class="num c-neu">0.0</td><td class="ctr"><span class="ar dn-good">▲</span></td><td class="num c-grn">2.9</td></tr>
+<tr class="lv1"><td class="nm">서비스(에너지·주거 제외)</td><td class="num c-grn">0.2</td><td class="num c-grn">0.3</td><td class="ctr"><span class="ar up-bad">▼</span></td><td class="num c-grn">2.9</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note"><p>⁷ MoM: BEA Table 2.8.1 / YoY: BEA Table 2.8.11 Line 1–28. 성장 지표 색상 로직(증가=초록 · 감소=빨강)을 적용했다.</p></div>
+</section>
+
+<!-- ⑥-2 개정 -->
+<section style="padding-top:8px">
+  <div class="sub-h"><span class="no">⑥-2</span>연례 개정·방법론 개편 요약</div>
+  <div class="tbl-wrap" style="max-height:none">
+    <table>
+      <thead><tr><th>항목</th><th>개정 후</th><th>개정 전 / 변화</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td class="nm">근원 PCE YoY (2026년 7월)</td><td class="num c-grn">3.0%</td><td class="num">3.3%</td><td class="na" style="text-align:left">하향 수정</td></tr>
+        <tr><td class="nm">PCE 물가 (2분기, 연율)</td><td class="num c-grn">5%</td><td class="num">−0.3%p</td><td class="na" style="text-align:left">직전 추정치 대비</td></tr>
+        <tr><td class="nm">근원 PCE 물가 (2분기, 연율)</td><td class="num c-grn">3.3%</td><td class="num">−0.3%p</td><td class="na" style="text-align:left">직전 추정치 대비</td></tr>
+        <tr><td class="nm">PCE 물가 연평균 (2020.4Q~2026.1Q)</td><td class="num">4%</td><td class="num c-neu">변화 없음</td><td class="na" style="text-align:left">기존 발표치와 동일</td></tr>
+        <tr><td class="nm">근원 PCE 연평균 (2020.4Q~2026.1Q)</td><td class="num c-grn">3.8%</td><td class="num">−0.1%p</td><td class="na" style="text-align:left">하향 수정</td></tr>
+        <tr class="sep"><td colspan="4">방법론 개편 품목 (방향만 공개 · 수치 데이터 미제공)</td></tr>
+        <tr><td class="nm">포트폴리오 운용수수료</td><td class="ctr c-grn" colspan="2">2021년 이후 물가 상승 속도 하향</td><td class="na" style="text-align:left">계산 방식 변경</td></tr>
+        <tr><td class="nm">법률 서비스</td><td class="ctr c-red" colspan="2">상승 추세 상향</td><td class="na" style="text-align:left">―</td></tr>
+        <tr><td class="nm">컴퓨터 소프트웨어·액세서리</td><td class="ctr c-red" colspan="2">최근 수치 상향</td><td class="na" style="text-align:left">―</td></tr>
+        <tr class="sep"><td colspan="4">성장 지표 (증가=초록)</td></tr>
+        <tr><td class="nm">2분기 GDP 확정치 (연율)</td><td class="num c-grn">2.2%</td><td class="num">1.5%</td><td class="na" style="text-align:left">1분기도 상향</td></tr>
+        <tr><td class="nm">민간 국내 최종구매자 실질 판매</td><td class="num c-grn">4.6%</td><td class="num">+0.4%p</td><td class="na" style="text-align:left">연준 주시 기조수요 지표</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note"><p>¹¹ BEA는 가격 데이터 수정 폭을 "작다(small)"고 설명했다. 2분기 물가·GDP·연평균 수치는 Barron's·CNBC·Bloomberg 기사를 인용했다. 방법론 개편이 품목별로 몇 %p 영향을 줬는지는 원문에 없다.</p></div>
+</section>
+
+<!-- ⑦ 시장 영향 -->
+<section>
+  <div class="sec-h"><span class="no">⑦</span><h2>Market Impact<small>채널 자체 해석</small></h2></div>
+  <div class="impact">
+    <div class="imp good">
+      <div class="tag">DOWNSIDE SURPRISE</div>
+      <h3>근원 물가, 전망을 전 구간 하회했다</h3>
+      <div class="fig">3.0% vs 전망 3.3%</div>
+      <p>근원 PCE는 전월비(0.2% vs 0.3%)와 전년비(3.0% vs 3.3%) 모두 전망을 밑돌았다. 다만 하회 폭의 상당 부분은 연례 개정으로 7월치까지 3.3%→3.0%로 낮아진 데서 비롯됐다. 월간 물가 모멘텀이 식었다기보다 물가 수준이 재조정된 결과로 평가된다.</p>
+    </div>
+    <div class="imp bad">
+      <div class="tag">ENERGY · SUPERCORE</div>
+      <h3>에너지와 서비스 물가의 압력은 남아 있다</h3>
+      <div class="fig">슈퍼코어 MoM 0.4%</div>
+      <p>에너지·주거 제외 서비스 물가는 전월비 0.4%로 5월 이후 가장 빨랐고, 전년비 3.5%로 올라섰다. 휘발유 +4.4%, 운송 서비스 +1.4%가 뒤를 받쳤다. 금융서비스·보험은 +0.2%에 그쳐 이번 반등의 주동인은 아니었다. 9월 디젤 가격 급등은 이번 수치에 아직 반영되지 않았다.</p>
+    </div>
+    <div class="imp good">
+      <div class="tag">RATES REPRICING</div>
+      <h3>10월 인상 베팅이 후퇴했다</h3>
+      <div class="fig">인상 확률 ≈50% → 34.9%</div>
+      <p>10월 FOMC 인상(400–425bp) 확률은 전일 약 50%에서 34.9%로 낮아졌다. 동결은 65.1%다. 미 2년물은 4.848%(−0.042)로 하락해 단기물 중심의 금리 되돌림이 나타났다. 12월 인상(400–425bp 이상) 확률은 87.9%로, 시장은 연내 1회 인상 시나리오를 유지했다.</p>
+    </div>
+    <div class="imp mix">
+      <div class="tag">CONSUMER SQUEEZE</div>
+      <h3>1년 만의 최대 소비, 소득은 따라오지 못했다</h3>
+      <div class="fig">실질 DPI 0.0% · 저축률 4.1%</div>
+      <p>실질 소비 0.6%는 2025년 3월 이후 최대 증가였다. 반면 실질 가처분소득은 제자리로 4월 이후 가장 부진했고, 저축률은 2022년 이후 최저로 내려왔다. 개정으로 가계 재무 여력이 기존 추정보다 크다는 점이 확인됐지만, 저축 인출에 기댄 소비의 지속성에는 의문이 남는다.</p>
+    </div>
+  </div>
+
+  <div class="sub-h"><span class="no">⑦-1</span>정책·시장 코멘트</div>
+  <div class="impact">
+    <div class="imp mix">
+      <div class="tag">NY FED · JOHN WILLIAMS</div>
+      <h3>"서두를 필요 없다"</h3>
+      <p>9월 회의 조치로 급할 필요가 없고 정보를 더 모을 시간이 있다고 말했다. 다만 연말께 추가 인상이 "적절할 수 있다"고 덧붙였고, 시장은 다음 인상 시점을 12월로 옮겼다.</p>
+    </div>
+    <div class="imp good">
+      <div class="tag">BLOOMBERG ECONOMICS</div>
+      <h3>올해 물가, 예상의 두 배만큼 하향 수정</h3>
+      <p>이번 소득·지출 보고서가 윌리엄스 총재의 "서두를 필요 없다"는 판단을 뒷받침한다고 평가했다. 올해 물가 수정 폭이 자체 예상보다 두 배 컸다고 분석했다.</p>
+    </div>
+    <div class="imp bad">
+      <div class="tag">NAVY FEDERAL · HEATHER LONG</div>
+      <h3>"8월 물가 개선은 없었다"</h3>
+      <p>8월 물가에 진전이 없었고 9월 수치는 더 높아질 수밖에 없다고 진단했다. 미국 소비자가 압박을 받고 있다고 평가했다.</p>
+    </div>
+    <div class="imp mix">
+      <div class="tag">TRADESTATION · DAVID RUSSELL</div>
+      <h3>10월 동결 논거 강화, 다만 '지난 데이터'</h3>
+      <p>최근 채권금리 급등을 걱정하던 투자자에게 호재이고 10월 동결 논거를 강화한다고 평가했다. 다만 이번 달 디젤 가격 급등을 반영하지 못한 과거 데이터라고 지적했다.</p>
+    </div>
+  </div>
+  <div class="note"><p>¹² 해석이 엇갈리는 코멘트(비둘기적: Bloomberg Economics·Russell / 매파적: Long)를 조정하지 않고 나란히 제시했다.</p></div>
+</section>
+
+<!-- ⑧ 정책 영향 -->
+<section>
+  <div class="sec-h"><span class="no">⑧</span><h2>Policy Outlook<small>CME FedWatch · 현행 3.75–4.00%</small></h2></div>
+  <div class="sub-h" style="margin-top:0"><span class="no">⑧-1</span>10월 FOMC — 발표 전후 비교</div>
+  <div class="tbl-wrap" style="max-height:none">
+    <table class="fw">
+      <thead><tr><th>2026-10-28 FOMC</th><th>목표 범위</th><th>발표 전 (전일)</th><th>발표 후</th><th>변화</th></tr></thead>
+      <tbody>
+        <tr><td>동결</td><td>375–400bp</td><td>약 50%<sup>†</sup></td><td class="hl">65.1%</td><td class="c-grn">상승</td></tr>
+        <tr><td>25bp 인상</td><td>400–425bp</td><td>약 50%<sup>†</sup></td><td>34.9%</td><td class="c-grn">하락</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note"><p>† 발표 전 수치는 RAJAZ가 제공한 전일 수준("금리 인상 가능성 50% 정도")을 옮긴 근사치이며 CME 캡처가 아니다. 소수점 수치와 동결 확률은 데이터 미제공이며, 동결 약 50%는 인상 확률의 보수(補數)로 표기했다.</p></div>
+
+  <div class="sub-h"><span class="no">⑧-2</span>회의별 조건부 확률 — 발표 후 스냅샷</div>
+  <div class="tbl-wrap" style="max-height:none">
+    <table class="fw">
+      <thead><tr><th>회의일</th><th>375–400<br>동결</th><th>400–425<br>+25bp</th><th>425–450<br>+50bp</th><th>450–475<br>+75bp</th><th>475–500<br>+100bp</th><th>500–525<br>+125bp</th><th>525–550<br>+150bp</th><th>550–575<br>+175bp</th></tr></thead>
+      <tbody>
+<tr><td>2026-10-28</td><td class="hl">65.1%</td><td class="">34.9%</td><td class="">0.0%</td><td class="">0.0%</td><td class="">0.0%</td><td class="">0.0%</td><td class="na">―</td><td class="na">―</td></tr>
+<tr><td>2026-12-09</td><td class="">12.2%</td><td class="hl">59.5%</td><td class="">28.4%</td><td class="">0.0%</td><td class="">0.0%</td><td class="">0.0%</td><td class="">0.0%</td><td class="">0.0%</td></tr>
+<tr><td>2027-01-27</td><td class="">5.9%</td><td class="">35.0%</td><td class="hl">44.4%</td><td class="">14.7%</td><td class="">0.0%</td><td class="">0.0%</td><td class="">0.0%</td><td class="">0.0%</td></tr>
+<tr><td>2027-03-17</td><td class="">1.6%</td><td class="">14.0%</td><td class="hl">37.6%</td><td class="">36.2%</td><td class="">10.6%</td><td class="">0.0%</td><td class="">0.0%</td><td class="">0.0%</td></tr>
+<tr><td>2027-04-28</td><td class="">1.0%</td><td class="">8.9%</td><td class="">28.0%</td><td class="hl">36.8%</td><td class="">21.0%</td><td class="">4.3%</td><td class="">0.0%</td><td class="">0.0%</td></tr>
+<tr><td>2027-06-09</td><td class="">0.5%</td><td class="">5.5%</td><td class="">19.7%</td><td class="hl">33.0%</td><td class="">27.9%</td><td class="">11.6%</td><td class="">1.9%</td><td class="">0.0%</td></tr>
+<tr><td>2027-07-28</td><td class="">0.5%</td><td class="">4.7%</td><td class="">17.4%</td><td class="hl">30.8%</td><td class="">28.7%</td><td class="">14.3%</td><td class="">3.5%</td><td class="">0.3%</td></tr>
+<tr><td>2027-09-15</td><td class="">0.4%</td><td class="">4.1%</td><td class="">15.7%</td><td class="hl">29.0%</td><td class="hl">29.0%</td><td class="">16.1%</td><td class="">4.9%</td><td class="">0.7%</td></tr>
+<tr><td>2027-10-27</td><td class="">0.4%</td><td class="">4.1%</td><td class="">15.6%</td><td class="">28.9%</td><td class="hl">29.0%</td><td class="">16.3%</td><td class="">5.0%</td><td class="">0.8%</td></tr>
+<tr><td>2027-12-08</td><td class="">0.8%</td><td class="">5.3%</td><td class="">17.0%</td><td class="hl">28.9%</td><td class="">27.6%</td><td class="">15.1%</td><td class="">4.5%</td><td class="">0.7%</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note"><p>¹³ CME FedWatch 조건부 확률 캡처(단일 시점 스냅샷)를 그대로 옮겼다. 회의별 최고 확률 구간은 레드 볼드로 강조했다. "―"는 캡처상 공란이다. 구간 라벨은 9월 인상 이후 현행 목표 범위(3.75–4.00%)를 기준으로 붙였다.</p></div>
+</section>
+
+<!-- ⑨ 시장 반응 -->
+<section>
+  <div class="sec-h"><span class="no">⑨</span><h2>Market Reaction<small>발표 후 스냅샷 · KST 22:46 전후</small></h2></div>
+  <div class="mkt">
+    <div class="m"><div class="h"><span>EQUITIES</span>주식 (현물 지수)</div>
+      <div class="row"><span>다우존스</span><span class="mono c-red">51,328.89 (−0.04%)</span></div>
+      <div class="row"><span>S&amp;P 500</span><span class="mono c-grn">7,690.36 (+0.25%)</span></div>
+      <div class="row"><span>나스닥종합</span><span class="mono c-grn">26,929.37 (+0.49%)</span></div></div>
+    <div class="m"><div class="h"><span>TREASURIES</span>채권</div>
+      <div class="row"><span>미 2년</span><span class="mono c-grn">4.848% (−0.042)</span></div>
+      <div class="row"><span>미 10년</span><span class="mono c-neu">5.260% (0.000)</span></div>
+      <div class="row"><span>미 30년</span><span class="mono c-red">5.605% (+0.011)</span></div></div>
+    <div class="m"><div class="h"><span>FX</span>달러</div>
+      <div class="row"><span>달러인덱스</span><span class="na">데이터 미제공</span></div>
+      <div class="row"><span>달러/원</span><span class="na">데이터 미제공</span></div></div>
+    <div class="m"><div class="h"><span>COMMODITY · CRYPTO</span>원자재·암호화폐</div>
+      <div class="row"><span>WTI</span><span class="na">데이터 미제공</span></div>
+      <div class="row"><span>비트코인</span><span class="na">데이터 미제공</span></div></div>
+  </div>
+  <div class="note"><p>색상: 주가 상승=초록 · 하락=빨강 / 금리 하락=초록(완화) · 상승=빨강(긴축). 괄호 안은 캡처상 전일 기준가(베이스) 대비 변동이다. 발표 직전 대비 비교값은 데이터 미제공이다. 캡처는 지수선물이 아닌 현물 지수다.</p></div>
+
+  <div class="sub-h"><span class="no">⑨-1</span>미 국채 수익률 곡선 — 스냅샷</div>
+  <div class="tbl-wrap" style="max-height:none">
+    <table>
+      <thead><tr><th>만기</th><th>현재가 %</th><th>베이스 %</th><th>고가</th><th>저가</th><th>변동</th><th>변동 %</th><th>시간 (KST)</th></tr></thead>
+      <tbody>
+<tr><td class="nm">미국 1개월</td><td class="num">3.940</td><td class="num">3.933</td><td class="num">3.960</td><td class="num">3.932</td><td class="num c-red">+0.007</td><td class="num c-red">+0.18%</td><td class="num c-neu">22:36:25</td></tr>
+<tr><td class="nm">U.S. 2M</td><td class="num">4.080</td><td class="num">4.080</td><td class="num">4.124</td><td class="num">4.073</td><td class="num c-neu">0.000</td><td class="num c-neu">0.00%</td><td class="num c-neu">04:59:59</td></tr>
+<tr><td class="nm">미국 3개월</td><td class="num">4.154</td><td class="num">4.172</td><td class="num">4.182</td><td class="num">4.154</td><td class="num c-grn">−0.018</td><td class="num c-grn">−0.43%</td><td class="num c-neu">21:57:54</td></tr>
+<tr><td class="nm">U.S. 4M</td><td class="num">4.198</td><td class="num">4.232</td><td class="num">4.198</td><td class="num">4.198</td><td class="num c-grn">−0.035</td><td class="num c-grn">−0.83%</td><td class="num c-neu">22:32:38</td></tr>
+<tr><td class="nm">미국 6개월</td><td class="num">4.335</td><td class="num">4.372</td><td class="num">4.385</td><td class="num">4.335</td><td class="num c-grn">−0.037</td><td class="num c-grn">−0.85%</td><td class="num c-neu">22:08:55</td></tr>
+<tr><td class="nm">미국 1년</td><td class="num">4.534</td><td class="num">4.575</td><td class="num">4.599</td><td class="num">4.526</td><td class="num c-grn">−0.041</td><td class="num c-grn">−0.90%</td><td class="num c-neu">22:36:07</td></tr>
+<tr><td class="nm">미국 2년</td><td class="num">4.848</td><td class="num">4.889</td><td class="num">4.893</td><td class="num">4.831</td><td class="num c-grn">−0.042</td><td class="num c-grn">−0.86%</td><td class="num c-neu">22:39:36</td></tr>
+<tr><td class="nm">미국 3년</td><td class="num">4.949</td><td class="num">4.986</td><td class="num">4.988</td><td class="num">4.933</td><td class="num c-grn">−0.037</td><td class="num c-grn">−0.74%</td><td class="num c-neu">22:39:59</td></tr>
+<tr><td class="nm">미국 5년</td><td class="num">5.034</td><td class="num">5.063</td><td class="num">5.063</td><td class="num">5.014</td><td class="num c-grn">−0.029</td><td class="num c-grn">−0.57%</td><td class="num c-neu">22:39:57</td></tr>
+<tr><td class="nm">미국 7년</td><td class="num">5.140</td><td class="num">5.160</td><td class="num">5.152</td><td class="num">5.140</td><td class="num c-grn">−0.020</td><td class="num c-grn">−0.39%</td><td class="num c-neu">22:39:59</td></tr>
+<tr><td class="nm">미국 10년</td><td class="num">5.260</td><td class="num">5.260</td><td class="num">5.262</td><td class="num">5.202</td><td class="num c-neu">0.000</td><td class="num c-neu">0.00%</td><td class="num c-neu">22:46:48</td></tr>
+<tr><td class="nm">미국 20년</td><td class="num">5.645</td><td class="num">5.645</td><td class="num">5.660</td><td class="num">5.594</td><td class="num c-neu">0.000</td><td class="num c-neu">0.00%</td><td class="num c-neu">22:39:56</td></tr>
+<tr><td class="nm">미국 30년</td><td class="num">5.605</td><td class="num">5.594</td><td class="num">5.605</td><td class="num">5.544</td><td class="num c-red">+0.011</td><td class="num c-red">+0.20%</td><td class="num c-neu">22:39:59</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note"><p>¹⁴ 첨부 캡처 원문 수치다. 단일 시점 스냅샷이며, 만기별 갱신 시각이 달라 동시점 비교에 한계가 있다. 2M·10년물 변동은 캡처상 0.000이다.</p></div>
+</section>
+
+<!-- ⑩ 결론 -->
+<section>
+  <div class="sec-h"><span class="no">⑩</span><h2>Conclusion &amp; Outlook<small>결론 및 전망</small></h2></div>
+  <div class="concl">
+    <div class="cc"><div class="n">01</div><h4>'예상 하회'는 개정 효과가 절반이다</h4><p>근원 3.0%는 전망 3.3%를 밑돌았지만, 7월치도 3.3%→3.0%로 수정됐다. 근원 전년비는 3개월째 3.0%에 머물러 개선이 멈춘 상태이며 연준 목표 2%와의 거리는 그대로다.</p></div>
+    <div class="cc"><div class="n">02</div><h4>에너지·서비스 압력은 진행형이다</h4><p>헤드라인 전월비 0.3%는 휘발유 +4.4%가 주도했다. 슈퍼코어 0.4%는 5월 이후 최고였다. 9월 디젤 급등을 감안하면 다음 달 헤드라인은 재상승할 위험이 있다.</p></div>
+    <div class="cc"><div class="n">03</div><h4>소비는 강하지만 소득이 받쳐주지 못한다</h4><p>실질 소비는 1년여 만의 최대 증가였고 2분기 GDP는 2.2%로 상향됐다. 반면 실질 가처분소득 정체와 저축률 4.1%(2022년 이후 최저)는 소비 지속성을 제약한다.</p></div>
+  </div>
+  <div class="policy">
+    <h4>통화정책 영향</h4>
+    <p>이번 지표는 10월 추가 인상을 서두를 근거를 약화시켰다. 윌리엄스 총재의 "서두를 필요 없다" 발언에 예상 하회 물가가 더해지면서 10월 동결 확률은 65.1%로 올라섰다. 다만 근원 3.0% 정체, 슈퍼코어 재가속, 견조한 소비와 상향된 성장률은 긴축 사이클 종료 신호로 보기 어렵다. 12월 400–425bp 이상 확률이 87.9%(59.5% + 28.4%)에 이르는 만큼 시장의 기본 시나리오는 '10월 건너뛰고 12월 인상'으로 이동한 것으로 평가된다. 단기물 중심으로 금리가 하락한 반면 10년물 5.260%·30년물 5.605%는 높은 수준을 유지해 장기 금리 부담은 해소되지 않았다.</p>
+  </div>
+  <div class="next">
+    <div class="nx"><div class="d">2026년 10월 초</div><div class="t">9월 고용보고서 (NFP)</div><div class="x">ADP 9월 민간고용 +90,000명(3개월 최대)이 공식 지표로 확인되는지 본다.</div></div>
+    <div class="nx"><div class="d">2026년 10월 중순</div><div class="t">9월 CPI · PPI</div><div class="x">디젤·운송 서비스 가격 상승이 반영되는지 확인한다.</div></div>
+    <div class="nx"><div class="d mono">2026-10-28 · 10-29</div><div class="t">10월 FOMC · 9월 PCE</div><div class="x">동결 65.1% 시나리오가 유지될지, 근원 3.0% 정체에서 벗어날지 점검한다.</div></div>
+  </div>
+  <div class="note"><p>¹⁵ FOMC 일자는 CME FedWatch 캡처, 9월 PCE 발표(10-29 08:30 EDT)는 BEA 원문 기재다. 고용·CPI·PPI 정확한 일자는 원문에 없어 월 단위로만 표기했다. 12월 합산 확률 87.9%는 캡처 수치를 채널이 합산한 값이다.</p></div>
+</section>
+
+</main>
+
+<!-- ⑪ 푸터 -->
+<footer>
+  <div class="wrap">
+    <div class="fb"><span>TNBfolio · @TNBfolio</span><span>2026-09-30 · PCE 2026년 8월분</span></div>
+    <p>본 리포트는 미국 경제분석국(BEA) 공식 발표 자료를 바탕으로 한 채널 자체 분석이며, 투자 권유나 특정 금융상품의 매매 추천이 아니다. 수치는 원문 그대로 인용했고 원문에 없는 수치는 "데이터 미제공"으로 표기했다. 투자 판단과 그 결과에 대한 책임은 투자자 본인에게 있다.</p>
+  </div>
+</footer>
+
+<script>
+const STORAGE_KEY = 'tnbfolio_pce_auto_dl';
+
+function downloadReport(){
+  const blob = new Blob(['<!DOCTYPE html>\n' + document.documentElement.outerHTML], {type:'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'pce_202608_report.html';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+
+function handleToggleChange(isOn){
+  document.getElementById('switchStatus').textContent = isOn ? 'ON' : 'OFF';
+  try{ localStorage.setItem(STORAGE_KEY, isOn ? '1' : '0'); }catch(e){}
+}
+
+function initToggleState(){
+  const toggle = document.getElementById('autoDlToggle');
+  let saved = null;
+  try{ saved = localStorage.getItem(STORAGE_KEY); }catch(e){}
+  if(saved === '0'){ toggle.checked = false; }
+  else if(saved === '1'){ toggle.checked = true; }
+  document.getElementById('switchStatus').textContent = toggle.checked ? 'ON' : 'OFF';
+  return toggle.checked;
+}
+
+
+</script>
+
+
+</body></html>
