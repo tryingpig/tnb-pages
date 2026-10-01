@@ -1,0 +1,843 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>데일리 마켓 브리핑 2026-10-01</title>
+<style>
+*{box-sizing:border-box;} html,body{margin:0;padding:0;} html{font-size:14.5px;}
+/* 색: dataviz 스킬의 검증 팔레트(blue↔red 다이버징, CVD·대비 통과) 적용 */
+:root{
+  --bg:#f2f3f5; --panel:#ffffff; --fg:#12161c; --muted:#5c636b; --line:#e3e6ea; --line2:#eef0f2;
+  --accent:#2a78d6; --accent-d:#1c5cab; --accent-t:rgba(42,120,214,.08); --accent-b:rgba(42,120,214,.22);
+  --up:#e34948; --down:#2a78d6; --neu:#808891; --mix:#808891; --ai:#eaf2fc;
+  /* 적중/실패는 등락색(빨=상승,파=하락)과 뜻이 겹치면 안 되므로 green↔gray로 분리(적록 대비 아님) */
+  --ok:#1f8f57; --ok-b:rgba(31,143,87,.28); --no:#7d858d;
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#0d0d0d; --panel:#1a1a19; --fg:#f4f4f2; --muted:#a7ada6; --line:#2a2a28; --line2:#1f1f1e;
+    --accent:#3987e5; --accent-d:#6da7ec; --accent-t:rgba(57,135,229,.14); --accent-b:rgba(57,135,229,.32);
+    --up:#e66767; --down:#3987e5; --neu:#8a949c; --mix:#8a949c; --ai:#121a26;
+    --ok:#42b881; --ok-b:rgba(66,184,129,.32); --no:#8a949c;}
+}
+body{background:var(--bg); color:var(--fg);
+  font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  -webkit-font-smoothing:antialiased; font-size:1rem; line-height:1.68; letter-spacing:-.003em;}
+.topbar{height:4px; background:linear-gradient(90deg,var(--accent-d),var(--accent));}
+.wrap{max-width:768px; margin:0 auto; padding:44px 22px 110px;}
+
+header{border-bottom:1px solid var(--line); padding-bottom:22px; margin-bottom:32px;}
+.eyebrow{display:inline-flex; align-items:center; gap:8px; color:var(--accent-d); font-size:.72rem;
+  font-weight:800; letter-spacing:.18em; text-transform:uppercase;}
+.eyebrow:before{content:""; width:16px; height:2px; background:var(--accent);}
+h1{font-size:clamp(1.8rem,5.2vw,2.5rem); font-weight:800; letter-spacing:-.03em; line-height:1.1; margin:12px 0 10px;}
+.meta{color:var(--muted); font-size:.83rem; font-variant-numeric:tabular-nums;}
+
+section{margin:0 0 38px;}
+.sh{display:flex; align-items:center; gap:10px; margin:0 0 15px;}
+.sh:before{content:""; flex:0 0 auto; width:4px; height:19px; background:var(--accent); border-radius:2px;}
+.sh .no{color:var(--accent-d); font-weight:800; font-size:.8rem; font-variant-numeric:tabular-nums;}
+.sh h2{font-size:1.22rem; font-weight:800; letter-spacing:-.02em; margin:0;}
+.sh .cap{margin-left:auto; color:var(--muted); font-size:.76rem;}
+
+ul{margin:0; padding:0; list-style:none;}
+
+/* ① 핵심 = 요약 박스(흰색으로 대비) */
+.keybox{background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--accent);
+  border-radius:10px; padding:8px 22px;}
+.keybox li{position:relative; padding:12px 0 12px 20px; border-bottom:1px solid var(--line2); font-weight:600; font-size:1.03rem;}
+.keybox li:last-child{border-bottom:none;}
+.keybox li:first-child{font-size:1.12rem;}
+.keybox li:before{content:""; position:absolute; left:0; top:20px; width:7px; height:7px; border-radius:50%; background:var(--accent);}
+
+/* ②④ 리스트(■ 마커) */
+.mk li{position:relative; padding:11px 0 11px 22px; border-bottom:1px solid var(--line2);}
+.mk li:last-child{border-bottom:none;}
+.mk li:before{content:"▪"; position:absolute; left:2px; top:9px; color:var(--accent); font-size:.9rem;}
+
+/* ③ 종목·테마 = 게시글 리스트 스타일 (빨/파/회 논조 유지) */
+.art{border-top:1px solid var(--line); padding:18px 2px;}
+.art:first-of-type{border-top:none; padding-top:2px;}
+.ahead{display:flex; gap:13px; align-items:baseline;}
+.cat{flex:0 0 auto; min-width:52px; font-size:.75rem; font-weight:800; letter-spacing:.01em; padding-top:2px;}
+.cat.up{color:var(--up);} .cat.down{color:var(--down);} .cat.neu,.cat.mix{color:var(--mix);}
+.art h3{margin:0; font-size:1.12rem; font-weight:800; letter-spacing:-.015em; line-height:1.4;}
+.art .summary{color:var(--muted); font-size:.9rem; margin:6px 0 12px; padding-left:65px;}
+.sq{padding-left:65px;}
+.sq li{position:relative; padding:7px 0 7px 20px; border-top:1px solid var(--line2);}
+.sq li:first-child{border-top:none;}
+.sq li:before{content:"■"; position:absolute; left:0; top:8px; font-size:.66rem;}
+.sq li.up:before{color:var(--up);} .sq li.down:before{color:var(--down);} .sq li.neu:before{color:var(--neu);}
+@media(max-width:560px){
+  .art .summary,.sq{padding-left:0;}
+  .ahead{flex-wrap:wrap; gap:4px 10px;}
+}
+
+/* ⑤ AI */
+.ai{background:var(--ai); border:1px solid var(--accent-b); border-radius:12px; padding:4px 22px 16px; margin-top:4px;}
+.ai .sh{padding-top:16px;}
+.ai .tag{display:inline-block; margin:0 0 6px; font-size:.7rem; font-weight:800; color:var(--accent-d);
+  border:1px solid var(--accent-b); border-radius:999px; padding:2px 10px;}
+.ai li{position:relative; padding:11px 0 11px 22px; border-bottom:1px dashed var(--line); font-size:1.02rem;}
+.ai li:last-child{border-bottom:none;}
+.ai li:before{content:""; position:absolute; left:2px; top:19px; width:7px; height:7px; border-radius:50%; background:var(--accent-d);}
+
+/* ⑥ AI 베팅 */
+.bet{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:4px 22px 18px;}
+.bet .sh{padding-top:16px;}
+.bet .tag{display:inline-block; margin:0 0 12px; font-size:.7rem; font-weight:800; color:var(--muted);
+  border:1px solid var(--line); border-radius:999px; padding:2px 10px;}
+.bsub{font-size:.74rem; font-weight:800; letter-spacing:.1em; color:var(--muted);
+  text-transform:uppercase; margin:20px 0 9px; padding-top:14px; border-top:1px solid var(--line2);}
+.bsub:first-of-type{margin-top:2px; padding-top:0; border-top:none;}
+.bet-row{display:flex; align-items:baseline; gap:11px; padding:9px 0; border-bottom:1px solid var(--line2);}
+.bet-row:last-child{border-bottom:none;}
+.bet-row .idx{flex:0 0 52px; font-weight:800; font-size:.92rem;}
+.dir{flex:0 0 auto; font-weight:800; font-size:.92rem; font-variant-numeric:tabular-nums;}
+.dir.up{color:var(--up);} .dir.down{color:var(--down);}
+.bet-row .why{color:var(--muted); font-size:.87rem; line-height:1.55;}
+.pick{display:flex; align-items:baseline; gap:11px; padding:9px 0; border-bottom:1px solid var(--line2);}
+.pick:last-child{border-bottom:none;}
+.pick .rk{flex:0 0 18px; color:var(--accent-d); font-weight:800; font-size:.82rem; font-variant-numeric:tabular-nums;}
+.pick .nm{flex:0 0 auto; font-weight:800; font-size:.95rem;}
+.pick .mkt{flex:0 0 auto; font-size:.68rem; color:var(--muted); border:1px solid var(--line);
+  border-radius:4px; padding:1px 5px;}
+.pick .why{color:var(--muted); font-size:.85rem;}
+.badge{flex:0 0 auto; font-size:.7rem; font-weight:800; border-radius:999px; padding:2px 9px;
+  border:1px solid var(--line); color:var(--no);}
+.badge.hit{color:var(--ok); border-color:var(--ok-b);}
+.conf{color:var(--muted); font-size:.8rem; margin:10px 0 0; letter-spacing:.12em;}
+.btab{width:100%; border-collapse:collapse; font-size:.88rem; font-variant-numeric:tabular-nums;}
+.btab th,.btab td{padding:8px 6px; border-bottom:1px solid var(--line2); text-align:right;}
+.btab th{color:var(--muted); font-size:.74rem; font-weight:700; border-bottom:1px solid var(--line);}
+.btab th:first-child,.btab td:first-child{text-align:left; font-weight:700;}
+.btab tr:last-child td{border-bottom:none;}
+.btab td.rate{font-weight:800; white-space:nowrap;}
+.btab .sub{display:block; font-size:.72rem; font-weight:600; color:var(--muted);}
+.bnone{color:var(--muted); font-size:.88rem; padding:6px 0;}
+@media(max-width:560px){
+  .bet{padding:4px 15px 16px;}
+  .bet-row,.pick{flex-wrap:wrap; gap:5px 9px;}
+  .bet-row .why,.pick .why{flex:1 0 100%;}
+  .bet-row .idx{flex:0 0 44px;}
+}
+
+/* 차트(다이버징 바) */
+.chart{margin:0 0 14px; padding:11px 14px 9px; background:var(--panel); border:1px solid var(--line); border-radius:12px;}
+.c-title{font-size:.84rem; font-weight:800; color:var(--fg); margin:0 0 6px;}
+.c-note{color:var(--muted); font-size:.72rem; margin:8px 0 0;}
+.chart svg text{font-family:inherit;}
+.c-lab{fill:var(--muted); font-size:9px;}
+.c-val{fill:var(--fg); font-size:9px; font-weight:700; font-variant-numeric:tabular-nums;}
+.bar-up{fill:var(--up);} .bar-down{fill:var(--down);}
+.c-zero{stroke:var(--neu); stroke-width:1; stroke-opacity:.4;}
+
+footer{margin-top:46px; padding-top:18px; border-top:1px solid var(--line); color:var(--muted); font-size:.76rem;}
+</style><style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+<div class="topbar"></div>
+<div class="wrap">
+
+  <header>
+    <span class="eyebrow">Daily Market Briefing</span>
+    <h1>데일리 마켓 브리핑</h1>
+    <div class="meta">2026-10-01 · 2026-09-30 20:00 ~ 2026-10-01 20:00 · 원문 102건</div>
+  </header>
+
+  <section>
+    <div class="sh"><span class="no">01</span><h2>오늘의 핵심</h2></div>
+    <ul class="keybox">
+      <li class="">
+</li>
+      <li class="">&lt;</li>
+      <li class="">p</li>
+      <li class="">a</li>
+      <li class="">r</li>
+      <li class="">a</li>
+      <li class="">m</li>
+      <li class="">e</li>
+      <li class="">t</li>
+      <li class="">e</li>
+      <li class="">r</li>
+      <li class=""> </li>
+      <li class="">n</li>
+      <li class="">a</li>
+      <li class="">m</li>
+      <li class="">e</li>
+      <li class="">=</li>
+      <li class="">&quot;</li>
+      <li class="">h</li>
+      <li class="">e</li>
+      <li class="">a</li>
+      <li class="">d</li>
+      <li class="">l</li>
+      <li class="">i</li>
+      <li class="">n</li>
+      <li class="">e</li>
+      <li class="">s</li>
+      <li class="">&quot;</li>
+      <li class="">&gt;</li>
+      <li class="">[</li>
+      <li class="">&quot;</li>
+      <li class="">코</li>
+      <li class="">스</li>
+      <li class="">피</li>
+      <li class=""> </li>
+      <li class="">6</li>
+      <li class="">,</li>
+      <li class="">9</li>
+      <li class="">6</li>
+      <li class="">1</li>
+      <li class="">.</li>
+      <li class="">3</li>
+      <li class="">2</li>
+      <li class="">(</li>
+      <li class="">+</li>
+      <li class="">1</li>
+      <li class="">.</li>
+      <li class="">8</li>
+      <li class="">0</li>
+      <li class="">%</li>
+      <li class="">)</li>
+      <li class="">,</li>
+      <li class=""> </li>
+      <li class="">코</li>
+      <li class="">스</li>
+      <li class="">닥</li>
+      <li class=""> </li>
+      <li class="">8</li>
+      <li class="">9</li>
+      <li class="">3</li>
+      <li class="">.</li>
+      <li class="">7</li>
+      <li class="">0</li>
+      <li class="">(</li>
+      <li class="">+</li>
+      <li class="">4</li>
+      <li class="">.</li>
+      <li class="">4</li>
+      <li class="">2</li>
+      <li class="">%</li>
+      <li class="">)</li>
+      <li class=""> </li>
+      <li class="">동</li>
+      <li class="">반</li>
+      <li class=""> </li>
+      <li class="">급</li>
+      <li class="">등</li>
+      <li class="">,</li>
+      <li class=""> </li>
+      <li class="">코</li>
+      <li class="">스</li>
+      <li class="">닥</li>
+      <li class=""> </li>
+      <li class="">B</li>
+      <li class="">r</li>
+      <li class="">e</li>
+      <li class="">a</li>
+      <li class="">d</li>
+      <li class="">t</li>
+      <li class="">h</li>
+      <li class="">_</li>
+      <li class="">6</li>
+      <li class="">0</li>
+      <li class=""> </li>
+      <li class="">+</li>
+      <li class="">1</li>
+      <li class="">1</li>
+      <li class="">9</li>
+      <li class="">로</li>
+      <li class=""> </li>
+      <li class="">급</li>
+      <li class="">반</li>
+      <li class="">등</li>
+      <li class="">&quot;</li>
+      <li class="">,</li>
+      <li class=""> </li>
+      <li class="">&quot;</li>
+      <li class="">美</li>
+      <li class=""> </li>
+      <li class="">8</li>
+      <li class="">월</li>
+      <li class=""> </li>
+      <li class="">근</li>
+      <li class="">원</li>
+      <li class=""> </li>
+      <li class="">P</li>
+      <li class="">C</li>
+      <li class="">E</li>
+      <li class=""> </li>
+      <li class="">Y</li>
+      <li class="">o</li>
+      <li class="">Y</li>
+      <li class=""> </li>
+      <li class="">3</li>
+      <li class="">.</li>
+      <li class="">0</li>
+      <li class="">%</li>
+      <li class="">(</li>
+      <li class="">예</li>
+      <li class="">상</li>
+      <li class=""> </li>
+      <li class="">3</li>
+      <li class="">.</li>
+      <li class="">3</li>
+      <li class="">%</li>
+      <li class=""> </li>
+      <li class="">하</li>
+      <li class="">회</li>
+      <li class="">)</li>
+      <li class=""> </li>
+      <li class="">디</li>
+      <li class="">스</li>
+      <li class="">인</li>
+      <li class="">플</li>
+      <li class="">레</li>
+      <li class=""> </li>
+      <li class="">서</li>
+      <li class="">프</li>
+      <li class="">라</li>
+      <li class="">이</li>
+      <li class="">즈</li>
+      <li class="">,</li>
+      <li class=""> </li>
+      <li class="">1</li>
+      <li class="">0</li>
+      <li class="">월</li>
+      <li class=""> </li>
+      <li class="">F</li>
+      <li class="">O</li>
+      <li class="">M</li>
+      <li class="">C</li>
+      <li class=""> </li>
+      <li class="">인</li>
+      <li class="">상</li>
+      <li class="">확</li>
+      <li class="">률</li>
+      <li class=""> </li>
+      <li class="">5</li>
+      <li class="">0</li>
+      <li class="">%</li>
+      <li class="">→</li>
+      <li class="">3</li>
+      <li class="">4</li>
+      <li class="">.</li>
+      <li class="">9</li>
+      <li class="">%</li>
+      <li class="">로</li>
+      <li class=""> </li>
+      <li class="">급</li>
+      <li class="">락</li>
+      <li class="">&quot;</li>
+      <li class="">,</li>
+      <li class=""> </li>
+      <li class="">&quot;</li>
+      <li class="">美</li>
+      <li class=""> </li>
+      <li class="">1</li>
+      <li class="">0</li>
+      <li class="">년</li>
+      <li class="">물</li>
+      <li class=""> </li>
+      <li class="">국</li>
+      <li class="">채</li>
+      <li class="">금</li>
+      <li class="">리</li>
+      <li class=""> </li>
+      <li class="">5</li>
+      <li class="">.</li>
+      <li class="">2</li>
+      <li class="">9</li>
+      <li class="">~</li>
+      <li class="">5</li>
+      <li class="">.</li>
+      <li class="">3</li>
+      <li class="">0</li>
+      <li class="">%</li>
+      <li class="">(</li>
+      <li class="">2</li>
+      <li class="">0</li>
+      <li class="">0</li>
+      <li class="">2</li>
+      <li class="">~</li>
+      <li class="">2</li>
+      <li class="">0</li>
+      <li class="">0</li>
+      <li class="">7</li>
+      <li class="">년</li>
+      <li class="">래</li>
+      <li class=""> </li>
+      <li class="">최</li>
+      <li class="">고</li>
+      <li class="">치</li>
+      <li class="">)</li>
+      <li class="">,</li>
+      <li class=""> </li>
+      <li class="">모</li>
+      <li class="">기</li>
+      <li class="">지</li>
+      <li class=""> </li>
+      <li class="">7</li>
+      <li class="">.</li>
+      <li class="">3</li>
+      <li class="">0</li>
+      <li class="">%</li>
+      <li class="">·</li>
+      <li class="">3</li>
+      <li class="">0</li>
+      <li class="">년</li>
+      <li class="">물</li>
+      <li class=""> </li>
+      <li class="">5</li>
+      <li class="">.</li>
+      <li class="">6</li>
+      <li class="">%</li>
+      <li class="">대</li>
+      <li class="">까</li>
+      <li class="">지</li>
+      <li class=""> </li>
+      <li class="">베</li>
+      <li class="">어</li>
+      <li class="">스</li>
+      <li class="">티</li>
+      <li class="">프</li>
+      <li class="">닝</li>
+      <li class="">&quot;</li>
+      <li class="">,</li>
+      <li class=""> </li>
+      <li class="">&quot;</li>
+      <li class="">마</li>
+      <li class="">이</li>
+      <li class="">크</li>
+      <li class="">론</li>
+      <li class=""> </li>
+      <li class="">Q</li>
+      <li class="">4</li>
+      <li class=""> </li>
+      <li class="">매</li>
+      <li class="">출</li>
+      <li class=""> </li>
+      <li class="">$</li>
+      <li class="">5</li>
+      <li class="">4</li>
+      <li class="">.</li>
+      <li class="">2</li>
+      <li class="">3</li>
+      <li class="">B</li>
+      <li class="">(</li>
+      <li class="">+</li>
+      <li class="">3</li>
+      <li class="">7</li>
+      <li class="">9</li>
+      <li class="">%</li>
+      <li class=""> </li>
+      <li class="">Y</li>
+      <li class="">o</li>
+      <li class="">Y</li>
+      <li class="">)</li>
+      <li class="">·</li>
+      <li class="">E</li>
+      <li class="">P</li>
+      <li class="">S</li>
+      <li class=""> </li>
+      <li class="">$</li>
+      <li class="">3</li>
+      <li class="">3</li>
+      <li class="">.</li>
+      <li class="">4</li>
+      <li class="">2</li>
+      <li class="">,</li>
+      <li class=""> </li>
+      <li class="">총</li>
+      <li class="">마</li>
+      <li class="">진</li>
+      <li class=""> </li>
+      <li class="">8</li>
+      <li class="">7</li>
+      <li class="">%</li>
+      <li class=""> </li>
+      <li class="">달</li>
+      <li class="">성</li>
+      <li class="">하</li>
+      <li class="">며</li>
+      <li class=""> </li>
+      <li class="">어</li>
+      <li class="">닝</li>
+      <li class=""> </li>
+      <li class="">서</li>
+      <li class="">프</li>
+      <li class="">라</li>
+      <li class="">이</li>
+      <li class="">즈</li>
+      <li class="">&quot;</li>
+      <li class="">,</li>
+      <li class=""> </li>
+      <li class="">&quot;</li>
+      <li class="">트</li>
+      <li class="">럼</li>
+      <li class="">프</li>
+      <li class="">,</li>
+      <li class=""> </li>
+      <li class="">한</li>
+      <li class="">국</li>
+      <li class="">의</li>
+      <li class=""> </li>
+      <li class="">대</li>
+      <li class="">미</li>
+      <li class=""> </li>
+      <li class="">2</li>
+      <li class="">,</li>
+      <li class="">0</li>
+      <li class="">0</li>
+      <li class="">0</li>
+      <li class="">억</li>
+      <li class="">달</li>
+      <li class="">러</li>
+      <li class=""> </li>
+      <li class="">투</li>
+      <li class="">자</li>
+      <li class="">(</li>
+      <li class="">원</li>
+      <li class="">전</li>
+      <li class=""> </li>
+      <li class="">8</li>
+      <li class="">기</li>
+      <li class="">·</li>
+      <li class="">텍</li>
+      <li class="">사</li>
+      <li class="">스</li>
+      <li class=""> </li>
+      <li class="">발</li>
+      <li class="">전</li>
+      <li class="">·</li>
+      <li class="">알</li>
+      <li class="">래</li>
+      <li class="">스</li>
+      <li class="">카</li>
+      <li class=""> </li>
+      <li class="">L</li>
+      <li class="">N</li>
+      <li class="">G</li>
+      <li class="">)</li>
+      <li class=""> </li>
+      <li class="">공</li>
+      <li class="">식</li>
+      <li class=""> </li>
+      <li class="">발</li>
+      <li class="">표</li>
+      <li class="">&quot;</li>
+      <li class="">,</li>
+      <li class=""> </li>
+      <li class="">&quot;</li>
+      <li class="">국</li>
+      <li class="">내</li>
+      <li class=""> </li>
+      <li class="">반</li>
+      <li class="">도</li>
+      <li class="">체</li>
+      <li class=""> </li>
+      <li class="">소</li>
+      <li class="">부</li>
+      <li class="">장</li>
+      <li class="">(</li>
+      <li class="">전</li>
+      <li class="">공</li>
+      <li class="">정</li>
+      <li class="">·</li>
+      <li class="">후</li>
+      <li class="">공</li>
+      <li class="">정</li>
+      <li class="">·</li>
+      <li class="">핵</li>
+      <li class="">심</li>
+      <li class="">장</li>
+      <li class="">비</li>
+      <li class="">)</li>
+      <li class=""> </li>
+      <li class="">6</li>
+      <li class="">0</li>
+      <li class="">일</li>
+      <li class=""> </li>
+      <li class="">신</li>
+      <li class="">고</li>
+      <li class="">가</li>
+      <li class=""> </li>
+      <li class="">군</li>
+      <li class="">집</li>
+      <li class="">,</li>
+      <li class=""> </li>
+      <li class="">코</li>
+      <li class="">스</li>
+      <li class="">닥</li>
+      <li class=""> </li>
+      <li class="">주</li>
+      <li class="">도</li>
+      <li class=""> </li>
+      <li class="">랠</li>
+      <li class="">리</li>
+      <li class=""> </li>
+      <li class="">견</li>
+      <li class="">인</li>
+      <li class="">&quot;</li>
+      <li class="">,</li>
+      <li class=""> </li>
+      <li class="">&quot;</li>
+      <li class="">T</li>
+      <li class="">r</li>
+      <li class="">e</li>
+      <li class="">n</li>
+      <li class="">d</li>
+      <li class="">F</li>
+      <li class="">o</li>
+      <li class="">r</li>
+      <li class="">c</li>
+      <li class="">e</li>
+      <li class=""> </li>
+      <li class="">4</li>
+      <li class="">Q</li>
+      <li class="">2</li>
+      <li class="">6</li>
+      <li class=""> </li>
+      <li class="">D</li>
+      <li class="">R</li>
+      <li class="">A</li>
+      <li class="">M</li>
+      <li class=""> </li>
+      <li class="">+</li>
+      <li class="">1</li>
+      <li class="">0</li>
+      <li class="">~</li>
+      <li class="">1</li>
+      <li class="">5</li>
+      <li class="">%</li>
+      <li class="">,</li>
+      <li class=""> </li>
+      <li class="">N</li>
+      <li class="">A</li>
+      <li class="">N</li>
+      <li class="">D</li>
+      <li class=""> </li>
+      <li class="">+</li>
+      <li class="">1</li>
+      <li class="">5</li>
+      <li class="">~</li>
+      <li class="">2</li>
+      <li class="">0</li>
+      <li class="">%</li>
+      <li class=""> </li>
+      <li class="">계</li>
+      <li class="">약</li>
+      <li class="">가</li>
+      <li class=""> </li>
+      <li class="">상</li>
+      <li class="">승</li>
+      <li class=""> </li>
+      <li class="">전</li>
+      <li class="">망</li>
+      <li class="">,</li>
+      <li class=""> </li>
+      <li class="">메</li>
+      <li class="">모</li>
+      <li class="">리</li>
+      <li class=""> </li>
+      <li class="">슈</li>
+      <li class="">퍼</li>
+      <li class="">사</li>
+      <li class="">이</li>
+      <li class="">클</li>
+      <li class=""> </li>
+      <li class="">지</li>
+      <li class="">속</li>
+      <li class="">&quot;</li>
+      <li class="">]</li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="sh"><span class="no">02</span><h2>시장 정리</h2></div>
+<figure class="chart"><figcaption class="c-title">미국 뉴욕증시 섹터별 등락률 · %</figcaption><svg viewBox="0 0 560 160" style="width:100%;height:auto" role="img" aria-label="미국 뉴욕증시 섹터별 등락률"><line class="c-zero" x1="305.0" y1="5" x2="305.0" y2="155"/><path class="bar-up" d="M305.0,8.0 H386.6 A4.0,4.0 0 0 1 390.6,12.0 V13.0 A4.0,4.0 0 0 1 386.6,17.0 H305.0 Z"/><text class="c-lab" x="96" y="15.5" text-anchor="end">기술</text><text class="c-val" x="558" y="15.5" text-anchor="end">+0.61%</text><path class="bar-up" d="M305.0,23.0 H319.2 A4.0,4.0 0 0 1 323.2,27.0 V28.0 A4.0,4.0 0 0 1 319.2,32.0 H305.0 Z"/><text class="c-lab" x="96" y="30.5" text-anchor="end">경기소비재</text><text class="c-val" x="558" y="30.5" text-anchor="end">+0.13%</text><path class="bar-down" d="M305.0,38.0 H305.0 A2.8,2.8 0 0 0 302.2,40.8 V44.2 A2.8,2.8 0 0 0 305.0,47.0 H305.0 Z"/><text class="c-lab" x="96" y="45.5" text-anchor="end">에너지</text><text class="c-val" x="558" y="45.5" text-anchor="end">-0.02%</text><path class="bar-down" d="M305.0,53.0 H303.4 A4.0,4.0 0 0 0 299.4,57.0 V58.0 A4.0,4.0 0 0 0 303.4,62.0 H305.0 Z"/><text class="c-lab" x="96" y="60.5" text-anchor="end">커뮤니케이션서비스</text><text class="c-val" x="558" y="60.5" text-anchor="end">-0.04%</text><path class="bar-down" d="M305.0,68.0 H206.6 A4.0,4.0 0 0 0 202.6,72.0 V73.0 A4.0,4.0 0 0 0 206.6,77.0 H305.0 Z"/><text class="c-lab" x="96" y="75.5" text-anchor="end">유틸리티</text><text class="c-val" x="558" y="75.5" text-anchor="end">-0.73%</text><path class="bar-down" d="M305.0,83.0 H194.0 A4.0,4.0 0 0 0 190.0,87.0 V88.0 A4.0,4.0 0 0 0 194.0,92.0 H305.0 Z"/><text class="c-lab" x="96" y="90.5" text-anchor="end">소재</text><text class="c-val" x="558" y="90.5" text-anchor="end">-0.82%</text><path class="bar-down" d="M305.0,98.0 H142.1 A4.0,4.0 0 0 0 138.1,102.0 V103.0 A4.0,4.0 0 0 0 142.1,107.0 H305.0 Z"/><text class="c-lab" x="96" y="105.5" text-anchor="end">금융</text><text class="c-val" x="558" y="105.5" text-anchor="end">-1.19%</text><path class="bar-down" d="M305.0,113.0 H129.4 A4.0,4.0 0 0 0 125.4,117.0 V118.0 A4.0,4.0 0 0 0 129.4,122.0 H305.0 Z"/><text class="c-lab" x="96" y="120.5" text-anchor="end">부동산</text><text class="c-val" x="558" y="120.5" text-anchor="end">-1.28%</text><path class="bar-down" d="M305.0,128.0 H128.0 A4.0,4.0 0 0 0 124.0,132.0 V133.0 A4.0,4.0 0 0 0 128.0,137.0 H305.0 Z"/><text class="c-lab" x="96" y="135.5" text-anchor="end">산업재</text><text class="c-val" x="558" y="135.5" text-anchor="end">-1.29%</text><path class="bar-down" d="M305.0,143.0 H114.0 A4.0,4.0 0 0 0 110.0,147.0 V148.0 A4.0,4.0 0 0 0 114.0,152.0 H305.0 Z"/><text class="c-lab" x="96" y="150.5" text-anchor="end">헬스케어</text><text class="c-val" x="558" y="150.5" text-anchor="end">-1.39%</text></svg><div class="c-note">9/30 종가 기준</div></figure>
+<figure class="chart"><figcaption class="c-title">美 주요 지수 등락률 · %</figcaption><svg viewBox="0 0 560 130" style="width:100%;height:auto" role="img" aria-label="美 주요 지수 등락률"><line class="c-zero" x1="305.0" y1="5" x2="305.0" y2="125"/><path class="bar-down" d="M305.0,8.0 H219.3 A4.0,4.0 0 0 0 215.3,12.0 V13.0 A4.0,4.0 0 0 0 219.3,17.0 H305.0 Z"/><text class="c-lab" x="96" y="15.5" text-anchor="end">다우존스</text><text class="c-val" x="558" y="15.5" text-anchor="end">-0.86%</text><path class="bar-down" d="M305.0,23.0 H282.9 A4.0,4.0 0 0 0 278.9,27.0 V28.0 A4.0,4.0 0 0 0 282.9,32.0 H305.0 Z"/><text class="c-lab" x="96" y="30.5" text-anchor="end">S&amp;P500</text><text class="c-val" x="558" y="30.5" text-anchor="end">-0.25%</text><path class="bar-up" d="M305.0,38.0 H326.0 A4.0,4.0 0 0 1 330.0,42.0 V43.0 A4.0,4.0 0 0 1 326.0,47.0 H305.0 Z"/><text class="c-lab" x="96" y="45.5" text-anchor="end">나스닥</text><text class="c-val" x="558" y="45.5" text-anchor="end">+0.24%</text><path class="bar-up" d="M305.0,53.0 H496.0 A4.0,4.0 0 0 1 500.0,57.0 V58.0 A4.0,4.0 0 0 1 496.0,62.0 H305.0 Z"/><text class="c-lab" x="96" y="60.5" text-anchor="end">CBOE VIX</text><text class="c-val" x="558" y="60.5" text-anchor="end">+1.87%</text><path class="bar-down" d="M305.0,68.0 H305.0 A1.0,1.0 0 0 0 304.0,69.0 V76.0 A1.0,1.0 0 0 0 305.0,77.0 H305.0 Z"/><text class="c-lab" x="96" y="75.5" text-anchor="end">필라델피아반도체</text><text class="c-val" x="558" y="75.5" text-anchor="end">-0.01%</text><path class="bar-up" d="M305.0,83.0 H344.8 A4.0,4.0 0 0 1 348.8,87.0 V88.0 A4.0,4.0 0 0 1 344.8,92.0 H305.0 Z"/><text class="c-lab" x="96" y="90.5" text-anchor="end">매그니피센트7</text><text class="c-val" x="558" y="90.5" text-anchor="end">+0.42%</text><path class="bar-down" d="M305.0,98.0 H168.2 A4.0,4.0 0 0 0 164.2,102.0 V103.0 A4.0,4.0 0 0 0 168.2,107.0 H305.0 Z"/><text class="c-lab" x="96" y="105.5" text-anchor="end">DJ Transportation</text><text class="c-val" x="558" y="105.5" text-anchor="end">-1.35%</text><path class="bar-down" d="M305.0,113.0 H261.0 A4.0,4.0 0 0 0 257.0,117.0 V118.0 A4.0,4.0 0 0 0 261.0,122.0 H305.0 Z"/><text class="c-lab" x="96" y="120.5" text-anchor="end">코스피야간선물</text><text class="c-val" x="558" y="120.5" text-anchor="end">-0.46%</text></svg><div class="c-note">9/30 마감</div></figure>
+<figure class="chart"><figcaption class="c-title">국내 10/1 섹터 등락률 · %</figcaption><svg viewBox="0 0 560 160" style="width:100%;height:auto" role="img" aria-label="국내 10/1 섹터 등락률"><line class="c-zero" x1="305.0" y1="5" x2="305.0" y2="155"/><path class="bar-up" d="M305.0,8.0 H496.0 A4.0,4.0 0 0 1 500.0,12.0 V13.0 A4.0,4.0 0 0 1 496.0,17.0 H305.0 Z"/><text class="c-lab" x="96" y="15.5" text-anchor="end">바이오</text><text class="c-val" x="558" y="15.5" text-anchor="end">+8.7%</text><path class="bar-up" d="M305.0,23.0 H475.8 A4.0,4.0 0 0 1 479.8,27.0 V28.0 A4.0,4.0 0 0 1 475.8,32.0 H305.0 Z"/><text class="c-lab" x="96" y="30.5" text-anchor="end">반도체후공정</text><text class="c-val" x="558" y="30.5" text-anchor="end">+7.8%</text><path class="bar-up" d="M305.0,38.0 H466.9 A4.0,4.0 0 0 1 470.9,42.0 V43.0 A4.0,4.0 0 0 1 466.9,47.0 H305.0 Z"/><text class="c-lab" x="96" y="45.5" text-anchor="end">반도체전공정</text><text class="c-val" x="558" y="45.5" text-anchor="end">+7.4%</text><path class="bar-up" d="M305.0,53.0 H433.2 A4.0,4.0 0 0 1 437.2,57.0 V58.0 A4.0,4.0 0 0 1 433.2,62.0 H305.0 Z"/><text class="c-lab" x="96" y="60.5" text-anchor="end">바이오(코스닥)</text><text class="c-val" x="558" y="60.5" text-anchor="end">+5.9%</text><path class="bar-up" d="M305.0,68.0 H410.8 A4.0,4.0 0 0 1 414.8,72.0 V73.0 A4.0,4.0 0 0 1 410.8,77.0 H305.0 Z"/><text class="c-lab" x="96" y="75.5" text-anchor="end">반도체</text><text class="c-val" x="558" y="75.5" text-anchor="end">+4.9%</text><path class="bar-up" d="M305.0,83.0 H392.9 A4.0,4.0 0 0 1 396.9,87.0 V88.0 A4.0,4.0 0 0 1 392.9,92.0 H305.0 Z"/><text class="c-lab" x="96" y="90.5" text-anchor="end">우주항공</text><text class="c-val" x="558" y="90.5" text-anchor="end">+4.1%</text><path class="bar-up" d="M305.0,98.0 H390.7 A4.0,4.0 0 0 1 394.7,102.0 V103.0 A4.0,4.0 0 0 1 390.7,107.0 H305.0 Z"/><text class="c-lab" x="96" y="105.5" text-anchor="end">게임</text><text class="c-val" x="558" y="105.5" text-anchor="end">+4%</text><path class="bar-up" d="M305.0,113.0 H372.7 A4.0,4.0 0 0 1 376.7,117.0 V118.0 A4.0,4.0 0 0 1 372.7,122.0 H305.0 Z"/><text class="c-lab" x="96" y="120.5" text-anchor="end">미용의료</text><text class="c-val" x="558" y="120.5" text-anchor="end">+3.2%</text><path class="bar-up" d="M305.0,128.0 H370.5 A4.0,4.0 0 0 1 374.5,132.0 V133.0 A4.0,4.0 0 0 1 370.5,137.0 H305.0 Z"/><text class="c-lab" x="96" y="135.5" text-anchor="end">자동차소부장</text><text class="c-val" x="558" y="135.5" text-anchor="end">+3.1%</text><path class="bar-up" d="M305.0,143.0 H363.8 A4.0,4.0 0 0 1 367.8,147.0 V148.0 A4.0,4.0 0 0 1 363.8,152.0 H305.0 Z"/><text class="c-lab" x="96" y="150.5" text-anchor="end">2차전지소부장</text><text class="c-val" x="558" y="150.5" text-anchor="end">+2.8%</text></svg><div class="c-note">KOSPI·KOSDAQ 섹터 혼합</div></figure>
+    <ul class="mk">
+      <li class="">美 3대지수 혼조: 다우 -0.86%, S&amp;P500 -0.25~-0.13%, 나스닥 +0.23~+0.49% — 기술주만 홀로 플러스</li>
+      <li class="">美 10년물 5.29%(2007년래 최고), 30년물 5.62~5.64%(2002년래 최고), 10-2 스프레드 40.6bp로 베어스티프닝 심화</li>
+      <li class="">WTI $90.42(+1.16%), 브렌트 $103.53(+0.92%), 미국 정제유(디젤·항공유) 재고 급감 및 공급 50% 수준 정체</li>
+      <li class="">근원 PCE YoY 3.0%(전망 3.3% 하회) vs 유럽 인플레 쇼크: 독일 HICP 3.3%, 이탈리아 4.1~4.2%(예상 상회), 프랑스-독일 10년물 스프레드 124bp(2012년 이후 최고)</li>
+      <li class="">국내: 코스피 6,961.32(+1.80%, 상승523/하락354), 코스닥 893.70(+4.42%, 상승1223/하락438) — 유가 하락, 금리 소폭 하락, 10월 금리인상 후퇴에 양시장 상승</li>
+      <li class="">코스닥 Breadth_60 +119(전일 +35), 코스피 Breadth_60 +3(전일 -18)로 코스닥이 질적으로 우세</li>
+      <li class="">한국 8월 광공업생산 YoY -2.2%(MoM -4.8%), 소매판매 MoM -1.8%로 실물지표 급랭</li>
+      <li class="">美 연기금 분기말 리밸런싱으로 $330억 주식 순매도 추정(골드만삭스), 빅테크 ETF에서 자금 유출되고 VFLO(퀄리티/FCF) 등으로 자금 이동</li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="sh"><span class="no">03</span><h2>종목 · 테마</h2><span class="cap">강세 · 약세 · 혼재</span></div>
+      <div class="art">
+        <div class="ahead"><span class="cat up">강세</span><h3>마이크론(Micron) Q4 실적 서프라이즈</h3></div>
+        <p class="summary">매출 $54.23B(+379% YoY)·EPS $33.42, 총마진 87% 달성하며 AI 메모리 슈퍼사이클 입증, 가이던스도 상회</p>
+        <ul class="sq">
+        <li class="up">Q4 매출 $54.23B(+379% YoY, 컨센서스 $51.49B 대비 +5.3%), 조정 EPS $33.42(+1080% YoY, 컨센서스 $31.83 대비 +5.0%), 조정 총마진 87.0%(컨센서스 86.2% 대비 +0.8%p), 조정 영업이익 $44.64B(영업이익률 82.3%)</li>
+        <li class="up">DRAM(HBM포함) 매출 $39.80B(+343% YoY, 비중 73.4%), 핵심 데이터센터 매출 $18.00B로 예상치 대비 +58.7% 초과달성(+11배 YoY). 16개 전략적 고객계약 중 14개에 약 $100.00B 규모 최저가격보장(Floor Price) 설정</li>
+        <li class="up">Q1 2027 가이던스 매출 중간값 $61.50B(시장예상 $56.77B 대비 +8.3%), EPS 중간값 $38.15(시장예상 $36.02 상회). HBM4 양산속도 이전세대 대비 약 2배, 신규 설비투자 $250.00B(뉴욕 클레이·아이다호 보이시 증설)</li>
+        <li class="neu">리스크 요인: 1분기 총마진 전망 86.3%로 소폭 조정(임직원 성과급 확대 영향), 대만 생산거점 노사협상 추이, 완제품 소비재 시장 판가전가 한계에 따른 최종수요 둔화 가능성 모니터링 필요</li>
+        <li class="neu">방 코멘트: 마이크론 실적 기대가 컸지만 &#x27;실적으로 시장 오르는 거 아니다. 유동성 없이는 시장 제대로 돌릴 수 없다&#x27;는 반론 제기 — 멀티플 낮아도 시장 유입 자금 부족이 핵심 변수라는 시각</li>
+        </ul>
+      </div>
+      <div class="art">
+        <div class="ahead"><span class="cat mix">혼재</span><h3>美 8월 근원 PCE 디스인플레 서프라이즈와 연준 정책 경로</h3></div>
+        <p class="summary">근원 PCE YoY 3.0%로 예상 하회했으나 개정효과 절반, 10월 인상확률 급락·12월로 이연</p>
+        <ul class="sq">
+        <li class="up">근원 PCE MoM 0.2%(전망 0.3% 하회), YoY 3.0%(전망 3.3% 하회). 헤드라인 PCE MoM 0.3%(전망 부합), YoY 3.4%(전망 3.7% 하회). 다만 7월치가 3.3%→3.0%로 하향 개정되어 하회 폭의 절반은 개정 효과로 평가</li>
+        <li class="up">10월 FOMC 인상확률 전일 약 50%→34.9%로 급락, 동결 65.1%로 상승. 12월 인상확률은 87.9%(CME) 유지, 시장은 다음 인상시점을 12월로 이연. 골드만삭스도 12월 인상 전망 유지하며 긴축 사이클 종료 가능성 언급</li>
+        <li class="neu">실질소비 MoM 0.6%로 2025년 3월 이후 최대 증가, 2분기 GDP 확정치 2.2%(잠정치 1.5%에서 대폭 상향). 반면 실질 가처분소득 제자리, 저축률 4.1%로 2022년 이후 최저 — 소비 지속성에 의문</li>
+        <li class="down">슈퍼코어(에너지·주거 제외 서비스) MoM 0.4%로 5월 이후 최고, 휘발유 +4.4%·운송서비스 +1.4%가 주도. 9월 디젤가격 급등은 이번 수치에 미반영되어 다음달 헤드라인 재상승 위험 지적(Heather Long 등 매파적 해석)</li>
+        </ul>
+      </div>
+      <div class="art">
+        <div class="ahead"><span class="cat down">약세</span><h3>美 장기금리 급등과 듀레이션 둠루프 리스크</h3></div>
+        <p class="summary">10년물 5.29~5.30%(2007년래 최고), 30년물 5.6%대(2002년래 최고)로 베어스티프닝 심화, 1997년 아시아 위기와 유사 구조 경계</p>
+        <ul class="sq">
+        <li class="down">미 10년물 국채금리 9월 한달간 50bp 이상 급등해 5.3% 도달(2007년 이후 최고), 30년물은 2002년 이후 최고치. 3분기 중 10년물 85bp, 10-2 스프레드 40.6bp로 확대(베어스티프닝)</li>
+        <li class="down">MBS 조기상환 감소로 듀레이션 확대 → 헤지펀드·리츠의 장기국채 매도 → 레버리지 펀드 위험한도 도달 → 추가매도 유발하는 피드백 루프(듀레이션 둠루프) 형성. 1994~97년 미국 긴축기 아시아 외환위기 전사와 구조적 유사성 지적</li>
+        <li class="down">약한 고리로 프랑스(10년물 4.8%, 독일 대비 스프레드 124bp~1.2%p, 2012년 이후 최고)와 AI 인프라 채권($4,500억 규모, 전년대비 2배)이 지목됨. 오라(Oura) IPO 철회 등 조달창구 균열 조짐 포착되나 아직 소규모·단발적</li>
+        <li class="neu">성장 지표는 견조(GDPNow 3분기 3.7%, 2분기 확정 2.2%)해 금리상승이 성장의 부산물이라는 해석도 병존. 빅테크 모멘텀 ETF(MTUM)에서 $50억 유출, 퀄리티/FCF 중심 ETF(VFLO)로 $9억+ 유입되며 자금이 현금흐름 중심으로 로테이션</li>
+        </ul>
+      </div>
+      <div class="art">
+        <div class="ahead"><span class="cat up">강세</span><h3>국내 반도체 소부장 랠리 — 코스닥 주도</h3></div>
+        <p class="summary">반도체 전·후공정·핵심장비 ETF 60일 신고가 군집, 브이엠·HPSP·에스앤에스텍 등 주도주로 코스닥 강세 견인</p>
+        <ul class="sq">
+        <li class="up">SOL 반도체전공정·후공정 ETF 모두 60일 연속 주도섹터 유지, 장중 브이엠 +8.9%, 유진테크 +7.2%, HPSP +6.9%, 테크윙 +9.1%, 리노공업 +7.9%, 에스앤에스텍 +14.9%까지 상승</li>
+        <li class="up">세미파이브는 미국 AI 팹리스와 611억원 규모 ASIC 설계개발 계약(매출대비 58.13%) 공시 후 장중 +10~13% 급등. 디아이·동진쎄미켐·와이씨도 신규 주도주로 포착되며 장중 7~11% 상승</li>
+        <li class="up">수출데이터(9월 기준): 반도체 메모리 Q3 YoY +316%·QoQ +26%(9월 단월 80.9조원, 6월 대비 +23%), 반도체 테스트/장비 Q3 YoY +57%·QoQ +18%, 소재/부품 +32%/+6%, 전자부품/PCB +21%/+10% — 메모리 중심 수출 호조가 소부장 전반으로 확산</li>
+        <li class="up">방 코멘트: &#x27;삼성전자·하이닉스 투자 낙수효과로 소부장 추세 지속&#x27;, &#x27;타이트한 유동성 환경으로 코스피 대형주 &lt; 코스닥 소형주 우세&#x27;, 3분기 실적 발표(11월 중순)까지 소부장 어닝 트레이드 유효 구간으로 평가</li>
+        <li class="neu">코스닥 Breadth_60 +119(전일 +35)로 급반등, HLI 10-SMA 66.3(전일 65.3)로 40선 훨씬 상회. 다만 바이오 ETF는 가격 급등에도 Breadth 음수(질적 저하), 엔터·소비재·금융은 Breadth 붕괴 지속되는 쏠림 현상</li>
+        </ul>
+      </div>
+      <div class="art">
+        <div class="ahead"><span class="cat up">강세</span><h3>바이오 반등과 종목별 온도차</h3></div>
+        <p class="summary">HLB 트리거로 바이오 섹터 가격 반등했으나 Breadth는 음수 — 삼천당제약·씨젠 등 일부 종목 쏠림</p>
+        <ul class="sq">
+        <li class="neu">TIME K바이오액티브 +8.7%(Breadth -2), KoAct 바이오헬스케어액티브 +6.9%(Breadth -3), TIGER 코스닥150바이오테크 +5.9%(Breadth -2) — 가격은 급등했으나 Breadth는 음수로 질적 개선 미흡</li>
+        <li class="neu">삼천당제약 장중 +15.4%까지 급등하며 주도주 등극, 씨젠은 +5.1%로 60일·52주 신고가 진성(squat 0.00%) 기록. 반면 에이비엘바이오·파마리서치·휴젤·클래시스는 60일 종가 신저가권 잔존</li>
+        <li class="up">방 해석: HLB가 바이오 반등의 트리거이며, 대형주→중소형주 머니무브 국면. 금리 부담에도 불구하고 그동안 반영이 부족했던 밸류를 채우는 과정으로 진단, 코스닥 지수 레벨로 접근하겠다는 의견</li>
+        </ul>
+      </div>
+      <div class="art">
+        <div class="ahead"><span class="cat up">강세</span><h3>S-Oil — 외국계 3사 동시 목표가 상향·신규 편입</h3></div>
+        <p class="summary">UBS 목표가 54% 상향(₩200,000), 모건스탠리 Focus List 신규 편입(₩190,000), 골드만삭스도 Buy 유지</p>
+        <ul class="sq">
+        <li class="up">UBS는 S-Oil 목표주가를 ₩130,000→₩200,000(+54%)으로 상향하고 Most Preferred List 신규 편입. 2026E/2027E EPS 49%/112% 상향, APAC 정제마진 전망 2026년 11→26달러, 2027년 5.6→15.5달러로 큰 폭 상향</li>
+        <li class="up">모건스탠리는 에너지 업종 의견을 중립에서 비중확대로 상향하며 S-Oil을 Focus List에 신규 편입(TP ₩190,000). 타이트한 석유제품 공급에 따른 정제마진·윤활유 마진 강세, 디레버리징과 주주환원 확대 기대</li>
+        <li class="neu">골드만삭스는 Buy 및 Conviction List 유지, 중국 석유수요가 2030년까지 일 0~100만 배럴 감소하지만 설비 합리화로 가동률 하락은 1%p에 그칠 것으로 전망. 다만 올해 S-Oil 주가가 이미 94% 상승해 기대가 상당부분 선반영됐다는 지적도 병존</li>
+        </ul>
+      </div>
+      <div class="art">
+        <div class="ahead"><span class="cat mix">혼재</span><h3>NAVER — 외국계 사이에서 Buy·Hold 극명하게 갈림</h3></div>
+        <p class="summary">HSBC는 Buy 유지(TP ₩360,000), CGSI는 Hold로 하향(TP ₩210,000) — AIDC를 옵션가치로 볼지 리스크로 볼지가 쟁점</p>
+        <ul class="sq">
+        <li class="up">HSBC: 3Q26 영업이익 4,670억원(YoY -18%, 컨센서스 대비 -17%) 전망에도 AI 데이터센터 포함 Enterprise 사업가치 약 15조원이 현 시총에 미반영됐다며 Buy·TP ₩360,000 유지</li>
+        <li class="down">CGSI: 3Q26 영업이익 5,000억원(컨센서스 대비 -10%, 기존 추정 대비 -25%)으로 Hold 하향, TP ₩210,000으로 낮춤. Brookfield에 최소 8-10% IRR 보장 구조라 Off-balance Sheet라도 경제적 노출은 줄지 않는다고 평가, AIDC 실행위험 반영</li>
+        <li class="down">UBS는 높은 금리 부담을 이유로 NAVER를 Least Preferred List에 추가. 두 리포트 모두 단기 영업이익이 컨센서스를 10~17% 밑돈다는 데는 일치, 핵심 변수는 GPU 임대가격과 Tenant 계약조건</li>
+        </ul>
+      </div>
+      <div class="art">
+        <div class="ahead"><span class="cat up">강세</span><h3>현대모비스 — 램프사업 매각, 청구권이 변수</h3></div>
+        <p class="summary">램프사업 분할·매각(6,000억원) 공시, 목표주가는 증권사별 차이, 11/24 임시주총 주식매수청구권이 핵심 변수</p>
+        <ul class="sq">
+        <li class="neu">9월 30일 램프사업(2025년 매출 약 2%, 2.1조원·연결매출 3.4%) 분할·매각 공시, 매각가 약 6,000억원. 회수자금은 전장·ADAS·로보틱스에 재투자 예정. 주식매수청구권 예상 매수가 ₩408,394(전일종가 367,000원 대비 +11%)</li>
+        <li class="neu">삼성증권 Buy·TP ₩650,000 유지(상승여력 77.1%), 대신증권 Buy·TP ₩580,000으로 하향(상승여력 58.0%). 청구권 행사가 매력적인지(KB증권은 비매력적, 대신증권은 하방지지)를 두고 시각 엇갈림</li>
+        <li class="neu">주주총회는 11월 24일, 매수청구 금액이 2,300억원을 초과하면 분할 자체가 철회됨. 3분기 영업이익 9,240억원으로 컨센서스(9,558억원) 소폭 하회 추정되나 4분기 비용 회수 집중으로 영업이익 1조원 달성 기대</li>
+        <li class="up">골드만삭스는 12M Forward P/E 6-7배로 10년 평균 7-8배를 하회한다고 평가(매수 유지, TP 미제시)</li>
+        </ul>
+      </div>
+      <div class="art">
+        <div class="ahead"><span class="cat up">강세</span><h3>삼성전자·SK하이닉스 — 메모리 가격 모멘텀</h3></div>
+        <p class="summary">골드만삭스 2027년 HBM 매출 약 100조원 전망, TrendForce 4Q26 DRAM·NAND 가격 전망이 추정치 상회</p>
+        <ul class="sq">
+        <li class="up">골드만삭스: 삼성전자 3Q26 영업이익 추정 112조→106조원(-5%) 소폭 하향에도 Buy·TP ₩490,000 유지. 2027년 HBM 매출 약 100조원(+274%), HBM ASP Gb당 $3.6 전망, Conviction List 유지. 2027E P/E 3.6배·ROE 53%</li>
+        <li class="up">SK하이닉스: 4Q26 PC DRAM +13-18%, 서버 DRAM +10-15% QoQ, NAND ASP +15-20%, Enterprise SSD +23-28% 급등 전망(TrendForce). 모바일 DRAM은 0-5%로 둔화 후 1Q27 재가속 가능성. Buy 재확인</li>
+        <li class="up">KB증권: 일반 D램 공급부족이 &#x27;발생하지 않는 게 이상한 상황&#x27;으로 진단, 2027년 HBM 판매가격 100% 이상 상승 전망. CLSA는 삼성전자·SK하이닉스 합산 175조원 자사주 매입이 다른 기업으로 확산될 때 재평가 기대</li>
+        <li class="up">국내 수출데이터: 반도체 메모리 품목(D램·D램모듈·MCP·SSD) 모두 Q3 YoY +170~520%, 9월 단월 합산 80.9조원(6월 대비 +23%)으로 전체 수출 상승을 견인</li>
+        </ul>
+      </div>
+      <div class="art">
+        <div class="ahead"><span class="cat down">약세</span><h3>지정학 리스크 — 중동·우크라이나·한반도</h3></div>
+        <p class="summary">플라이두바이 조종사 피습 테러 미수, 키이우 전력망 공습, 미-이란 협상 교착 등 안보 긴장 고조</p>
+        <ul class="sq">
+        <li class="down">두바이발 텔아비브행 플라이두바이 FZ1073편에서 조종사가 다른 조종사를 흉기로 찌르고 추락 시도, 고도 4,000m 급강하 후 제압. 이스라엘 국방장관은 &#x27;지하디스트 테러 공격 시도&#x27;로 규정</li>
+        <li class="down">러시아의 키이우 대규모 미사일 공습으로 전력망 파괴, 최소 1명 사망·3명 부상. 미-이란 카타르 중재 협상은 이행순서(시퀀싱) 이견으로 진전 없이 재충돌 위험 급증(Axios)</li>
+        <li class="neu">DMZ 지뢰 폭발로 정전협정 위반, 북한 요새화 작업으로 아군 부상 확인. 국정원은 러시아 파병 북한군 약 9,000명 추산, APEC 계기 북미대화 성사확률 50% 전망</li>
+        <li class="neu">JP모건·골드만삭스: 걸프만 원유 수출 전전 수준의 98% 회복, 40%는 호르무즈 우회 수송. 다만 디젤·항공유 등 정제유 수출은 여전히 평시 50% 수준 정체, WTI $90선 돌파로 인플레 우려 지속</li>
+        </ul>
+      </div>
+  </section>
+
+  <section>
+    <div class="sh"><span class="no">04</span><h2>시장 전망</h2><span class="cap">방 전체 기준</span></div>
+    <ul class="mk">
+      <li class="">유동성이 실적보다 중요하다는 시각 — 마이크론 호실적에도 &#x27;유동성 없이는 시장이 제대로 돌아가지 않는다&#x27;는 의견이 반복 제기됨, 미국 예금금리 7.5% 상품 등장으로 주식시장 자금 유입 제약 우려</li>
+      <li class="">타이트한 유동성 환경에서 코스피 대형주보다 코스닥 소형주가 우세하는 구도가 지속될 것으로 전망, 11월 중순 3분기 실적 발표 시즌까지 반도체 소부장 중심 어닝 트레이드가 유효한 대안으로 제시됨</li>
+      <li class="">美 10년물 5.3% 레벨 자체는 부담스러우나, 1997년 아시아 위기 분석대로 금리 수준보다 약한 고리(프랑스, AI 인프라 채권)의 신규 자금조달 실패(차환 실패)가 실제 트리거가 될 것이라는 전망 — 아직 조달 창구 균열은 소규모 수준</li>
+      <li class="">외국계는 메모리 가격 모멘텀에는 이견이 없으나 매크로(고금리·원화 변동성)가 지수 박스권을 결정한다고 봄 — 모건스탠리는 코스피 3~6개월 트레이딩 밴드를 5,500~8,500으로 하향, 9월 상승이 IT 집중의 좁은 장세였다고 평가</li>
+      <li class="">시장 자금이 성장주(빅테크 모멘텀)에서 잉여현금흐름(FCF)이 강한 가치주(헬스케어·에너지·방산·보험)로 로테이션하는 추세가 미국·한국 시장에서 공통적으로 관찰됨</li>
+      <li class="">국내 기재부는 국채금리 급등 시 바이백 등 시장안정조치 즉각 시행 방침을 밝히며 금리 리스크에 선제 대응 의지를 표명</li>
+    </ul>
+  </section>
+
+  <section class="ai">
+    <div class="sh"><span class="no">05</span><h2>AI 전망</h2></div>
+    <span class="tag">참고용 · AI 독자 견해</span>
+    <ul>
+      <li class="">코스닥의 Breadth 개선(+119)과 반도체 소부장 신고가 군집은 유동성 쏠림이 특정 축(반도체)에 극도로 집중된 결과로, 추세 자체는 유효해 보이지만 바이오·엔터·금융 등 타 섹터의 Breadth 약세가 지속되는 한 &#x27;전면적 강세장&#x27;이라기보다 &#x27;단일 테마 모멘텀 장세&#x27;로 해석하는 게 합리적입니다. 쏠림이 풀리기 전까지는 반도체 소부장 추격매수보다 되돌림 리스크 관리가 필요해 보입니다.</li>
+      <li class="">미 10년물 5.3%와 베어스티프닝은 단기적으로 &#x27;성장의 부산물&#x27;이라는 낙관적 해석이 우세하지만, 프랑스 스프레드(124bp, 2012년래 최고)와 AI 채권 발행 급증($4,500억)이라는 두 개의 약한 고리가 동시에 부풀고 있다는 점은 간과할 수 없습니다. 오라 IPO 철회 같은 신호가 추가로 나온다면 국내 증시도 레버리지 축소 국면에 민감하게 반응할 가능성이 있습니다.</li>
+      <li class="">마이크론 서프라이즈와 TrendForce의 메모리 가격 전망 상향은 삼성전자·SK하이닉스 주가에 실질적 펀더멘털 근거를 제공하지만, 시장 전반의 유동성 긴축(예금금리 7.5%, 연준 12월 인상 유지 전망) 속에서는 대형주보다 유통물량이 적고 테마성이 강한 중소형 소부장이 단기 변동성 장세에서 더 민감하게 반응할 것으로 보입니다.</li>
+      <li class="">한미 2,000억 달러 투자 발표와 철강 관세 완화 기대는 국내 철강·에너지 관련주(포스코홀딩스, 동국제강 등)에 단기 모멘텀을 제공할 수 있으나, 구체적 집행 일정과 관세 조건이 불확실한 만큼 뉴스 모멘텀 소멸 시 변동성 확대 가능성에 유의해야 합니다.</li>
+    </ul>
+  </section>
+
+  <section class="bet">
+    <div class="sh"><span class="no">06</span><h2>AI 베팅</h2></div>
+    <span class="tag">재미용 · 적중률 추적</span>
+    <div class="bsub">다음 거래일 베팅</div><p class="bnone">이번 회차는 베팅 없음(휴장일 또는 정리할 내용 없음).</p>
+    <div class="bsub">직전 회차 결과 · 2026-09-16 → 2026-09-17</div>
+    <div class="bet-row"><span class="idx">코스피</span><span class="dir up">▲ 상승</span><span class="dir up">+0.09%</span><span class="badge hit">적중</span></div>
+    <div class="bet-row"><span class="idx">코스닥</span><span class="dir down">▼ 하락</span><span class="dir up">+0.70%</span><span class="badge">실패</span></div>
+    <div class="pick"><span class="rk">·</span><span class="nm">SK하이닉스</span><span class="dir up">+0.46%</span><span class="badge hit">적중</span></div>
+    <div class="pick"><span class="rk">·</span><span class="nm">이오테크닉스</span><span class="dir up">+0.21%</span><span class="badge hit">적중</span></div>
+    <div class="pick"><span class="rk">·</span><span class="nm">효성중공업</span><span class="dir up">+2.47%</span><span class="badge hit">적중</span></div>
+    <p class="conf">종목 3/3 적중 · 평균 +1.05%</p>
+    <div class="bsub">적중률</div>
+    <table class="btab">
+      <tr><th>구분</th><th>최근 7일</th><th>최근 30일</th><th>2026년 누적</th></tr>
+      <tr><td>코스피</td><td class="rate">—</td><td class="rate">33%<span class="sub">3/9</span></td><td class="rate">43%<span class="sub">9/21</span></td></tr>
+      <tr><td>코스닥</td><td class="rate">—</td><td class="rate">56%<span class="sub">5/9</span></td><td class="rate">52%<span class="sub">11/21</span></td></tr>
+      <tr><td>지수 합계</td><td class="rate">—</td><td class="rate">44%<span class="sub">8/18</span></td><td class="rate">48%<span class="sub">20/42</span></td></tr>
+      <tr><td>종목 픽</td><td class="rate">—</td><td class="rate">37%<span class="sub">10/27</span></td><td class="rate">39%<span class="sub">24/61</span></td></tr>
+    </table>
+    <p class="conf">종목 픽 평균 수익률 -1.69% · 총 21회차 · 적중률은 해마다 초기화 · 7일·30일은 결과 확정일 기준 롤링</p>
+  </section>
+
+  <footer>Daily Market Briefing · 자동 생성 2026-10-01 20:02 · 01–04 팩트 / 05–06 AI 견해 · 06은 재미용 예측이며 투자 판단 근거가 아닙니다</footer>
+
+</div></body></html>
