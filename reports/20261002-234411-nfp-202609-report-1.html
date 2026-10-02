@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TNBfolio | 미국 9월 고용보고서 (NFP) 심층 분석</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&amp;family=JetBrains+Mono:wght@400;500;700&amp;family=Noto+Serif+KR:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#1A1714; --paper:#F8F7F5; --white:#FFFFFF; --line:#E7E4DF;
+    --neg:#EF4444; --neg-t:#B91C1C; --neg-bg:#FDECEC;
+    --pos:#10B981; --pos-t:#047857; --pos-bg:#E8F7F1;
+    --neu:#6B7280; --neu-bg:#F1F2F4;
+    --gold:#9A7B4F;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#FFFFFF;color:var(--ink)}
+  body{font-family:'Noto Serif KR',serif;font-size:15px;line-height:1.75;-webkit-font-smoothing:antialiased}
+  .mono{font-family:'JetBrains Mono',monospace}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+  section{padding:44px 0 8px}
+  .sec-head{display:flex;align-items:baseline;gap:14px;border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:22px}
+  .sec-num{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold);letter-spacing:.08em}
+  .sec-title{font-family:'DM Serif Display','Noto Serif KR',serif;font-size:26px;font-weight:400}
+  .sec-title .ko{font-family:'Noto Serif KR',serif;font-size:15px;font-weight:600;color:#4B4640;margin-left:8px}
+  .sub-head{font-family:'DM Serif Display','Noto Serif KR',serif;font-size:19px;margin:30px 0 14px;display:flex;gap:10px;align-items:baseline}
+  .sub-head .mono{font-size:11px;color:var(--gold)}
+  .sub-head .ko{font-family:'Noto Serif KR',serif;font-size:14px;font-weight:600;color:#4B4640}
+  .note{font-size:12px;color:var(--neu);margin-top:12px;line-height:1.65}
+  .note b{color:#4B4640}
+
+  /* ① HEADER */
+  header.cover{background:var(--paper);border-bottom:1px solid var(--line)}
+  .cover-inner{display:flex;justify-content:space-between;align-items:flex-start;gap:28px;padding:40px 0 36px}
+  .brand{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.22em;color:var(--gold);font-weight:700}
+  .brand span{color:var(--ink)}
+  .cover h1{font-family:'DM Serif Display',serif;font-weight:400;font-size:52px;line-height:1.05;margin:14px 0 6px;letter-spacing:-.01em}
+  .cover h2{font-family:'Noto Serif KR',serif;font-weight:700;font-size:20px;color:#3A352F}
+  .meta-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:18px}
+  .meta{font-family:'JetBrains Mono',monospace;font-size:12px;color:#4B4640;background:var(--white);border:1px solid var(--line);padding:5px 10px;border-radius:3px}
+  .badge{font-size:12px;font-weight:700;color:var(--neg-t);border:1.5px solid var(--neg-t);padding:4px 10px;border-radius:3px;background:var(--white)}
+  .cover-lead{margin-top:18px;max-width:720px;font-size:15px;color:#3A352F}
+
+  .dl-cluster{display:flex;flex-direction:column;align-items:flex-end;gap:10px;min-width:230px}
+  .dl-btn{font-family:'Noto Serif KR',serif;font-weight:700;font-size:13px;background:var(--ink);color:#FFFFFF;border:none;padding:11px 16px;border-radius:4px;cursor:pointer;transition:.15s}
+  .dl-btn:hover{background:#3A352F}
+  .switch-row{display:flex;align-items:center;gap:9px;background:var(--white);border:1px solid var(--line);padding:6px 10px;border-radius:4px}
+  .switch-label{font-size:12px;font-weight:600;color:#4B4640}
+  .switch{position:relative;display:inline-block;width:38px;height:20px}
+  .switch input{opacity:0;width:0;height:0}
+  .switch-track{position:absolute;inset:0;background:#CBC7C1;border-radius:20px;cursor:pointer;transition:.2s}
+  .switch-track::before{content:"";position:absolute;width:14px;height:14px;left:3px;top:3px;background:#FFFFFF;border-radius:50%;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+  .switch input:checked + .switch-track{background:var(--pos-t)}
+  .switch input:checked + .switch-track::before{transform:translateX(18px)}
+  .switch-status{font-size:11px;font-weight:700;color:var(--ink);min-width:24px}
+
+  /* ② SURPRISE */
+  .surprise{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .s-card{background:var(--white);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .s-bar{height:6px}
+  .s-body{padding:20px 22px}
+  .s-label{font-size:12px;font-weight:700;color:#4B4640;letter-spacing:.02em}
+  .s-val{font-family:'JetBrains Mono',monospace;font-size:34px;font-weight:700;margin:6px 0 4px}
+  .s-sub{font-size:12.5px;color:var(--neu)}
+  .mini-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:14px;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .mini{padding:12px 16px;border-right:1px solid var(--line);background:var(--white)}
+  .mini:last-child{border-right:none}
+  .mini .l{font-size:11.5px;font-weight:700;color:#4B4640}
+  .mini .v{font-family:'JetBrains Mono',monospace;font-size:13px;margin-top:4px}
+  .mini .v b.neg{color:#B91C1C} .mini .v b.pos{color:#047857} .mini .v b.neu{color:#4B4640}
+
+  /* ③ KPI */
+  .kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .kpi{background:var(--white);border:1px solid var(--line);border-left:5px solid var(--neu);border-radius:6px;padding:18px 20px}
+  .kpi.neg{border-left-color:var(--neg)} .kpi.pos{border-left-color:var(--pos)}
+  .kpi-label{font-size:12.5px;font-weight:700;color:#4B4640}
+  .kpi-tag{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--neu);margin-left:6px}
+  .kpi-val{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;margin:6px 0 2px}
+  .kpi.neg .kpi-val{color:var(--neg-t)} .kpi.pos .kpi-val{color:var(--pos-t)}
+  .kpi-prev{font-size:12.5px;color:#4B4640}
+  .arrow{font-family:'JetBrains Mono',monospace;font-weight:700}
+  .arrow.dn{color:var(--neg-t)} .arrow.up{color:var(--pos-t)} .arrow.upbad{color:var(--neg-t)} .arrow.flat{color:var(--neu)}
+  .kpi-desc{font-size:12px;color:var(--neu);margin-top:8px;border-top:1px dashed var(--line);padding-top:8px}
+  .legend-row{display:flex;flex-wrap:wrap;gap:18px;margin-bottom:14px;font-size:12px;color:#4B4640}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+
+  /* ④⑤ CHART */
+  .chart-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+  .chart-grid.half{grid-template-columns:1fr 1fr}
+  .panel{background:var(--white);border:1px solid var(--line);border-radius:6px;padding:20px}
+  .panel h4{font-size:14px;font-weight:700;margin-bottom:12px}
+  .chart-box{position:relative;height:320px}
+  .chart-box.short{height:260px}
+  .chart-box.tall{height:500px}
+  .chart-fallback{display:none;font-size:13px;color:var(--neu);padding:30px;text-align:center}
+  .rev-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px dashed var(--line);font-size:13px}
+  .rev-row:last-child{border-bottom:none}
+  .rev-row .mono{font-size:13px}
+  .rev-total{background:var(--neg-bg);border-radius:4px;padding:12px;margin-top:10px;text-align:center}
+  .rev-total .mono{font-size:24px;font-weight:700;color:var(--neg-t)}
+
+  /* ⑥ TABLE */
+  .tbl-wrap{max-height:720px;overflow:auto;border:1px solid var(--line);border-radius:6px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  thead th{position:sticky;top:0;z-index:2;background:#1A1714;color:#FFFFFF;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.06em;text-align:right;padding:11px 14px;white-space:nowrap}
+  thead th:first-child{text-align:left}
+  thead th.hl{background:#FDECEC;color:#B91C1C;font-weight:700}
+  tbody td{padding:9px 14px;border-bottom:1px solid var(--line);text-align:right}
+  tbody td:first-child{text-align:left}
+  tbody tr:nth-child(even){background:#F8F7F5}
+  tbody td.num{font-family:'JetBrains Mono',monospace}
+  tbody tr.grp td{background:#EFEBE5 !important;font-weight:700;font-size:12px;color:#3A352F;text-align:left;letter-spacing:.02em}
+  td.ind1{padding-left:30px !important;color:#4B4640}
+  td.c-neg{color:#B91C1C;font-weight:700}
+  td.c-pos{color:#047857;font-weight:700}
+  td.c-neu{color:#6B7280}
+  td.c-hl{color:#B91C1C;font-weight:700;background:#FDECEC}
+  td.memo{font-family:'Noto Serif KR',serif;font-size:12px;color:#4B4640;text-align:left}
+
+  /* ⑦ IMPACT */
+  .impact-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  .impact{background:var(--white);border:1px solid var(--line);border-top:4px solid var(--neu);border-radius:6px;padding:20px 22px}
+  .impact.neg{border-top-color:var(--neg)} .impact.pos{border-top-color:var(--pos)}
+  .impact h5{font-size:14.5px;font-weight:700}
+  .impact .big{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;margin:6px 0 8px}
+  .impact.neg .big{color:var(--neg-t)} .impact.pos .big{color:var(--pos-t)}
+  .impact p{font-size:13.5px;color:#3A352F}
+  .views{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .view{background:var(--paper);border-radius:6px;padding:18px 20px;border-left:4px solid var(--neu)}
+  .view.hawk{border-left-color:var(--neg)} .view.dove{border-left-color:var(--pos)}
+  .view .who{font-size:12px;font-weight:700;color:var(--gold);letter-spacing:.02em}
+  .view .stance{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;margin:4px 0 8px}
+  .view.hawk .stance{color:#B91C1C} .view.dove .stance{color:#047857} .view .stance{color:#4B4640}
+  .view p{font-size:13.5px;color:#3A352F}
+  .macro-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:14px}
+  .macro{background:var(--white);border:1px solid var(--line);border-radius:6px;padding:14px 16px}
+  .macro .l{font-size:11.5px;font-weight:700;color:#4B4640}
+  .macro .v{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;margin-top:4px}
+  .macro .s{font-size:11.5px;color:var(--neu)}
+
+  /* ⑨ MARKET */
+  .mkt-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .mkt{background:var(--white);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .mkt .bar{height:5px}
+  .mkt .in{padding:18px}
+  .mkt h5{font-size:13.5px;font-weight:700;margin-bottom:6px}
+  .mkt .dir{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;margin-bottom:8px}
+  .mkt-row{display:flex;justify-content:space-between;font-size:12.5px;padding:6px 0;border-bottom:1px dashed var(--line)}
+  .mkt-row:last-child{border-bottom:none}
+  .mkt-row .v{color:var(--neu);font-weight:600}
+  .mkt p{font-size:12.5px;color:#3A352F;margin-top:8px}
+
+  /* ⑩ CONCLUSION */
+  .concl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .concl{background:var(--paper);border-radius:6px;padding:20px}
+  .concl .n{font-family:'DM Serif Display',serif;font-size:34px;color:var(--gold);line-height:1}
+  .concl h5{font-size:14.5px;font-weight:700;margin:8px 0 6px}
+  .concl p{font-size:13.5px;color:#3A352F}
+  .policy{margin-top:16px;background:var(--white);border:1px solid var(--line);border-left:5px solid var(--ink);border-radius:6px;padding:20px 22px}
+  .policy h5{font-size:15px;font-weight:700;margin-bottom:6px}
+  .policy p{font-size:14px;color:#3A352F;margin-bottom:8px}
+  .next-list{list-style:none;margin-top:14px}
+  .next-list li{display:flex;gap:14px;align-items:baseline;padding:10px 0;border-bottom:1px dashed var(--line);font-size:14px}
+  .next-list .mono{font-size:12px;color:var(--gold);min-width:190px}
+
+  footer{margin-top:52px;background:#1A1714;color:#D9D4CC;padding:28px 0}
+  footer .f-top{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;font-family:'JetBrains Mono',monospace;font-size:12px}
+  footer .f-top b{color:#FFFFFF;letter-spacing:.18em}
+  footer p{font-size:11.5px;line-height:1.7;margin-top:12px;color:#A8A29A}
+
+  @media (max-width:900px){
+    .cover-inner{flex-direction:column}
+    .dl-cluster{align-items:flex-start}
+    .surprise,.kpi-grid,.chart-grid,.chart-grid.half,.impact-grid,.mkt-grid,.concl-grid,.views,.macro-strip,.mini-strip{grid-template-columns:1fr}
+    .mini{border-right:none;border-bottom:1px solid var(--line)}
+    .cover h1{font-size:38px}
+  }
+</style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+
+<!-- ① HEADER COVER -->
+<header class="cover">
+  <div class="wrap cover-inner">
+    <div>
+      <div class="brand">TNB<span>folio</span> · US MACRO DEEP DIVE</div>
+      <h1>EMPLOYMENT SITUATION<br>SEPTEMBER 2026</h1>
+      <h2>미국 9월 고용보고서 — 비농업 고용·실업률·임금 심층 분석</h2>
+      <div class="meta-row">
+        <span class="meta">발표일 2026.10.02 (FRI) 8:30 a.m. ET</span>
+        <span class="meta">BLS USDL-26-1549</span>
+        <span class="badge">채널 자체 분석</span>
+      </div>
+      <p class="cover-lead">9월 비농업 고용은 +29,000으로 전망치 84,000에 크게 못 미쳤고, 실업률은 4.1%에서 4.2%로 올랐다. 7·8월 고용도 합산 60,000 하향 수정됐다. 반면 시간당 평균임금 상승률은 연 3.0%로 2021년 5월 이후 최저를 기록했다. 시장은 이를 "노동시장발 인플레이션 압력 부재"로 해석해 10월 FOMC 동결 확률을 82.8%로 끌어올렸다.</p>
+    </div>
+    <div class="dl-cluster">
+      <button class="dl-btn" onclick="downloadReport()">⬇ 리포트 다운로드 (HTML)</button>
+      <div class="switch-row">
+        <span class="switch-label">자동 다운로드</span>
+        <label class="switch">
+          <input type="checkbox" id="autoDlToggle" checked="" onchange="handleToggleChange(this.checked)">
+          <span class="switch-track"></span>
+        </label>
+        <span class="switch-status mono" id="switchStatus">ON</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- ② SURPRISE BANNER -->
+<section>
+  <div class="sec-head"><span class="sec-num">02</span><span class="sec-title">Surprise Banner<span class="ko">발표치 vs 전망치</span></span></div>
+  <div class="surprise">
+    <div class="s-card">
+      <div class="s-bar" style="background:var(--neg)"></div>
+      <div class="s-body">
+        <div class="s-label">발표치 · 비농업 고용 (2026년 9월 잠정)</div>
+        <div class="s-val" style="color:var(--neg-t)">+29,000</div>
+        <div class="s-sub">직전 12개월 월평균 45,000도 밑돌았다</div>
+      </div>
+    </div>
+    <div class="s-card">
+      <div class="s-bar" style="background:var(--neu)"></div>
+      <div class="s-body">
+        <div class="s-label">전망치 · 시장 컨센서스</div>
+        <div class="s-val" style="color:#4B4640">+84,000</div>
+        <div class="s-sub">발표치는 이코노미스트 전망치 전체를 하회했다</div>
+      </div>
+    </div>
+    <div class="s-card">
+      <div class="s-bar" style="background:var(--neg)"></div>
+      <div class="s-body">
+        <div class="s-label">서프라이즈 (발표치 − 전망치)</div>
+        <div class="s-val" style="color:var(--neg-t)">−55,000</div>
+        <div class="s-sub">부정적 서프라이즈 — 고용 부진 신호</div>
+      </div>
+    </div>
+  </div>
+  <div class="mini-strip">
+    <div class="mini"><div class="l">실업률</div><div class="v"><b class="neg">4.2%</b> vs 전망 4.1%</div></div>
+    <div class="mini"><div class="l">시간당 평균임금 MoM</div><div class="v"><b class="neu">+0.1%</b> vs 전망 0.3%</div></div>
+    <div class="mini"><div class="l">시간당 평균임금 YoY</div><div class="v"><b class="neu">+3.0%</b> vs 전망 3.1%</div></div>
+    <div class="mini"><div class="l">10월 FOMC 동결 확률</div><div class="v"><b class="neu">82.8%</b> (발표 후)</div></div>
+  </div>
+  <p class="note">※ 색상 바: 고용지표 기준 부진=빨강 / 호조=초록 / 중립=회색. 임금 지표는 고용 측면과 인플레이션 측면의 함의가 엇갈려 중립(회색)으로 표기하고, 해석은 ⑦·⑩에서 별도로 다뤘다. 서프라이즈(−55,000)는 발표치와 전망치의 단순 차이다.</p>
+</section>
+
+<!-- ③ KPI CARDS -->
+<section>
+  <div class="sec-head"><span class="sec-num">03</span><span class="sec-title">Key Indicators<span class="ko">핵심 KPI</span></span></div>
+  <div class="legend-row">
+    <span><i class="dot" style="background:var(--neg)"></i>고용 부진·악화 신호</span>
+    <span><i class="dot" style="background:var(--pos)"></i>고용 호조·개선 신호</span>
+    <span><i class="dot" style="background:var(--neu)"></i>중립 / 임금(인플레 함의 별도 해석)</span>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi neg">
+      <div class="kpi-label">비농업 고용 증감 <span class="kpi-tag">NFP · MoM</span></div>
+      <div class="kpi-val">+29,000</div>
+      <div class="kpi-prev">전월(8월 수정) <span class="mono">+133,000</span> <span class="arrow dn">▼</span> · 전망 <span class="mono">84,000</span></div>
+      <div class="kpi-desc">BLS는 모든 주요 산업의 고용이 월간 기준 큰 변화를 보이지 않았다고 밝혔다.</div>
+    </div>
+    <div class="kpi neg">
+      <div class="kpi-label">실업률 <span class="kpi-tag">U-3</span></div>
+      <div class="kpi-val">4.2%</div>
+      <div class="kpi-prev">전월 <span class="mono">4.1%</span> <span class="arrow upbad">▲</span> · 전망 <span class="mono">4.1%</span></div>
+      <div class="kpi-desc">상승은 경제활동참가율 확대(노동공급 증가)가 일부 반영된 결과다. 3월 이후 4.1%~4.3% 범위다.</div>
+    </div>
+    <div class="kpi pos">
+      <div class="kpi-label">경제활동참가율 <span class="kpi-tag">LFPR</span></div>
+      <div class="kpi-val">61.8%</div>
+      <div class="kpi-prev">전월 대비 <span class="mono">+0.2%p</span> <span class="arrow up">▲</span></div>
+      <div class="kpi-desc">5월 이후 최고(4개월 만의 최고)다. 경제활동인구는 485,000 늘었다.</div>
+    </div>
+    <div class="kpi neu">
+      <div class="kpi-label">시간당 평균임금 <span class="kpi-tag">AHE · MoM</span></div>
+      <div class="kpi-val">+0.1%</div>
+      <div class="kpi-prev"><span class="mono">$37.81</span> · 전월 <span class="mono">$37.76</span> · 전망 <span class="mono">0.3%</span></div>
+      <div class="kpi-desc">5 cents 상승에 그쳤다. 생산·비관리직은 7 cents(0.2%) 오른 $32.60이다.</div>
+    </div>
+    <div class="kpi neu">
+      <div class="kpi-label">시간당 평균임금 <span class="kpi-tag">AHE · YoY</span></div>
+      <div class="kpi-val">+3.0%</div>
+      <div class="kpi-prev">전월 <span class="mono">3.1%</span> <span class="arrow flat">▼</span> · 전망 <span class="mono">3.1%</span></div>
+      <div class="kpi-desc">2021년 5월 이후 최저다. 8월 CPI 상승률 3.4%를 밑돌아 실질임금은 마이너스 구간이다.</div>
+    </div>
+    <div class="kpi neg">
+      <div class="kpi-label">확산지수 (민간 250개 산업) <span class="kpi-tag">1-MONTH SPAN</span></div>
+      <div class="kpi-val">49.0</div>
+      <div class="kpi-prev">전월(8월) <span class="mono">57.6</span> <span class="arrow dn">▼</span></div>
+      <div class="kpi-desc">50 하회 — 고용 감소 산업이 증가 산업보다 많아졌다. 지난 10월 이후 최저 수준이다.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ④ TREND CHART -->
+<section>
+  <div class="sec-head"><span class="sec-num">04</span><span class="sec-title">Payroll Trend<span class="ko">비농업 vs 민간 고용 증감 추이</span></span></div>
+  <div class="chart-grid">
+    <div class="panel">
+      <h4>월간 고용 증감 (단위: 천 명, 계절조정)</h4>
+      <div class="chart-box"><canvas id="trendChart"></canvas><div class="chart-fallback" id="fb1">차트 라이브러리를 불러오지 못했다. 데이터는 ⑥ 전체 데이터 테이블에서 확인할 수 있다.</div></div>
+    </div>
+    <div class="panel">
+      <h4>수정치 추적 (Revisions)</h4>
+      <div class="rev-row"><span>7월 비농업</span><span class="mono">+21,000 → <b style="color:#B91C1C">-10,000</b></span></div>
+      <div class="rev-row"><span>7월 수정폭</span><span class="mono" style="color:#B91C1C">-31,000</span></div>
+      <div class="rev-row"><span>8월 비농업</span><span class="mono">+162,000 → <b style="color:#B91C1C">+133,000</b></span></div>
+      <div class="rev-row"><span>8월 수정폭</span><span class="mono" style="color:#B91C1C">-29,000</span></div>
+      <div class="rev-total">
+        <div style="font-size:12px;font-weight:700;color:#4B4640">7·8월 합산 하향 수정</div>
+        <div class="mono">-60,000</div>
+      </div>
+      <div class="rev-row" style="margin-top:8px"><span>3개월 평균 (비농업)</span><span class="mono">51</span></div>
+      <div class="rev-row"><span>3개월 평균 (민간)</span><span class="mono">54</span></div>
+    </div>
+  </div>
+  <p class="note">※ <b>원문 실측 구간만 표기</b>: BLS Summary Table B에 명시된 2025년 9월, 2026년 7월, 2026년 8월(수정), 2026년 9월(잠정) 4개 시점만 사용했다. 첨부 차트 이미지에 2023년 이후 월별 막대가 있으나 정확한 수치가 표기되지 않아 추정값을 생성하지 않았다. 이에 따라 x축은 비연속 구간이다. 첨부 차트상 2025년 10월은 연방정부 셧다운으로 데이터가 없다. 당월(2026년 9월) 포인트는 확대 표시했다.</p>
+
+  <div class="sub-head"><span class="mono">04-1</span>Survey Divergence &amp; Real Wage<span class="ko">가계 vs 사업체 조사 · 임금 vs 물가</span></div>
+  <div class="chart-grid half">
+    <div class="panel">
+      <h4>9월 고용 증감: 가계조사 vs 사업체조사</h4>
+      <div class="chart-box short"><canvas id="surveyChart"></canvas><div class="chart-fallback" id="fb3">차트 라이브러리를 불러오지 못했다.</div></div>
+    </div>
+    <div class="panel">
+      <h4>시간당 평균임금 YoY vs CPI YoY (%)</h4>
+      <div class="chart-box short"><canvas id="wageChart"></canvas><div class="chart-fallback" id="fb4">차트 라이브러리를 불러오지 못했다.</div></div>
+    </div>
+  </div>
+  <p class="note">※ 가계조사 취업자 +406,000과 경제활동인구 +485,000은 사업체조사 비농업 고용 +29,000과 크게 엇갈렸다. 두 조사는 표본·정의가 달라 월별 괴리가 발생할 수 있다. 임금 YoY 8월 3.1%와 CPI 8월 3.4%는 첨부 차트 표기값, 9월 3.0%는 BLS 원문값이다. 9월 CPI는 10월 14일 발표 예정이며, 현재는 데이터 미제공이다.</p>
+</section>
+
+<!-- ⑤ SECTOR CHART -->
+<section>
+  <div class="sec-head"><span class="sec-num">05</span><span class="sec-title">Sector Breakdown<span class="ko">산업별 9월 고용 증감</span></span></div>
+  <div class="panel">
+    <h4>2026년 9월(잠정) 전월 대비 증감 (단위: 천 명, 계절조정)</h4>
+    <div class="chart-box tall"><canvas id="sectorChart"></canvas><div class="chart-fallback" id="fb2">차트 라이브러리를 불러오지 못했다. 데이터는 ⑥ 전체 데이터 테이블에서 확인할 수 있다.</div></div>
+  </div>
+  <p class="note">※ 출처: BLS Summary Table B. 증가=초록, 감소=빨강. 데이터센터 등 AI 인프라 투자가 건설·제조업 고용을 지지했다. 반면 정보업·전문 및 비즈니스 서비스·금융 등 AI 노출도가 높은 업종은 감소했다.</p>
+</section>
+
+<!-- ⑥ FULL DATA TABLE -->
+<section>
+  <div class="sec-head"><span class="sec-num">06</span><span class="sec-title">Full Data Table<span class="ko">전체 데이터</span></span></div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>항목</th>
+          <th class="hl">2026.09 (잠정)</th>
+          <th>2026.08 (수정)</th>
+          <th>2025.09 (전년 동월) / 비고</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="grp"><td colspan="4">헤드라인 vs 전망</td></tr>
+        <tr><td>비농업 고용</td><td class="num c-hl">+29,000</td><td class="num">+133,000</td><td class="memo">전망 84,000 · 서프라이즈 −55,000</td></tr>
+        <tr><td>실업률</td><td class="num c-hl">4.2%</td><td class="num">4.1%</td><td class="memo">전망 4.1%</td></tr>
+        <tr><td>시간당 평균임금 MoM</td><td class="num">+0.1%</td><td class="num c-neu">데이터 미제공</td><td class="memo">전망 0.3%</td></tr>
+        <tr><td>시간당 평균임금 YoY</td><td class="num">+3.0%</td><td class="num">3.1%</td><td class="memo">전망 3.1% · 2021년 5월 이후 최저</td></tr>
+
+        <tr class="grp"><td colspan="4">사업체 조사 · 전월 대비 고용 증감 (천 명, 계절조정)</td></tr>
+        <tr><td>총 비농업</td><td class="num c-pos">29</td><td class="num c-pos">133</td><td class="num">76</td></tr>
+        <tr><td>총 민간</td><td class="num c-pos">46</td><td class="num c-pos">89</td><td class="num">68</td></tr>
+        <tr><td>상품 생산</td><td class="num c-pos">18</td><td class="num c-pos">34</td><td class="num">11</td></tr>
+        <tr><td class="ind1">광업 및 벌채업</td><td class="num c-neg">-2</td><td class="num c-pos">3</td><td class="num">-2</td></tr>
+        <tr><td class="ind1">건설업</td><td class="num c-pos">11</td><td class="num c-pos">16</td><td class="memo"><span class="mono">16</span> · 데이터센터 붐 수혜</td></tr>
+        <tr><td class="ind1">└ 비주거 전문건설업</td><td class="num c-pos">12.3</td><td class="num c-neu">—</td><td class="memo">Table B-1 전월 대비 변동</td></tr>
+        <tr><td class="ind1">제조업</td><td class="num c-pos">9</td><td class="num c-pos">15</td><td class="memo"><span class="mono">-3</span> · 2025년 12월 저점 대비 +72,000</td></tr>
+        <tr><td class="ind1">└ 내구재</td><td class="num c-pos">8</td><td class="num c-pos">14</td><td class="num">-5</td></tr>
+        <tr><td class="ind1">└ 자동차 및 부품</td><td class="num c-pos">1.6</td><td class="num c-neg">-7.3</td><td class="num">-2.3</td></tr>
+        <tr><td class="ind1">└ 비내구재</td><td class="num c-pos">1</td><td class="num c-pos">1</td><td class="num">2</td></tr>
+        <tr><td>민간 서비스 제공</td><td class="num c-pos">28</td><td class="num c-pos">55</td><td class="num">57</td></tr>
+        <tr><td class="ind1">도매업</td><td class="num c-pos">5.0</td><td class="num c-pos">8.0</td><td class="num">8.8</td></tr>
+        <tr><td class="ind1">소매업</td><td class="num c-pos">5.8</td><td class="num c-neg">-5.1</td><td class="num">13.1</td></tr>
+        <tr><td class="ind1">운송 및 창고업</td><td class="num c-pos">7.6</td><td class="num c-pos">3.3</td><td class="num">-39.3</td></tr>
+        <tr><td class="ind1">유틸리티</td><td class="num c-pos">0.5</td><td class="num c-pos">2.1</td><td class="num">0.0</td></tr>
+        <tr><td class="ind1">정보업</td><td class="num c-neg">-10</td><td class="num c-neg">-18</td><td class="memo"><span class="mono">-1</span> · AI 영향 우려 업종</td></tr>
+        <tr><td class="ind1">금융 활동</td><td class="num c-neg">-7</td><td class="num c-neg">-9</td><td class="memo"><span class="mono">4</span> · 2025년 5월 고점 대비 -129,000</td></tr>
+        <tr><td class="ind1">전문 및 비즈니스 서비스</td><td class="num c-neg">-9</td><td class="num c-neg">-5</td><td class="num">-16</td></tr>
+        <tr><td class="ind1">└ 임시직 서비스</td><td class="num c-neg">-10.9</td><td class="num c-pos">0.2</td><td class="num">-11.7</td></tr>
+        <tr><td class="ind1">민간 교육 및 헬스케어</td><td class="num c-pos">20</td><td class="num c-pos">38</td><td class="num">54</td></tr>
+        <tr><td class="ind1">└ 헬스케어 및 사회지원</td><td class="num c-pos">23.0</td><td class="num c-pos">35.1</td><td class="num">55.3</td></tr>
+        <tr><td class="ind1">└ 헬스케어 (본문 기준)</td><td class="num c-pos">+17,000</td><td class="num c-neu">—</td><td class="memo">12개월 월평균 +33,000 · 외래 +13,000 / 병원 +12,000 / 요양 -9,000</td></tr>
+        <tr><td class="ind1">여가 및 숙박업</td><td class="num c-pos">10</td><td class="num c-pos">37</td><td class="num">37</td></tr>
+        <tr><td class="ind1">기타 서비스업</td><td class="num c-pos">6</td><td class="num c-pos">3</td><td class="num">-3</td></tr>
+        <tr><td>정부 부문</td><td class="num c-neg">-17</td><td class="num c-pos">44</td><td class="memo"><span class="mono">8</span> · 지방정부 -13</td></tr>
+        <tr><td>3개월 평균 · 총 비농업</td><td class="num">51</td><td class="num">51</td><td class="num">23</td></tr>
+        <tr><td>3개월 평균 · 총 민간</td><td class="num c-pos">54</td><td class="num">48</td><td class="num">38</td></tr>
+
+        <tr class="grp"><td colspan="4">사업체 조사 · 근로시간·임금 (계절조정)</td></tr>
+        <tr><td>주당 평균 근로시간 (총 민간)</td><td class="num c-neu">34.4시간</td><td class="num">34.4시간</td><td class="memo"><span class="mono">34.2시간</span> · 일부 보도는 34.6시간으로 전함¹</td></tr>
+        <tr><td>시간당 평균임금 (총 민간)</td><td class="num">$37.81</td><td class="num">$37.76</td><td class="memo"><span class="mono">$36.70</span> · 12개월 +3.0% / 월간 +0.1%</td></tr>
+        <tr><td>주당 평균임금 (총 민간)</td><td class="num">$1,300.66</td><td class="num">$1,298.94</td><td class="num">$1,255.14</td></tr>
+        <tr><td>시간당 평균임금 (생산·비관리직)</td><td class="num">$32.60</td><td class="num c-neu">데이터 미제공</td><td class="memo">월간 +7 cents (+0.2%)</td></tr>
+        <tr><td>주당 평균 근로시간 (생산·비관리직)</td><td class="num c-neu">33.8시간</td><td class="num c-neu">데이터 미제공</td><td class="memo">원문: 전월과 동일(remained)</td></tr>
+        <tr><td>제조업 주당 근로시간</td><td class="num c-neu">40.6시간</td><td class="num">40.6시간</td><td class="num">40.0시간</td></tr>
+        <tr><td>제조업 주당 초과근무</td><td class="num c-neu">3.0시간</td><td class="num">3.0시간</td><td class="num">2.9시간</td></tr>
+        <tr><td>총 주간 근로시간 지수 (2007=100)</td><td class="num c-neu">117.2</td><td class="num">117.2</td><td class="memo"><span class="mono">115.9</span> · 월간 0.0%</td></tr>
+        <tr><td>총 주간 급여 지수 (2007=100)</td><td class="num">211.9</td><td class="num">211.5</td><td class="memo"><span class="mono">203.4</span> · 월간 0.2%</td></tr>
+        <tr><td>확산지수 · 민간 250개 산업</td><td class="num c-neg">49.0</td><td class="num">57.6</td><td class="memo"><span class="mono">50.4</span> · 지난 10월 이후 최저</td></tr>
+        <tr><td>확산지수 · 제조업 72개 산업</td><td class="num c-neg">46.5</td><td class="num">63.9</td><td class="num">47.2</td></tr>
+
+        <tr class="grp"><td colspan="4">가계 조사</td></tr>
+        <tr><td>실업률</td><td class="num c-neg">4.2%</td><td class="num">4.1%</td><td class="memo">3월 이후 4.1%~4.3% 범위</td></tr>
+        <tr><td>가계조사 취업자 증감</td><td class="num c-pos">+406,000</td><td class="num c-neu">데이터 미제공</td><td class="memo">사업체조사와 큰 괴리</td></tr>
+        <tr><td>경제활동인구 증감</td><td class="num c-pos">+485,000</td><td class="num c-neu">데이터 미제공</td><td class="memo">노동공급 확대</td></tr>
+        <tr><td>경제활동참가율</td><td class="num c-pos">61.8%</td><td class="num c-neu">데이터 미제공</td><td class="memo">+0.2%p · 5월 이후 최고</td></tr>
+        <tr><td>고용률 (Employment-population ratio)</td><td class="num">59.2%</td><td class="num c-neu">데이터 미제공</td><td class="memo">1월 이후 순변화 미미</td></tr>
+        <tr><td>광의 실업률 (U-6 계열 대체 지표)</td><td class="num c-pos">7.6%</td><td class="num c-neu">데이터 미제공</td><td class="memo">소폭 하락 · 2025년 1월 이후 최저</td></tr>
+        <tr><td>실업자 수</td><td class="num">7.1 million</td><td class="num c-neu">데이터 미제공</td><td class="memo">원문: little changed</td></tr>
+        <tr><td>장기 실업자 (27주 이상)</td><td class="num">1.9 million</td><td class="num c-neu">데이터 미제공</td><td class="memo">전체 실업자의 27.1%</td></tr>
+        <tr><td>실업 기간 중위값</td><td class="num c-neg">11.5주</td><td class="num c-neu">데이터 미제공</td><td class="memo">4개월 만의 최고</td></tr>
+        <tr><td>비자발적 시간제 근로자</td><td class="num">4.5 million</td><td class="num c-neu">데이터 미제공</td><td class="memo">원문: little changed</td></tr>
+        <tr><td>구직 희망 비경제활동인구</td><td class="num">5.8 million</td><td class="num c-neu">데이터 미제공</td><td class="memo">원문: little changed</td></tr>
+        <tr><td>한계 구직자 (marginally attached)</td><td class="num c-pos">1.5 million</td><td class="num c-neu">데이터 미제공</td><td class="memo">월간 236,000 감소</td></tr>
+        <tr><td>실망 실업자 (discouraged)</td><td class="num">414,000</td><td class="num c-neu">데이터 미제공</td><td class="memo">원문: little changed</td></tr>
+        <tr><td class="ind1">흑인 실업률</td><td class="num c-neg">7.0%</td><td class="num c-neu">데이터 미제공</td><td class="memo">상승 · 일부는 참가율 상승 영향</td></tr>
+        <tr><td class="ind1">성인 남성 / 성인 여성</td><td class="num">3.9% / 3.6%</td><td class="num c-neu">데이터 미제공</td><td class="memo">little change</td></tr>
+        <tr><td class="ind1">10대</td><td class="num">14.5%</td><td class="num c-neu">데이터 미제공</td><td class="memo">little change</td></tr>
+        <tr><td class="ind1">백인 / 아시아계 / 히스패닉</td><td class="num">3.6% / 2.9% / 4.7%</td><td class="num c-neu">데이터 미제공</td><td class="memo">little change</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">※ 출처: BLS Employment Situation Summary, Summary Table B, Table B-1·B-2·B-3 (Last Modified 2026.10.02). 전망치, 전월 실업률, 가계조사 취업자·경제활동인구, 광의 실업률, 실업 기간 중위값은 발표 당일 보도 기준이다. 2026년 8월·9월은 잠정치(p)이며, 2025년 3월 벤치마크 및 업데이트된 계절조정 요인이 반영됐다.<br>
+  ¹ <b>출처 간 수치 불일치</b>: 9월 총 민간 주당 평균 근로시간을 BLS 원문(Table B-2·Summary B)은 34.4시간으로, 일부 보도는 "변화 없이 34.6시간"으로 전했다. 본 리포트는 BLS 원문 34.4시간을 기준으로 표기하고 보도 수치를 병기했다.</p>
+</section>
+
+<!-- ⑦ MARKET IMPACT -->
+<section>
+  <div class="sec-head"><span class="sec-num">07</span><span class="sec-title">Market Impact<span class="ko">시장 영향 분석</span></span></div>
+  <div class="impact-grid">
+    <div class="impact neg">
+      <h5>① 전망 하회 + 누적 하향 수정</h5>
+      <div class="big">−55,000 / −60,000</div>
+      <p>발표치는 전망치 84,000을 55,000 밑돌았고 7·8월은 합산 60,000 하향 수정됐다. 7월이 -10,000으로 마이너스 전환되면서 8월의 강한 수치는 6~7월 부진에 대한 반등에 불과했다는 해석이 힘을 얻는다.</p>
+    </div>
+    <div class="impact neg">
+      <h5>② 확산지수 50 하회 — 고용 확장의 폭 축소</h5>
+      <div class="big">49.0 <span style="font-size:14px;color:#6B7280">(전월 57.6)</span></div>
+      <p>민간 250개 산업 중 고용 감소 산업이 증가 산업보다 많아졌고, 지난 10월 이후 최저 수준이다. 제조업 확산지수도 63.9에서 46.5로 급락해 소수 업종 의존형 고용 구조가 뚜렷해졌다.</p>
+    </div>
+    <div class="impact neu">
+      <h5>③ 임금 둔화 — 인플레이션 압력 제거, 실질임금은 마이너스</h5>
+      <div class="big" style="color:#4B4640">+3.0% YoY <span style="font-size:14px;color:#6B7280">vs CPI 3.4%</span></div>
+      <p>임금 상승률은 2021년 5월 이후 최저로, 전망(0.3%·3.1%)을 모두 밑돌았다. 노동시장이 물가를 자극하지 않는다는 점은 연준에 우호적이다. 반면 8월 CPI 3.4%를 하회해 가계 체감 경기에는 부담이다.</p>
+    </div>
+    <div class="impact neu">
+      <h5>④ AI 양극화 — 인프라 고용 ↑, 화이트칼라 고용 ↓</h5>
+      <div class="big" style="color:#4B4640">건설 +11 · 정보 −10</div>
+      <p>데이터센터 투자가 건설(+11,000)·제조(+9,000) 고용을 지지했다. 반면 정보업(-10,000), 금융(-7,000), 임시직(-10.9천 명) 등 AI 노출 업종은 감소했다. 2023년 초 이후 AI 관련 일자리는 750,000개 이상 늘어난 것으로 추산된다.</p>
+    </div>
+  </div>
+
+  <div class="sub-head"><span class="mono">07-1</span>Policy Reaction<span class="ko">전문가 시각 — 해석의 분기</span></div>
+  <div class="views">
+    <div class="view dove">
+      <div class="who">Jefferies 수석 이코노미스트</div>
+      <div class="stance">10월 인상 사실상 배제</div>
+      <p>이번 고용지표가 10월 금리 인상 가능성에 사실상 종지부를 찍었다고 평가했다. 추가 인상까지 시간이 있다고 보는 위원들의 "인내" 기조가 유지될 가능성이 커졌다는 진단이다.</p>
+    </div>
+    <div class="view">
+      <div class="who">이코노미스트 팀 (연내 전망)</div>
+      <div class="stance">연말까지 동결 전망</div>
+      <p>8월 급등 이후 고용이 둔화했고 실업률도 소폭 올라, 10월 인상 근거가 성립하지 않는다고 봤다. 연준이 연내 남은 기간 동결할 것으로 전망했다.</p>
+    </div>
+    <div class="view hawk">
+      <div class="who">Navy Federal Credit Union 수석 이코노미스트</div>
+      <div class="stance">12월 인상 경로 유지</div>
+      <p>임금 상승률이 5년 만의 최저로 떨어져 물가에 잠식되고 있다고 지적했다. 다만 노동시장은 "안정적"이며, 연준의 12월 인상 의지가 꺾이지는 않을 것으로 봤다.</p>
+    </div>
+  </div>
+  <div class="macro-strip">
+    <div class="macro"><div class="l">1분기 GDP (수정)</div><div class="v">2.5%</div><div class="s">상무부 개정치</div></div>
+    <div class="macro"><div class="l">2분기 GDP (수정)</div><div class="v">2.2%</div><div class="s">상무부 개정치</div></div>
+    <div class="macro"><div class="l">3분기 GDP 추적치</div><div class="v">3.7%</div><div class="s">애틀랜타 연은</div></div>
+    <div class="macro"><div class="l">근원 PCE (최근)</div><div class="v">3%</div><div class="s">연준 목표 2% 상회</div></div>
+  </div>
+  <p class="note">※ 이 밖에 Oxford Economics는 노동시장이 견조하지만 인플레이션을 만들어내지 않는다고 평가했다. Regions Financial은 1년 넘게 이어진 "저채용·저해고" 구도가 유지되고 있다고 진단했다. 8월 기업 감원 발표(Challenger 집계)는 2022년 이후 같은 달 기준 최저였다. AI 관련 일자리 750,000개는 LinkedIn 추정치이며 건설 일자리를 포함하지 않는다.</p>
+</section>
+
+<!-- ⑧ POLICY / FEDWATCH -->
+<section>
+  <div class="sec-head"><span class="sec-num">08</span><span class="sec-title">Policy Impact<span class="ko">CME FedWatch 금리 확률</span></span></div>
+  <div class="tbl-wrap" style="max-height:none">
+    <table>
+      <thead>
+        <tr>
+          <th>FOMC 회의</th>
+          <th>시나리오</th>
+          <th class="hl">현재 확률 (발표 후)</th>
+          <th>발표 전 확률</th>
+          <th>변화 (Before → After)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>2026.10.27~28</td><td class="memo" style="text-align:right">동결</td><td class="num c-hl">82.8%</td><td class="num c-neu">데이터 미제공</td><td class="memo" style="text-align:right">급등(jumped) · 수치 데이터 미제공</td></tr>
+        <tr><td>2026.10.27~28</td><td class="memo" style="text-align:right">25bp 인상</td><td class="num c-neu">데이터 미제공</td><td class="num c-neu">데이터 미제공</td><td class="memo" style="text-align:right">인상 베팅 축소 · 수치 데이터 미제공</td></tr>
+        <tr><td>2026.12 FOMC</td><td class="memo" style="text-align:right">다음 인상 시점</td><td class="num c-neu">데이터 미제공</td><td class="num c-neu">데이터 미제공</td><td class="memo" style="text-align:right">시장 기대: 12월로 이연</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">※ <b>단일 시점 스냅샷</b>: 발표 후 보도된 10월 동결 확률 82.8%만 확보했다. 발표 전 확률과 구간별 상세 분포는 제공되지 않아 Before/After 비교값을 "데이터 미제공"으로 표기했다. 인상 확률을 동결 확률의 보수로 임의 산출하지 않았다. 배경: FOMC는 9월 회의에서 기준금리를 25bp 인상했다. 연준 위원들은 최근 인플레이션 추이를 평가할 시간이 더 필요하다는 신호를 보냈다.</p>
+</section>
+
+<!-- ⑨ MARKET REACTION -->
+<section>
+  <div class="sec-head"><span class="sec-num">09</span><span class="sec-title">Market Reaction<span class="ko">시장 반응 요약</span></span></div>
+  <div class="mkt-grid">
+    <div class="mkt">
+      <div class="bar" style="background:var(--pos)"></div>
+      <div class="in">
+        <h5>지수선물 / 주식</h5>
+        <div class="dir" style="color:#047857">▲ 급등</div>
+        <div class="mkt-row"><span class="mono">S&amp;P 500</span><span class="v">상승 · 수치 데이터 미제공</span></div>
+        <div class="mkt-row"><span class="mono">ES / NQ</span><span class="v">데이터 미제공</span></div>
+        <p>부진한 고용을 "10월 동결 확정" 재료로 받아들이며 호재로 해석했다.</p>
+      </div>
+    </div>
+    <div class="mkt">
+      <div class="bar" style="background:var(--pos)"></div>
+      <div class="in">
+        <h5>채권</h5>
+        <div class="dir" style="color:#047857">▼ 금리 급락</div>
+        <div class="mkt-row"><span class="mono">US 2Y</span><span class="v">데이터 미제공</span></div>
+        <div class="mkt-row"><span class="mono">US 10Y</span><span class="v">데이터 미제공</span></div>
+        <p>이번 주 초 24년 만의 최고치를 찍은 국채금리가 하락했다. 모기지 금리는 7%를 웃돈다.</p>
+      </div>
+    </div>
+    <div class="mkt">
+      <div class="bar" style="background:var(--neu)"></div>
+      <div class="in">
+        <h5>달러</h5>
+        <div class="dir" style="color:#4B4640">▼ 약세</div>
+        <div class="mkt-row"><span class="mono">DXY</span><span class="v">하락 · 수치 데이터 미제공</span></div>
+        <div class="mkt-row"><span>달러/원</span><span class="v">데이터 미제공</span></div>
+        <p>금리 인상 기대 후퇴가 달러 하락으로 연결됐다.</p>
+      </div>
+    </div>
+    <div class="mkt">
+      <div class="bar" style="background:var(--neu)"></div>
+      <div class="in">
+        <h5>원자재 · 암호화폐</h5>
+        <div class="dir" style="color:#6B7280">데이터 미제공</div>
+        <div class="mkt-row"><span>금 / WTI</span><span class="v">데이터 미제공</span></div>
+        <div class="mkt-row"><span class="mono">BTC</span><span class="v">데이터 미제공</span></div>
+        <p>관련 보도·캡처가 제공되지 않았다.</p>
+      </div>
+    </div>
+  </div>
+  <p class="note">※ 시장 반응은 발표 직후 보도된 <b>방향성</b>만 반영했다. 지수·금리·환율의 구체 수치와 발표 전/후 비교값은 제공되지 않아 "데이터 미제공"으로 표기했다. 색상은 위험자산 기준으로 주가 상승·금리 하락=초록, 방향 중립·미제공=회색이다.</p>
+</section>
+
+<!-- ⑩ CONCLUSION -->
+<section>
+  <div class="sec-head"><span class="sec-num">10</span><span class="sec-title">Conclusion &amp; Outlook<span class="ko">결론 및 전망</span></span></div>
+  <div class="concl-grid">
+    <div class="concl">
+      <div class="n">01</div>
+      <h5>사업체 조사는 "후퇴", 가계 조사는 "확장"</h5>
+      <p>비농업 고용은 전망을 55,000 밑돌고 7·8월도 60,000 하향 수정됐다. 반면 가계조사 취업자는 +406,000, 참가율은 61.8%로 올랐다. 실업률 상승은 수요 붕괴보다 노동공급 확대의 성격이 강한 것으로 평가된다.</p>
+    </div>
+    <div class="concl">
+      <div class="n">02</div>
+      <h5>임금은 더 이상 물가 리스크가 아니다</h5>
+      <p>시간당 평균임금 3.0%는 2021년 5월 이후 최저다. 노동시장발 인플레이션 압력이 사실상 사라졌다는 신호다. 다만 8월 CPI 3.4%를 밑돌아 실질임금 감소가 가계 체감을 짓누르고 있다.</p>
+    </div>
+    <div class="concl">
+      <div class="n">03</div>
+      <h5>시장·전문가 해석은 "동결"로 수렴하되 12월은 엇갈린다</h5>
+      <p>10월 동결 확률은 82.8%로 뛰었다. 그러나 연내 동결 전망과 12월 인상 경로 유지 전망이 공존한다. 성장률(3분기 추적치 3.7%)과 근원 물가(3%)가 견조해 긴축 사이클 종료를 단정하기는 이르다.</p>
+    </div>
+  </div>
+  <div class="policy">
+    <h5>통화정책 영향</h5>
+    <p>이번 고용보고서는 9월 25bp 인상 이후 연준이 관망할 근거를 제공했다. 연준이 고용 지표 중 가장 중시하는 실업률이 하락하지 않았고 임금도 둔화해, 10월 추가 인상의 장애물이 사실상 제거됐다고 평가된다. 시장은 다음 인상 시점을 12월로 이연했다.</p>
+    <p>향후 긴축의 시기와 강도는 고용보다 물가가 결정할 가능성이 크다. 10월 14일 9월 CPI가 핵심 분기점이다. 11월 3일 중간선거를 앞두고 고용 둔화와 실질임금 감소가 정치적 쟁점으로 부상한 점도 정책 환경의 변수다.</p>
+    <ul class="next-list">
+      <li><span class="mono">2026.10.14</span><span>9월 CPI — 8월 3.4% 이후 물가 경로, 12월 인상 여부의 핵심 변수</span></li>
+      <li><span class="mono">2026.10.27~28</span><span>FOMC — 동결 확률 82.8% 반영 여부, 성명서의 추가 인상 신호</span></li>
+      <li><span class="mono">2026.11.03</span><span>미국 중간선거 — 이번 고용보고서가 선거 전 마지막 고용지표</span></li>
+      <li><span class="mono">2026.11.06 8:30 a.m. ET</span><span>10월 고용보고서 — 9월 잠정치 수정 방향과 확산지수 50 회복 여부</span></li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<!-- ⑪ FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="f-top"><b>TNBfolio</b><span>2026.10.02 · US Employment Situation — September 2026</span></div>
+    <p>본 리포트는 미국 노동통계국(BLS) 공식 발표 자료와 발표 당일 시장 보도를 바탕으로 TNBfolio 채널이 자체 분석한 것이며, 투자 권유를 목적으로 하지 않는다. 모든 수치는 원문 그대로 인용했고, 원문에 없는 수치는 "데이터 미제공"으로 표기했다. 투자 판단과 그 결과에 대한 책임은 투자자 본인에게 있다.</p>
+  </div>
+</footer>
+
+<script>
+const STORAGE_KEY = 'tnbfolio_nfp_auto_dl';
+
+function downloadReport(){
+  const blob = new Blob(['<!DOCTYPE html>\n' + document.documentElement.outerHTML], {type:'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'nfp_202609_report.html';
+  a.click();
+}
+
+function handleToggleChange(isOn){
+  document.getElementById('switchStatus').textContent = isOn ? 'ON' : 'OFF';
+  try{ localStorage.setItem(STORAGE_KEY, isOn ? '1' : '0'); }catch(e){}
+}
+
+function initToggleState(){
+  const toggle = document.getElementById('autoDlToggle');
+  let saved = null;
+  try{ saved = localStorage.getItem(STORAGE_KEY); }catch(e){}
+  if(saved === '0'){ toggle.checked = false; }
+  else if(saved === '1'){ toggle.checked = true; }
+  document.getElementById('switchStatus').textContent = toggle.checked ? 'ON' : 'OFF';
+  return toggle.checked;
+}
+
+function initCharts(){
+  if(typeof Chart === 'undefined'){
+    ['fb1','fb2','fb3','fb4'].forEach(id=>document.getElementById(id).style.display='block');
+    ['trendChart','sectorChart','surveyChart','wageChart'].forEach(id=>document.getElementById(id).style.display='none');
+    return;
+  }
+  Chart.defaults.font.family = "'JetBrains Mono', monospace";
+  Chart.defaults.color = '#4B4640';
+  const zeroGrid = (c)=> c.tick.value===0 ? '#1A1714' : '#EEEAE4';
+
+  new Chart(document.getElementById('trendChart'), {
+    type:'line',
+    data:{
+      labels:['2025.09','2026.07','2026.08(수정)','2026.09(잠정)'],
+      datasets:[
+        {label:'총 비농업', data:[76,-10,133,29], borderColor:'#1A1714', backgroundColor:'#1A1714',
+         borderWidth:2.5, tension:.25, pointRadius:[4,4,4,9], pointBackgroundColor:['#1A1714','#1A1714','#1A1714','#EF4444'],
+         pointBorderColor:['#1A1714','#1A1714','#1A1714','#B91C1C'], pointBorderWidth:2},
+        {label:'총 민간', data:[68,28,89,46], borderColor:'#9A7B4F', backgroundColor:'#9A7B4F',
+         borderWidth:2.5, borderDash:[6,4], tension:.25, pointRadius:[4,4,4,9],
+         pointBackgroundColor:['#9A7B4F','#9A7B4F','#9A7B4F','#EF4444'], pointBorderColor:['#9A7B4F','#9A7B4F','#9A7B4F','#B91C1C'], pointBorderWidth:2}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'top', labels:{font:{family:"'Noto Serif KR', serif", size:12}}},
+        tooltip:{callbacks:{label:(c)=>` ${c.dataset.label}: ${c.raw} (천 명)`}}
+      },
+      scales:{ y:{title:{display:true,text:'천 명'}, grid:{color:zeroGrid}}, x:{grid:{display:false}} }
+    }
+  });
+
+  new Chart(document.getElementById('surveyChart'), {
+    type:'bar',
+    data:{
+      labels:['비농업 고용 (사업체)','전망치','가계 취업자','경제활동인구'],
+      datasets:[{data:[29000,84000,406000,485000],
+        backgroundColor:['#EF4444','#9CA3AF','#10B981','#10B981'],
+        borderColor:['#B91C1C','#6B7280','#047857','#047857'], borderWidth:1, borderRadius:3}]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:(c)=>` ${c.raw.toLocaleString('en-US')}명`}}},
+      scales:{
+        y:{ticks:{callback:(v)=>v.toLocaleString('en-US')}, grid:{color:'#EEEAE4'}},
+        x:{grid:{display:false}, ticks:{font:{family:"'Noto Serif KR', serif", size:11}}}
+      }
+    }
+  });
+
+  new Chart(document.getElementById('wageChart'), {
+    type:'bar',
+    data:{
+      labels:['2026.08','2026.09'],
+      datasets:[
+        {label:'시간당 평균임금 YoY', data:[3.1,3.0], backgroundColor:'#9A7B4F', borderRadius:3},
+        {label:'CPI YoY', data:[3.4,null], backgroundColor:'#EF4444', borderRadius:3}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'top', labels:{font:{family:"'Noto Serif KR', serif", size:12}}},
+        tooltip:{callbacks:{label:(c)=> c.raw===null ? ` ${c.dataset.label}: 데이터 미제공` : ` ${c.dataset.label}: ${c.raw}%`}}
+      },
+      scales:{ y:{min:0, max:4, ticks:{callback:(v)=>v+'%'}, grid:{color:'#EEEAE4'}}, x:{grid:{display:false}} }
+    }
+  });
+
+  const sectors = [
+    ['민간 교육·헬스케어',20],['건설업',11],['여가·숙박업',10],['제조업',9],['운송·창고업',7.6],
+    ['기타 서비스업',6],['소매업',5.8],['도매업',5.0],['유틸리티',0.5],['광업·벌채업',-2],
+    ['금융 활동',-7],['전문·비즈니스 서비스',-9],['정보업',-10],['정부 부문',-17]
+  ];
+  new Chart(document.getElementById('sectorChart'), {
+    type:'bar',
+    data:{
+      labels:sectors.map(s=>s[0]),
+      datasets:[{data:sectors.map(s=>s[1]),
+        backgroundColor:sectors.map(s=> s[1]>=0 ? '#10B981' : '#EF4444'),
+        borderColor:sectors.map(s=> s[1]>=0 ? '#047857' : '#B91C1C'), borderWidth:1, borderRadius:3}]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:(c)=>` ${c.raw} (천 명)`}}},
+      scales:{
+        x:{title:{display:true,text:'천 명'}, grid:{color:zeroGrid}},
+        y:{grid:{display:false}, ticks:{font:{family:"'Noto Serif KR', serif", size:12}}}
+      }
+    }
+  });
+}
+
+
+</script>
+
+
+</body></html>
