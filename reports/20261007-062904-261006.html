@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
+  <title>뉴욕증시 주도섹터 분석</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@600;700;900&display=swap" rel="stylesheet">
+  <style>
+    @media print {
+      body {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #ffffff;
+      color: #222222;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .container {
+      width: 1100px;
+      margin: 0 auto;
+      padding: 40px 60px 60px 60px;
+    }
+    .mono {
+      font-family: 'DM Mono', monospace;
+    }
+    .serif {
+      font-family: 'Noto Serif KR', serif;
+    }
+
+    /* 1. Header */
+    .header-section {
+      border-bottom: 2px solid #1a1814;
+      padding-bottom: 20px;
+      margin-bottom: 24px;
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+    }
+    .report-date {
+      font-family: 'DM Mono', monospace;
+      font-size: 15px;
+      font-weight: 500;
+      color: #666666;
+    }
+    .report-title {
+      font-size: 32px;
+      font-weight: 900;
+      color: #111111;
+      letter-spacing: -0.5px;
+      margin-bottom: 16px;
+    }
+    .badge-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      background-color: #f0eeeb;
+      color: #333333;
+    }
+    .badge-label {
+      color: #777777;
+      margin-right: 6px;
+    }
+    .badge.green {
+      background-color: #eaf6ed;
+      color: #1d8a4e;
+    }
+    .badge.red {
+      background-color: #fbeeed;
+      color: #d13b2e;
+    }
+    .badge.orange {
+      background-color: #fdf3e7;
+      color: #d4840a;
+    }
+
+    /* 2. Macro Summary */
+    .macro-card {
+      background-color: #1a1814;
+      color: #ffffff;
+      border-radius: 8px;
+      padding: 28px 32px;
+      margin-bottom: 30px;
+    }
+    .macro-headline {
+      font-size: 20px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 12px;
+      letter-spacing: -0.3px;
+    }
+    .macro-body {
+      font-size: 13.5px;
+      color: #d1cfcb;
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+    .macro-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      border-top: 1px solid #33312c;
+      padding-top: 20px;
+    }
+    .macro-stat-item {
+      background-color: #24221e;
+      padding: 12px 16px;
+      border-radius: 6px;
+    }
+    .stat-label {
+      font-size: 11px;
+      color: #8c8984;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      display: block;
+    }
+    .stat-val {
+      font-size: 18px;
+      font-weight: 500;
+    }
+    .stat-val.up {
+      color: #6ed99a;
+    }
+    .stat-val.down {
+      color: #f08070;
+    }
+
+    /* Section Common */
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #111111;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* 3. Bar Chart */
+    .chart-container {
+      background-color: #f8f7f5;
+      border: 1px solid #e0dcd4;
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 30px;
+    }
+    .chart-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .chart-row {
+      height: 32px;
+    }
+    .chart-row.spx-row {
+      background-color: #f1ede4;
+      font-weight: 700;
+    }
+    .sector-name-col {
+      width: 190px;
+      font-size: 12.5px;
+      color: #333333;
+      padding-right: 12px;
+      text-align: right;
+    }
+    .chart-bar-col {
+      position: relative;
+      padding: 0 10px;
+    }
+    .bar-wrapper {
+      position: relative;
+      width: 100%;
+      height: 16px;
+      display: flex;
+    }
+    .bar-side-left, .bar-side-right {
+      position: relative;
+      width: 50%;
+      height: 100%;
+    }
+    .center-line {
+      position: absolute;
+      left: 50%;
+      top: -6px;
+      bottom: -6px;
+      width: 1px;
+      background-color: #99948a;
+      z-index: 2;
+    }
+    .bar-fill {
+      height: 100%;
+      position: absolute;
+      border-radius: 2px;
+    }
+    .bar-fill.pos {
+      left: 0;
+      background-color: #1d8a4e;
+    }
+    .bar-fill.neg {
+      right: 0;
+      background-color: #d13b2e;
+    }
+    .bar-fill.spx {
+      left: 0;
+      background-color: #d4840a;
+    }
+    .chart-val-col {
+      width: 75px;
+      text-align: right;
+      font-size: 12.5px;
+      font-weight: 500;
+      padding-left: 10px;
+    }
+    .val-pos {
+      color: #1d8a4e;
+    }
+    .val-neg {
+      color: #d13b2e;
+    }
+    .val-spx {
+      color: #d4840a;
+    }
+
+    /* 4. Sector In-depth Cards (2 col grid) */
+    .sector-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .sector-card {
+      background-color: #ffffff;
+      border: 1px solid #e0dcd4;
+      border-radius: 6px;
+      padding: 22px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+    }
+    .sector-card.top-green {
+      border-top: 3px solid #1d8a4e;
+    }
+    .sector-card.top-red {
+      border-top: 3px solid #d13b2e;
+    }
+    .sector-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #f0eeeb;
+    }
+    .sector-title-text {
+      font-size: 17px;
+      font-weight: 700;
+      color: #111111;
+    }
+    .sector-badge {
+      font-size: 13px;
+      font-weight: 500;
+      padding: 3px 8px;
+      border-radius: 3px;
+    }
+    .sector-text {
+      font-size: 13px;
+      color: #444444;
+      line-height: 1.65;
+      margin-bottom: 16px;
+    }
+    .sector-text strong {
+      color: #111111;
+    }
+    .stock-box {
+      background-color: #fcfbf9;
+      border: 1px solid #eae6de;
+      border-radius: 4px;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+    .stock-box-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #77746d;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .stock-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11.5px;
+    }
+    .stock-table th {
+      text-align: left;
+      color: #888888;
+      font-weight: 500;
+      padding: 3px 4px;
+      border-bottom: 1px solid #ebe7df;
+    }
+    .stock-table td {
+      padding: 4px;
+      border-bottom: 1px dotted #f0ece4;
+    }
+    .stock-table tr:last-child td {
+      border-bottom: none;
+    }
+    .risk-box {
+      background-color: #fdf5f5;
+      border-left: 3px solid #d13b2e;
+      padding: 10px 12px;
+      border-radius: 0 4px 4px 0;
+      font-size: 12px;
+      color: #555555;
+      line-height: 1.5;
+    }
+    .risk-label {
+      font-weight: 700;
+      color: #d13b2e;
+      margin-right: 4px;
+    }
+
+    /* 5. Geopolitical Alert */
+    .geo-section {
+      background-color: #fdf6e3;
+      border: 1px solid #e8d89a;
+      border-radius: 6px;
+      padding: 20px 24px;
+      margin-bottom: 30px;
+    }
+    .geo-badge {
+      display: inline-block;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: #b8860b;
+      background-color: #fff9e6;
+      border: 1px solid #e8d89a;
+      padding: 2px 8px;
+      border-radius: 3px;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+    .geo-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #5c4500;
+      margin-bottom: 6px;
+    }
+    .geo-text {
+      font-size: 13px;
+      color: #4a3e1a;
+      line-height: 1.6;
+    }
+
+    /* 6. Major Asset Classes (3 col grid) */
+    .assets-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 30px;
+    }
+    .asset-card {
+      background-color: #f0eeeb;
+      border-radius: 6px;
+      padding: 16px;
+      border: 1px solid #e2ded7;
+    }
+    .asset-name {
+      font-size: 11px;
+      font-weight: 500;
+      color: #77746d;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+    .asset-val {
+      font-size: 20px;
+      font-weight: 500;
+      color: #111111;
+      margin-bottom: 6px;
+    }
+    .asset-desc {
+      font-size: 12px;
+      color: #555555;
+      line-height: 1.4;
+    }
+
+    /* 7. Insights Summary */
+    .insight-section {
+      background-color: #eaf6ed;
+      border: 1px solid #b8e2c7;
+      border-radius: 6px;
+      padding: 22px 26px;
+      margin-bottom: 36px;
+    }
+    .insight-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #135d34;
+      margin-bottom: 10px;
+    }
+    .insight-body {
+      font-size: 13.5px;
+      color: #1f4e32;
+      line-height: 1.65;
+    }
+
+    /* 8. Footer */
+    .footer {
+      border-top: 1px solid #e0dcd4;
+      padding-top: 20px;
+      text-align: center;
+      color: #888888;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+    .footer-meta {
+      font-family: 'DM Mono', monospace;
+      margin-bottom: 4px;
+    }
+  </style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- ① 헤더 -->
+    <header class="header-section">
+      <div class="header-top">
+        <span class="report-date mono">2026년 10월 06일</span>
+        <span class="mono" style="font-size: 12px; color: #888888;">DAILY SECTOR BRIEF</span>
+      </div>
+      <h1 class="report-title serif">뉴욕증시 주도섹터 분석</h1>
+      <div class="badge-container">
+        <div class="badge green">
+          <span class="badge-label">S&amp;P 500</span>
+          <span class="mono">7,820.07 (+0.59%)</span>
+        </div>
+        <div class="badge green">
+          <span class="badge-label">NASDAQ 100</span>
+          <span class="mono">+0.50%</span>
+        </div>
+        <div class="badge orange">
+          <span class="badge-label">10Y 국채금리</span>
+          <span class="mono">5.28% (-3.0bp)</span>
+        </div>
+        <div class="badge">
+          <span class="badge-label">NFP 고용지표</span>
+          <span>예상치 하회 (고용 냉각)</span>
+        </div>
+        <div class="badge red">
+          <span class="badge-label">장마감 MOC 불균형</span>
+          <span class="mono">SPX -$1.49B / NDX -$858M</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ② Macro Summary -->
+    <section class="macro-card">
+      <h2 class="macro-headline serif">채권 금리 진정과 AI 모멘텀 힘입어 S&amp;P 500·나스닥 사상 최고가 경신</h2>
+      <p class="macro-body">
+        미국 증시는 10년물 국채금리가 5.28%로 소폭 하락 안정세를 보이고 국제유가가 횡보 흐름을 나타내자 기술주와 AI 관련주를 중심으로 강한 매수세가 유입되었다.
+        S&amp;P 500 지수는 7,820.07에 마감하며 지난 8월 이후 첫 종가 기준 사상 최고치를 경신했고 나스닥 종합지수 역시 연이틀 최고치 랠리를 펼쳤다.
+        무역수지 적자가 17개월래 최대치인 1,056억 달러로 확대되며 애틀랜타 연은 GDPNow 3분기 전망치는 3.68%로 소폭 하향 조정되었으나, 3분기 기업 이익 성장률 25% 기대감이 지수 상승을 지지했다.
+        다만 3년물 국채 입찰 금리가 2006년 이후 최고치인 4.932%를 기록하고 연은 인사들이 지속적인 인플레이션 압력을 경고하는 등 긴축 장기화 부담은 잔존했다.
+      </p>
+      <div class="macro-grid">
+        <div class="macro-stat-item">
+          <span class="stat-label mono">S&amp;P 500</span>
+          <div class="stat-val up mono">7,820.07 <span style="font-size: 13px;">(+0.59%)</span></div>
+        </div>
+        <div class="macro-stat-item">
+          <span class="stat-label mono">NASDAQ 100</span>
+          <div class="stat-val up mono">+0.50%</div>
+        </div>
+        <div class="macro-stat-item">
+          <span class="stat-label mono">US 10Y YIELD</span>
+          <div class="stat-val down mono">5.28% <span style="font-size: 13px;">(-3.0bp)</span></div>
+        </div>
+        <div class="macro-stat-item">
+          <span class="stat-label mono">WTI CRUDE</span>
+          <div class="stat-val up mono">$89.44 <span style="font-size: 13px;">(+0.01%)</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ③ 섹터별 등락률 차트 -->
+    <section class="chart-container">
+      <div class="section-title serif">
+        <span>섹터별 등락률 현황 (Day's Change %)</span>
+        <span class="mono" style="font-size: 12px; font-weight: normal; color: #888888;"> 기준: 2026-10-06 TNBFolio</span>
+      </div>
+      <table class="chart-table">
+        <tbody>
+          <!-- Max abs value = 2.63% (Utilities) -> 100% width on half-side -->
+          <tr class="chart-row">
+            <td class="sector-name-col">Utilities</td>
+            <td class="chart-bar-col">
+              <div class="bar-wrapper">
+                <div class="center-line"></div>
+                <div class="bar-side-left"></div>
+                <div class="bar-side-right">
+                  <div class="bar-fill pos" style="width: 100%;"></div>
+                </div>
+              </div>
+            </td>
+            <td class="chart-val-col mono val-pos">+2.63%</td>
+          </tr>
+          <tr class="chart-row">
+            <td class="sector-name-col">Consumer Cyclical</td>
+            <td class="chart-bar-col">
+              <div class="bar-wrapper">
+                <div class="center-line"></div>
+                <div class="bar-side-left"></div>
+                <div class="bar-side-right">
+                  <div class="bar-fill pos" style="width: 44.87%;"></div>
+                </div>
+              </div>
+            </td>
+            <td class="chart-val-col mono val-pos">+1.18%</td>
+          </tr>
+          <tr class="chart-row">
+            <td class="sector-name-col">Real Estate</td>
+            <td class="chart-bar-col">
+              <div class="bar-wrapper">
+                <div class="center-line"></div>
+                <div class="bar-side-left"></div>
+                <div class="bar-side-right">
+                  <div class="bar-fill pos" style="width: 36.50%;"></div>
+                </div>
+              </div>
+            </td>
+            <td class="chart-val-col mono val-pos">+0.96%</td>
+          </tr>
+          <tr class="chart-row">
+            <td class="sector-name-col">Consumer Defensive</td>
+            <td class="chart-bar-col">
+              <div class="bar-wrapper">
+                <div class="center-line"></div>
+                <div class="bar-side-left"></div>
+                <div class="bar-side-right">
+                  <div class="bar-fill pos" style="width: 32.70%;"></div>
+                </div>
+              </div>
+            </td>
+            <td class="chart-val-col mono val-pos">+0.86%</td>
+          </tr>
+          <tr class="chart-row">
+            <td class="sector-name-col">Industrials</td>
+            <td class="chart-bar-col">
+              <div class="bar-wrapper">
+                <div class="center-line"></div>
+                <div class="bar-side-left"></div>
+                <div class="bar-side-right">
+                  <div class="bar-fill pos" style="width: 30.42%;"></div>
+                </div>
+              </div>
+            </td>
+            <td class="chart-val-col mono val-pos">+0.80%</td>
+          </tr>
+          <tr class="chart-row">
+            <td class="sector-name-col">Energy</td>
+            <td class="chart-bar-col">
+              <div class="bar-wrapper">
+                <div class="center-line"></div>
+                <div class="bar-side-left"></div>
+                <div class="bar-side-right">
+                  <div class="bar-fill pos" style="width: 23.57%;"></div>
+                </div>
+              </div>
+            </td>
+            <td class="chart-val-col mono val-pos">+0.62%</td>
+          </tr>
+          <tr class="chart-row spx-row">
+            <td class="sector-name-col" style="font-weight: 700; color: #111111;">S&amp;P 500</td>
+            <td class="chart-bar-col">
+              <div class="bar-wrapper">
+                <div class="center-line"></div>
+                <div class="bar-side-left"></div>
+                <div class="bar-side-right">
+                  <div class="bar-fill spx" style="width: 23.19%;"></div>
+                </div>
+              </div>
+            </td>
+            <td class="chart-val-col mono val-spx">+0.61%</td>
+          </tr>
+          <tr class="chart-row">
+            <td class="sector-name-col">Technology</td>
+            <td class="chart-bar-col">
+              <div class="bar-wrapper">
+                <div class="center-line"></div>
+                <div class="bar-side-left"></div>
+                <div class="bar-side-right">
+                  <div class="bar-fill pos" style="width: 22.81%;"></div>
+                </div>
+              </div>
+            </td>
+            <td class="chart-val-col mono val-pos">+0.60%</td>
+          </tr>
+          <tr class="chart-row">
+            <td class="sector-name-col">Basic Materials</td>
+            <td class="chart-bar-col">
+              <div class="bar-wrapper">
+                <div class="center-line"></div>
+                <div class="bar-side-left"></div>
+                <div class="bar-side-right">
+                  <div class="bar-fill pos" style="width: 15.59%;"></div>
+                </div>
+              </div>
+            </td>
+            <td class="chart-val-col mono val-pos">+0.41%</td>
+          </tr>
+          <tr class="chart-row">
+            <td class="sector-name-col">Financial</td>
+            <td class="chart-bar-col">
+              <div class="bar-wrapper">
+                <div class="center-line"></div>
+                <div class="bar-side-left"></div>
+                <div class="bar-side-right">
+                  <div class="bar-fill pos" style="width: 7.98%;"></div>
+                </div>
+              </div>
+            </td>
+            <td class="chart-val-col mono val-pos">+0.21%</td>
+          </tr>
+          <tr class="chart-row">
+            <td class="sector-name-col">Communication Services</td>
+            <td class="chart-bar-col">
+              <div class="bar-wrapper">
+                <div class="center-line"></div>
+                <div class="bar-side-left"></div>
+                <div class="bar-side-right">
+                  <div class="bar-fill pos" style="width: 2.66%;"></div>
+                </div>
+              </div>
+            </td>
+            <td class="chart-val-col mono val-pos">+0.07%</td>
+          </tr>
+          <tr class="chart-row">
+            <td class="sector-name-col">Healthcare</td>
+            <td class="chart-bar-col">
+              <div class="bar-wrapper">
+                <div class="center-line"></div>
+                <div class="bar-side-left">
+                  <div class="bar-fill neg" style="width: 8.75%;"></div>
+                </div>
+                <div class="bar-side-right"></div>
+              </div>
+            </td>
+            <td class="chart-val-col mono val-neg">-0.23%</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ④ 주도 섹터 심층 분석 카드 (2열 그리드) -->
+    <div class="section-title serif">
+      <span>주도 섹터 심층 분석</span>
+    </div>
+    <div class="sector-grid">
+      
+      <!-- Card 1: Technology -->
+      <div class="sector-card top-green">
+        <div class="sector-card-header">
+          <div class="sector-title-text serif">💻 Technology</div>
+          <div class="sector-badge mono" style="background-color: #eaf6ed; color: #1d8a4e;">+0.60%</div>
+        </div>
+        <p class="sector-text">
+          기술 섹터는 <strong>AI 인프라 확충</strong>과 <strong>사이버보안 솔루션 수요 급증</strong>에 힘입어 견고한 상승세를 나타냈다.
+          소프트웨어 지수(IGV)가 연고점을 경신한 가운데, <strong>팔로알토 네트웍스(+3.2%)</strong>와 <strong>크라우드스트라이크(+2.3%)</strong> 등 주요 보안 기업들이 동반 강세를 기록했다.
+          또한 <strong>마이크로소프트(+1.1%)</strong>가 클라우드 및 AI 비즈니스 확장성을 바탕으로 시가총액 3.9조 달러를 공고히 유지하며 섹터 전반의 상승 탄력을 견인했다.
+        </p>
+        <div class="stock-box">
+          <div class="stock-box-title mono">Key Stocks In Portfolio</div>
+          <table class="stock-table">
+            <thead>
+              <tr>
+                <th>티커</th>
+                <th>종목명</th>
+                <th style="text-align: right;">주가</th>
+                <th style="text-align: right;">등락률</th>
+                <th style="text-align: right;">시가총액</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono">MSFT</td>
+                <td>Microsoft Corp</td>
+                <td class="mono" style="text-align: right;">$531.10</td>
+                <td class="mono" style="text-align: right; color: #1d8a4e;">+1.1%</td>
+                <td class="mono" style="text-align: right;">3.90T</td>
+              </tr>
+              <tr>
+                <td class="mono">AMD</td>
+                <td>Advanced Micro Devices</td>
+                <td class="mono" style="text-align: right;">$650.64</td>
+                <td class="mono" style="text-align: right; color: #1d8a4e;">+3.0%</td>
+                <td class="mono" style="text-align: right;">1.03T</td>
+              </tr>
+              <tr>
+                <td class="mono">PANW</td>
+                <td>Palo Alto Networks</td>
+                <td class="mono" style="text-align: right;">$419.88</td>
+                <td class="mono" style="text-align: right; color: #1d8a4e;">+3.2%</td>
+                <td class="mono" style="text-align: right;">332.73B</td>
+              </tr>
+              <tr>
+                <td class="mono">CRWD</td>
+                <td>CrowdStrike Holdings</td>
+                <td class="mono" style="text-align: right;">$278.86</td>
+                <td class="mono" style="text-align: right; color: #1d8a4e;">+2.3%</td>
+                <td class="mono" style="text-align: right;">279.20B</td>
+              </tr>
+              <tr>
+                <td class="mono">PLTR</td>
+                <td>Palantir Technologies</td>
+                <td class="mono" style="text-align: right;">$192.88</td>
+                <td class="mono" style="text-align: right; color: #1d8a4e;">+1.8%</td>
+                <td class="mono" style="text-align: right;">455.14B</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="risk-box">
+          <span class="risk-label mono">[Risk Factor]</span>
+          제이미 다이먼 JP모건 CEO가 AI 기술 발전으로 사이버 위협이 10배 증가했다고 경고한 점과 막대한 전력 소비 및 하이퍼스케일러 부채 조달 속도 둔화 가능성은 잠재 리스크 요인이다.
+        </div>
+      </div>
+
+      <!-- Card 2: Communication Services -->
+      <div class="sector-card top-green">
+        <div class="sector-card-header">
+          <div class="sector-title-text serif">📡 Communication Services</div>
+          <div class="sector-badge mono" style="background-color: #eaf6ed; color: #1d8a4e;">+0.07%</div>
+        </div>
+        <p class="sector-text">
+          통신 및 인터넷 서비스 섹터는 보합권에서 숨고르기를 보였으나 네트워크 트래픽 최적화 기업들이 <strong>인터넷 인프라 ETF(FDN)</strong> 내에서 독보적인 성과를 기록했다.
+          차세대 클라우드 네트워킹 장비 공급을 확대 중인 <strong>아리스타 네트웍스(+4.1%)</strong>와 애플리케이션 보안 전문 <strong>F5(+2.1%)</strong>가 두드러진 오름세를 형성했다.
+          메타와 시에라의 <strong>퍼스널 AI 에이전트 프로토콜</strong> 발표 등 플랫폼 서비스의 AI 연계 기대감이 장기 성장 동력으로 부각되었다.
+        </p>
+        <div class="stock-box">
+          <div class="stock-box-title mono">Key Stocks In Portfolio</div>
+          <table class="stock-table">
+            <thead>
+              <tr>
+                <th>티커</th>
+                <th>종목명</th>
+                <th style="text-align: right;">주가</th>
+                <th style="text-align: right;">등락률</th>
+                <th style="text-align: right;">시가총액</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono">ANET</td>
+                <td>Arista Networks</td>
+                <td class="mono" style="text-align: right;">$215.47</td>
+                <td class="mono" style="text-align: right; color: #1d8a4e;">+4.1%</td>
+                <td class="mono" style="text-align: right;">260.95B</td>
+              </tr>
+              <tr>
+                <td class="mono">FFIV</td>
+                <td>F5, Inc.</td>
+                <td class="mono" style="text-align: right;">$468.27</td>
+                <td class="mono" style="text-align: right; color: #1d8a4e;">+2.1%</td>
+                <td class="mono" style="text-align: right;">25.97B</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="risk-box">
+          <span class="risk-label mono">[Risk Factor]</span>
+          온라인 플랫폼 간 에이전트 연동 표준화에 따른 규제 당국의 감시 강화와 빅테크 통신망 투자 사이클의 일시적 정체 가능성은 점검 대상이다.
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ⑤ 지정학적 리스크 섹션 -->
+    <section class="geo-section">
+      <div class="geo-badge">GEOPOLITICAL ALERT</div>
+      <div class="geo-title serif">호르무즈 해협 봉쇄 장기화 및 중동·러시아 지정학적 긴장 고조</div>
+      <p class="geo-text">
+        미국과 이란 간의 무력 충돌이 8개월째 지속되는 가운데 오만 무산담 인근 해역에서 상선이 피격되는 등 주요 원유 수송로의 위험 프리미엄이 지속되고 있다.
+        이란 게슘섬 인근 해역 폭발음 발생과 예멘 후티 반군의 탄도미사일 요격 등 국지적 충돌이 빈번하게 보고되었다.
+        러시아 볼고그라드 정유공장이 드론 공격으로 가동을 중단하고 EU가 1,650여 개 대상의 대규모 추가 제재를 예고하는 등 글로벌 에너지 공급망과 안보 지형의 불확실성이 상존해 있다.
+      </p>
+    </section>
+
+    <!-- ⑥ 주요 자산군 성과 -->
+    <div class="section-title serif">
+      <span>주요 자산군 성과 현황</span>
+    </div>
+    <div class="assets-grid">
+      <div class="asset-card">
+        <div class="asset-name mono">Gold (금 선물)</div>
+        <div class="asset-val mono">$4,170.00</div>
+        <div class="asset-desc">온스당 +0.7% 상승 마감. 지정학적 불안과 인플레이션 헤지 수요가 매수세를 견인했다.</div>
+      </div>
+      <div class="asset-card">
+        <div class="asset-name mono">WTI Crude Oil</div>
+        <div class="asset-val mono">$89.44</div>
+        <div class="asset-desc">배럴당 +0.01% 보합세 마감. EIA 연간 전망 상향 속 원유 재고 감소가 하방을 지지했다.</div>
+      </div>
+      <div class="asset-card">
+        <div class="asset-name mono">Brent Crude Oil</div>
+        <div class="asset-val mono">$100.58</div>
+        <div class="asset-desc">배럴당 +0.26% 상승 마감. 중동 정세 긴장감과 수송 차질 우려로 100달러 선을 유지했다.</div>
+      </div>
+      <div class="asset-card">
+        <div class="asset-name mono">US 10Y Treasury Yield</div>
+        <div class="asset-val mono">5.28%</div>
+        <div class="asset-desc">전일 대비 3.0bp 하락. 장기채 매도세 진정으로 증시 밸류에이션 부담이 일부 완화되었다.</div>
+      </div>
+      <div class="asset-card">
+        <div class="asset-name mono">US 3Y Treasury Auction</div>
+        <div class="asset-val mono">4.932%</div>
+        <div class="asset-desc">2006년 이후 최고 발행 금리 기록. 580억 달러 입찰은 응찰률 2.62배로 무난히 소화되었다.</div>
+      </div>
+      <div class="asset-card">
+        <div class="asset-name mono">Bitcoin (BTC)</div>
+        <div class="asset-val mono">$85,615</div>
+        <div class="asset-desc">전일 대비 -0.2% 소폭 조정. 탐욕 지수 73을 유지하며 제도권 규제 기대감이 부각되었다.</div>
+      </div>
+    </div>
+
+    <!-- ⑦ 인사이트 요약 섹션 -->
+    <section class="insight-section">
+      <div class="insight-title serif">💡 Market Strategy &amp; Insights: 유틸리티 주도 속 기술주 안도 랠리</div>
+      <p class="insight-body">
+        장기 국채금리의 단기 급등세가 진정되면서 고배당 방어 섹터인 유틸리티(+2.63%)와 부동산(+0.96%)으로의 강한 수급 유입이 전개되었다.
+        동시에 AI 반도체와 사이버보안 소프트웨어가 기술 섹터(+0.60%)의 하방을 견고히 방어하며 지수의 사상 최고가 돌파를 이끌었다.
+        3분기 어닝 시즌에 대한 실적 신뢰도가 유지되고 있으나 국채 입찰 금리 상승과 에너지 공급망 불안이 지속되는 만큼 고밸류에이션 종목에 대해서는 실적 가시성에 기반한 선별적 접근이 요구된다.
+      </p>
+    </section>
+
+    <!-- ⑧ 푸터 -->
+    <footer class="footer">
+      <div class="footer-meta">NYSE Sector Analysis · 2026.10.06 · by TNBFolio</div>
+      <div>본 자료는 투자 참고 목적이며, 투자 권유가 아닙니다.</div>
+    </footer>
+
+  </div>
+</body>
+</html>
