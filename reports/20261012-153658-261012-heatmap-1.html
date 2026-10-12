@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>10월 12일 장 마감 전 뉴스 히트맵</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#fff;--ink:#141c26;--sub:#4b5563;--muted:#8a94a3;--line:#e5e7eb;--soft:#f3f4f6;--blue:#0f69ff;--blue-bg:#eaf2ff;
+  --up:#13a688;--down:#d6203a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;word-break:keep-all}
+.wrap{max-width:1240px;margin:0 auto;padding:20px 16px 40px}
+button{font-family:inherit}
+
+/* header */
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.brand{font-size:12px;font-weight:800;letter-spacing:1.5px;color:var(--blue)}
+h1{font-size:24px;font-weight:800;letter-spacing:-.5px;margin-top:2px}
+h1 span{color:var(--muted);font-weight:600;font-size:15px;margin-left:6px}
+.dl{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;color:var(--sub)}
+.dl:hover{background:var(--soft)}
+
+/* tabs */
+.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);margin-bottom:12px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;border:0;background:none;padding:10px 14px;font-size:15px;font-weight:600;color:var(--ink);cursor:pointer;border-radius:8px 8px 0 0}
+.tab:hover{background:var(--soft)}
+.tab.on{color:var(--blue);background:var(--blue-bg)}
+.tab .c{font-size:12px;color:var(--muted);margin-left:4px;font-weight:600}
+
+/* toolbar */
+.bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:2px}
+.seg button{border:0;background:none;padding:6px 14px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink)}
+.seg button.on{background:var(--blue-bg);color:var(--blue)}
+.scale{display:flex;flex-direction:column;gap:3px}
+.scale .sw{display:flex;border-radius:3px;overflow:hidden}
+.scale .sw i{width:44px;height:12px}
+.scale .lb{display:flex;font-size:11px;color:var(--sub)}
+.scale .lb span{width:44px;text-align:center}
+.scale .cap{display:flex;justify-content:space-between;font-size:11px;font-weight:700}
+.scale .cap b:first-child{color:var(--down)} .scale .cap b:last-child{color:var(--up)}
+
+/* heatmap */
+.map{position:relative;width:100%;height:640px;border-radius:8px;overflow:hidden;background:#fff}
+.tile{position:absolute;border:1px solid #fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:6px;cursor:pointer;overflow:hidden;color:#10202b;transition:filter .12s}
+.tile:hover{filter:brightness(.93);z-index:2;outline:2px solid #10202b;outline-offset:-2px}
+.tile .k{font-weight:800;line-height:1.15;letter-spacing:-.3px}
+.tile .v{font-weight:500;margin-top:.25em;line-height:1.1}
+.tile .t{font-weight:500;margin-top:.55em;line-height:1.35;opacity:.85;max-width:92%;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tile .ai{position:absolute;top:6px;right:7px;font-size:10px;font-weight:800;border:1.5px solid currentColor;border-radius:4px;padding:0 4px;opacity:.6}
+.note{font-size:12px;color:var(--muted);margin-top:10px}
+
+/* table */
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-size:12px;color:var(--sub);font-weight:600;padding:10px 8px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap}
+.tbl td{padding:12px 8px;border-bottom:1px solid var(--soft);vertical-align:middle}
+.tbl tr.r{cursor:pointer}
+.tbl tr.r:hover td{background:#fafafa}
+.tbl .k{font-weight:800}
+.tbl .hl{color:var(--sub);font-size:13px}
+.pill{display:inline-block;min-width:56px;text-align:center;padding:3px 8px;border-radius:6px;font-weight:700;font-size:13px}
+.hide-m{}
+@media (max-width:720px){.hide-m{display:none}.map{height:820px}.scale .sw i,.scale .lb span{width:28px}}
+
+/* drawer */
+.dim{position:fixed;inset:0;background:rgba(15,23,32,.35);opacity:0;pointer-events:none;transition:.2s;z-index:20}
+.dim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;height:100%;width:min(460px,100%);background:#fff;z-index:21;transform:translateX(100%);transition:transform .25s ease;display:flex;flex-direction:column;box-shadow:-10px 0 30px rgba(0,0,0,.12)}
+.drawer:not(.on){visibility:hidden;transition:transform .25s ease,visibility 0s .25s}
+.drawer.on{transform:none}
+@media (max-width:720px){.drawer{top:auto;bottom:0;height:86%;width:100%;border-radius:18px 18px 0 0;transform:translateY(100%)}}
+.d-top{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)}
+.d-nav{display:flex;gap:6px}
+.d-nav button,.x{border:1px solid var(--line);background:#fff;border-radius:8px;width:34px;height:34px;font-size:16px;cursor:pointer;color:var(--sub)}
+.d-nav button:hover,.x:hover{background:var(--soft)}
+.d-pos{font-size:12px;color:var(--muted);font-weight:600}
+.d-body{padding:20px 22px 28px;overflow-y:auto;flex:1}
+.d-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.chip{font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--soft);color:var(--sub)}
+.d-num{border-radius:12px;padding:18px 18px 16px;margin-bottom:16px}
+.d-num .v{font-size:40px;font-weight:900;letter-spacing:-1.5px;line-height:1}
+.d-num .l{font-size:13px;font-weight:600;margin-top:6px;opacity:.85}
+.d-title{font-size:20px;font-weight:800;line-height:1.4;letter-spacing:-.4px;margin-bottom:14px}
+.d-sec{font-size:12px;font-weight:800;color:var(--muted);letter-spacing:1px;margin:18px 0 8px}
+.d-pts{list-style:none;display:flex;flex-direction:column;gap:10px}
+.d-pts li{font-size:15px;line-height:1.6;padding-left:16px;position:relative;color:#1f2937}
+.d-pts li::before{content:"";position:absolute;left:2px;top:10px;width:6px;height:6px;border-radius:2px;background:var(--ink)}
+.d-why{font-size:14.5px;line-height:1.65;color:#1f2937;background:var(--soft);border-radius:10px;padding:12px 14px}
+.d-co{display:flex;gap:6px;flex-wrap:wrap}
+.d-co span{font-size:13px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:3px 9px}
+.d-go{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:22px;padding:13px;border-radius:10px;background:var(--ink);color:#fff;text-decoration:none;font-weight:700;font-size:15px}
+.d-go:hover{opacity:.9}
+.d-src{text-align:center;font-size:12px;color:var(--muted);margin-top:8px;word-break:break-all}
+.foot{margin-top:26px;font-size:12px;color:var(--muted);text-align:center}
+</style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div>
+      <div class="brand">BY TNBFOLIO</div>
+      <h1>10월 12일 장 마감 전 뉴스<span>16건 · 8개 섹터</span></h1>
+    </div>
+    <button class="dl" onclick="downloadHTML()">⤓ HTML 다운로드</button>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="bar">
+    <div class="seg" id="view">
+      <button data-v="table">Table View</button>
+      <button data-v="map" class="on">Heatmap View</button>
+    </div>
+    <div class="scale" id="scale"></div>
+  </div>
+
+  <div id="mapWrap"><div class="map" id="map"></div><div class="note">타일 크기 = 시장 파급력 · 색 = 국내 증시 관점 시그널 강도 · 타일을 누르면 기사 요약과 원문 링크가 열립니다</div></div>
+  <div id="tblWrap" hidden></div>
+
+  <div class="foot">by TNBfolio · 시그널 점수와 파급력은 편집 판단이며 투자 권유가 아닙니다</div>
+</div>
+
+<div class="dim" id="dim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="d-top">
+    <div class="d-nav"><button id="prev" aria-label="이전">‹</button><button id="next" aria-label="다음">›</button></div>
+    <span class="d-pos" id="pos"></span>
+    <button class="x" id="close" aria-label="닫기">✕</button>
+  </div>
+  <div class="d-body" id="dbody"></div>
+</aside>
+
+<script>
+const CATS={developed:"선진국",asia:"아시아·이머징",domestic:"국내·금융",energy:"에너지·원자재",tech:"테크",mobility:"모빌리티·로봇",crypto:"크립토·바이오·소비",industry:"조선·물류·방산"};
+/* s = 시그널 점수(-3~+3), w = 파급력 가중치(타일 크기) */
+const N=[
+ {id:1,cat:"developed",s:2.5,w:10,ai:1,k:"美 반도체 수입",v:"905억$",l:"8개월 수입액 · 전년 대비 약 2배",
+  t:"美, AI탓 외국 반도체에 더 의존적…'국가 안보 문제 제기'",u:"https://news.einfomax.co.kr/news/articleView.html?idxno=4438685",src:"연합인포맥스",
+  p:["2026년 8개월간 반도체 수입 905억 달러로 전년 동기 대비 약 2배 급증","초당적 '반도체법'에도 급증하는 최첨단 AI 수요 충당에는 역부족 상태"],
+  why:"미국 내 생산이 AI 수요를 따라가지 못한다는 뜻. 해외 공급망, 특히 메모리·파운드리 수출국에 우호적인 숫자.",co:["반도체 수출"]},
+ {id:5,cat:"domestic",s:-3,w:9,ai:1,k:"은행 요구불예금",v:"-20조원",l:"5대 은행 · 단 7일",
+  t:"AI 해킹사태 후폭풍···은행 요구불예금, 일주일새 20조 급감",u:"https://www.seoulfn.com/news/articleView.html?idxno=639811",src:"서울파이낸스",
+  p:["금융권 연쇄 고객정보 유출 이슈로 5대 시중은행 요구불예금 7일 만에 20조 원 이상 유출","안전 자산 선호 변동과 함께 정기예금 잔액 또한 감소세로 전환"],
+  why:"보안 사고가 실제 자금 이동으로 번진 첫 숫자. 은행 조달비용·신뢰도 이슈로 이어질 수 있음.",co:["은행"]},
+ {id:4,cat:"domestic",s:-2.5,w:8,ai:0,k:"국내 거래대금",v:"-34.1%",l:"3분기 장내 일평균 · 결제대금 -16.5%",
+  t:"증시 하락하니 3분기 증권결제대금 16% 줄었다",u:"https://www.khan.co.kr/article/202610121115031/",src:"경향신문",
+  p:["3분기 하루 평균 결제대금 35조 4000억 원 집계로 전 분기 대비 16.5% 감소","국내 증시 조정 및 관망세 심화로 장내 주식시장 일평균 거래대금 34.1% 급감"],
+  why:"수급 공백이 숫자로 확인됨. 브로커리지 수익 의존도가 높은 증권사 실적에 부담.",co:["증권"]},
+ {id:15,cat:"industry",s:2.5,w:8,ai:1,k:"AI 조선소",v:"1.4조원",l:"5년간 · 3대 플래그십",
+  t:"AI 조선소 건립에 5년간 1.4조 투입…'3대 플래그십 프로젝트' 추진",u:"https://www.mt.co.kr/economy/2026/10/12/2026101210285640036",src:"머니투데이",
+  p:["목포·영암 AI 스마트 등대공장 구축 및 거제·부산·군산 조선 생태계 AX 통합 지원","HD한국조선해양, 한화오션, 삼성중공업 참여 민관 R&D를 통해 공정 혁신 가속"],
+  why:"인력난이 병목인 조선업에 생산성 투자가 붙음. 빅3 모두 참여.",co:["HD한국조선해양","한화오션","삼성중공업"]},
+ {id:7,cat:"energy",s:2.5,w:7,ai:1,k:"BESS 비용 역전",v:"43 / 43",l:"가스터빈보다 싼 시장 수",
+  t:"AI 데이터센터 전력난에 배터리 부상…가스터빈보다 저렴해졌다",u:"https://www.digitaltoday.co.kr/news/articleView.html?idxno=706323",src:"디지털투데이",
+  p:["우드 매켄지, 조사 대상 43개 시장 전체에서 4시간형 BESS가 개방형 가스터빈 대비 비용 우위 기록","가스터빈 조달 적체 심화에 따라 태양광+BESS 결합 전력망이 유력 대안으로 부상"],
+  why:"데이터센터 전력 대안으로 ESS가 '비용'에서도 이겼다는 근거. 국내 배터리 ESS 라인에 긍정적.",co:["ESS","2차전지"]},
+ {id:3,cat:"asia",s:-2,w:6,ai:1,k:"日 AI 해킹",v:"445만명",l:"최대 정보 유출 규모",
+  t:"日서 AI 악용 해킹 확산…예약정보 유출·물류 차질",u:"https://www.newsis.com/view/NISX20261012_0003822060",src:"뉴시스",
+  p:["예약관리 서비스 침해로 최대 445만 명 대상 정보 유출 및 물류센터 가동 장애","보안 툴 내 AI 생성 랜섬웨어 코드 정황 포착 등 고도화된 사이버 위협 대두"],
+  why:"AI가 공격 도구로 쓰이는 사례가 늘어나는 흐름. 보안 수요에는 기회, 피해 산업엔 리스크.",co:["사이버보안"]},
+ {id:6,cat:"energy",s:2,w:6,ai:0,k:"효성重 HVDC",v:"3,300억원",l:"창원 변압기 공장 투자",
+  t:"HVDC 국산화 속도 내는 효성重 … 서해안 에너지고속도로 사업서 주도권 잡는다",u:"https://biz.newdaily.co.kr/site/data/html/2026/10/12/2026101200148.html",src:"뉴데일리",
+  p:["한전 '대용량 전압형 HVDC 밸브·제어기 국산화' 주관사 선정 및 HILS 검증 구축","창원공장에 3300억 원 투입해 전용 변압기 공장 신설 등 자체 밸류체인 완성"],
+  why:"서해안 에너지고속도로 핵심 기자재를 국산화 주관. 송전망 투자 사이클의 직접 수혜 포지션.",co:["효성중공업","한전"]},
+ {id:2,cat:"asia",s:-1.5,w:6,ai:1,k:"中 이자 부담",v:"19% vs 14%",l:"정부지출 중 이자 · 中 vs 美",
+  t:"中 '부채 이자 비중' 美 넘었다…AI 대결서 부담",u:"https://news.einfomax.co.kr/news/articleView.html?idxno=4438712",src:"연합인포맥스",
+  p:["정부 지출 중 부채 이자 비중 19% 기록하며 미국의 14%를 상회","신용 확대에 따른 부실기업 연명으로 AI·첨단기술 신규 재정 투입 여력 위축"],
+  why:"중국의 재정 여력이 줄어들면 AI·첨단산업 부양 강도도 약해질 수 있음.",co:["중국 재정"]},
+ {id:16,cat:"industry",s:2,w:5,ai:0,k:"북극항로",v:"-35%",l:"수에즈 우회 대비 운항거리",
+  t:"황종우 \"북극항로 시범운항서 쇄빙선 없이 2~3개월 운항 가능성 확인\"",u:"https://www.newsis.com/view/NISX20261012_0003821949",src:"뉴시스",
+  p:["국적선 아크로호 북극항로 50일 왕복 완주, 수에즈 운하 우회 대비 운항거리 35% 단축","하절기 비쇄빙선 자력 운항 타당성 입증 및 신규 물류 루트 개척 가능성 확인"],
+  why:"하절기 상업 운항 가능성 확인. 장기적으로 해운 루트·쇄빙 선박 수요 테마.",co:["해운","조선"]},
+ {id:8,cat:"tech",s:1.5,w:5,ai:1,k:"AWS 피지컬 AI",v:"오픈소스",l:"개발 툴체인 공개",
+  t:"AWS, 피지컬 AI 개발 스택 오픈소스로 공개…엔비디아 기술 결합",u:"https://www.metroseoul.co.kr/article/20261012500353",src:"메트로서울",
+  p:["엔비디아 아이작 심·랩 등과 연계한 'AWS 피지컬 AI 툴체인' 오픈소스 배포","합성 데이터 생성부터 현장 엣지 기기 배포 및 상호 운용 라이프사이클 전 과정 지원"],
+  why:"로봇·피지컬 AI 개발 진입장벽을 낮추는 움직임. 로봇 생태계 확산에 우호적.",co:["AWS","엔비디아"]},
+ {id:9,cat:"tech",s:-1.5,w:5,ai:1,k:"AI 구독료",v:"年 100만원",l:"가계 부담 · 지식서비스 적자 64억$",
+  t:"김남준 \"AI 구독료 상승에 가계 年 부담 100만원…서비스 수지 적자 우려\"",u:"https://www.mt.co.kr/politics/2026/10/12/2026101209424562529",src:"머니투데이",
+  p:["상반기 지식서비스 수지 적자 64억 달러 지적 및 자체 '소버린 AI' 인프라 확충 강조","해외 플랫폼 경유 '크립토카드' 결제 확산에 따른 외환·과세 사각지대 모니터링 요구"],
+  why:"해외 AI 서비스 지출이 서비스수지 적자로 쌓이는 중. 소버린 AI 정책 논리가 강화될 수 있음.",co:["소버린 AI"]},
+ {id:10,cat:"mobility",s:0.5,w:4,ai:0,k:"상장사 신사업",v:"18.9% · 11.3%",l:"신재생 / 로봇 비중",
+  t:"1000대 상장사 신사업, 신재생에너지·로봇에 쏠렸다",u:"https://www.newspim.com/news/view/20261012000415",src:"뉴스핌",
+  p:["한경협 분석 결과 상위 1000대 상장사 신산업 정관 목적 75.5%가 에너지·제조·AI에 집중","신재생에너지(18.9%)와 로봇(11.3%) 비중이 1~2위 차지하며 미래 포트폴리오 재편"],
+  why:"정관 변경은 '의향'일 뿐 실적은 아님. 테마 쏠림 정도를 보는 참고 지표.",co:["신재생","로봇"]},
+ {id:14,cat:"crypto",s:1.8,w:4,ai:1,k:"루닛 AI 병리",v:"美 공급",l:"글로벌 제약사 검사망",
+  t:"루닛, 美 디스커버리와 협력…글로벌 제약사에 AI 병리 분석 공급",u:"https://www.etnews.com/20261012000196",src:"전자신문",
+  p:["미국 디스커버리 라이프 사이언스 검사망에 '루닛 스코프' 접목해 글로벌 신약 개발 지원","바이오마커 발굴 및 정량적 디지털 병리 데이터 표준화 공급망 확보"],
+  why:"신약 개발 단계의 B2B 매출 채널 확보. 의료기관 외 제약사향 확장.",co:["루닛"]},
+ {id:11,cat:"crypto",s:1,w:3,ai:0,k:"스테이블 결제",v:"PoC 완료",l:"CU POS 연동",
+  t:"갤럭시아머니트리, CU POS 연동 스테이블코인 결제 실증 완료",u:"https://www.newspim.com/news/view/20261012000585",src:"뉴스핌",
+  p:["BGF리테일 편의점 POS 시스템과 연동한 스테이블코인 MPM·CPM 결제 PoC 완료","가맹점 추가 학습 없이 기존 결제 인프라 상에서 실물 결제 연동 검증"],
+  why:"원화 스테이블코인 제도화 시 오프라인 결제처가 이미 준비됐다는 신호.",co:["갤럭시아머니트리","BGF리테일"]},
+ {id:13,cat:"crypto",s:1.5,w:3,ai:0,k:"알츠하이머 진단",v:"FDA 승인",l:"혈액 기반 체외진단",
+  t:"대웅바이오-랩지노믹스, 알츠하이머 혈액진단 '루미펄스' 시장 확대",u:"https://www.etnews.com/20261012000167",src:"전자신문",
+  p:["FDA 승인 획득 기반 혈액 내 타우·아밀로이드 지표 비율 분석 체외진단 플랫폼 상용화","PET 검사 전 선별 진단 솔루션으로 고비용 검사 부담 경감 추진"],
+  why:"치료제 확산 국면에서 선별 진단 수요가 같이 커지는 구조.",co:["대웅바이오","랩지노믹스"]},
+ {id:12,cat:"crypto",s:0.5,w:3,ai:1,k:"수이 AI 결제",v:"4,000만 TPS",l:"초당 처리 건수 제시",
+  t:"수이, AI 에이전트 인프라 선도…“5년 내 전통 금융거래 사라질 것”",u:"https://www.etnews.com/20261012000217",src:"전자신문",
+  p:["삼성월렛 및 하시(Hashi) 파트너십 구축, 초당 4천만 건 처리 기반 결제 환경 제시","원화 스테이블코인 규제 도입 대응 및 AI 에이전트 온체인 결제 생태계 확장 추진"],
+  why:"주장 위주의 발표. 삼성월렛 연계가 실제 사용으로 이어지는지 확인 필요.",co:["수이","삼성월렛"]}
+];
+const ORDER=N.slice().sort((a,b)=>b.w-a.w);
+const SCALE=[[-3,"#d6203a"],[-2.4,"#e2485a"],[-1.8,"#ec8591"],[-1.2,"#f3b4bc"],[-0.6,"#f8d8dc"],[0,"#e3e5ea"],[0.6,"#d5f0e8"],[1.2,"#b4e4d7"],[1.8,"#87d4c0"],[2.4,"#4fc0a3"],[3,"#17a688"]];
+function col(s){let best=SCALE[0];for(const c of SCALE)if(Math.abs(c[0]-s)<Math.abs(best[0]-s))best=c;return best[1]}
+const fmt=s=>(s>0?"+":"")+s.toFixed(1);
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const sigName=s=>s>=1?"기회":s<=-1?"리스크":"체크";
+
+/* scale legend */
+document.getElementById("scale").innerHTML=
+ `<div class="cap"><b>리스크</b><b>기회</b></div><div class="sw">${SCALE.map(c=>`<i style="background:${c[1]}"></i>`).join("")}</div>
+  <div class="lb">${SCALE.map(c=>`<span>${c[0]===-3?"≤-3":c[0]===3?"≥3":c[0]}</span>`).join("")}</div>`;
+
+/* tabs */
+const TABS=[["all","전체",()=>true],["ai","AI 연관",x=>x.ai],["up","기회",x=>x.s>=1],["down","리스크",x=>x.s<=-1],
+ ...Object.entries(CATS).map(([k,n])=>[k,n,x=>x.cat===k])];
+let tab="all",view="map";
+const tabsEl=document.getElementById("tabs");
+tabsEl.innerHTML=TABS.map(([k,n,f])=>`<button class="tab${k==="all"?" on":""}" data-k="${k}">${n}<span class="c">${N.filter(f).length}</span></button>`).join("");
+tabsEl.onclick=e=>{const b=e.target.closest(".tab");if(!b)return;tab=b.dataset.k;tabsEl.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t===b));draw()};
+document.getElementById("view").onclick=e=>{const b=e.target.closest("button");if(!b)return;view=b.dataset.v;
+ document.querySelectorAll("#view button").forEach(x=>x.classList.toggle("on",x===b));draw()};
+const list=()=>ORDER.filter(TABS.find(t=>t[0]===tab)[2]);
+
+/* squarified treemap */
+function worst(row,s){const sum=row.reduce((a,r)=>a+r.a,0);let mx=-1,mn=Infinity;for(const r of row){mx=Math.max(mx,r.a);mn=Math.min(mn,r.a)}
+ return Math.max(s*s*mx/(sum*sum),sum*sum/(s*s*mn))}
+function squarify(items,x,y,w,h){const out=[];let rest=items.slice();
+ while(rest.length){const short=Math.min(w,h);let row=[rest[0]],i=1;
+  while(i<rest.length&&worst(row.concat(rest[i]),short)<=worst(row,short)){row.push(rest[i]);i++}
+  const sum=row.reduce((s,r)=>s+r.a,0);
+  if(w>=h){const cw=sum/h;let cy=y;for(const r of row){const rh=r.a/cw;out.push({...r,x,y:cy,w:cw,h:rh});cy+=rh}x+=cw;w-=cw}
+  else{const rh=sum/w;let cx=x;for(const r of row){const rw=r.a/rh;out.push({...r,x:cx,y,w:rw,h:rh});cx+=rw}y+=rh;h-=rh}
+  rest=rest.slice(i)}
+ return out}
+
+function drawMap(){
+ const el=document.getElementById("map"),W=el.clientWidth,H=el.clientHeight,items=list();
+ const tot=items.reduce((s,x)=>s+x.w,0);
+ const rects=squarify(items.map(x=>({...x,a:x.w/tot*W*H})),0,0,W,H);
+ el.innerHTML=rects.map(r=>{const m=Math.min(r.w,r.h),ks=Math.max(11,Math.min(34,m/5.2,r.w/(r.k.length*0.95))),vs=Math.max(10,ks*.82);
+  const showT=r.h>170&&r.w>200,showV=r.h>46;
+  return `<div class="tile" data-id="${r.id}" style="left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px;background:${col(r.s)}" title="${esc(r.t)}">
+   ${r.ai&&m>90?'<span class="ai">AI</span>':""}
+   <div class="k" style="font-size:${ks}px">${esc(r.k)}</div>
+   ${showV?`<div class="v" style="font-size:${vs}px">${esc(r.v)}</div>`:""}
+   ${showT?`<div class="t" style="font-size:${Math.min(15,ks*.5)}px">${esc(r.t)}</div>`:""}</div>`}).join("");
+}
+function drawTable(){
+ const rows=list();
+ document.getElementById("tblWrap").innerHTML=`<table class="tbl"><thead><tr><th>이슈</th><th>핵심 숫자</th><th>시그널</th><th class="hide-m">섹터</th><th class="hide-m">헤드라인</th></tr></thead><tbody>
+ ${rows.map(x=>`<tr class="r" data-id="${x.id}"><td class="k">${esc(x.k)}${x.ai?' <span style="font-size:11px;color:var(--muted)">AI</span>':""}</td><td><b>${esc(x.v)}</b></td>
+  <td><span class="pill" style="background:${col(x.s)}">${fmt(x.s)}</span></td><td class="hide-m">${CATS[x.cat]}</td><td class="hide-m hl">${esc(x.t)}</td></tr>`).join("")}</tbody></table>`;
+}
+function draw(){
+ document.getElementById("mapWrap").hidden=view!=="map";document.getElementById("tblWrap").hidden=view!=="table";
+ view==="map"?drawMap():drawTable();
+}
+let rt;window.addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(()=>view==="map"&&drawMap(),120)});
+
+/* drawer */
+let cur=null;
+const dr=document.getElementById("drawer"),dim=document.getElementById("dim");
+function open(id){
+ const seq=list(),i=seq.findIndex(x=>x.id===id),x=seq[i];cur={id,seq};
+ document.getElementById("pos").textContent=`${i+1} / ${seq.length}`;
+ const dark=Math.abs(x.s)>=2.4;
+ document.getElementById("dbody").innerHTML=`
+  <div class="d-meta"><span class="chip">${CATS[x.cat]}</span><span class="chip" style="background:${col(x.s)};color:${dark?"#fff":"inherit"}">${sigName(x.s)} ${fmt(x.s)}</span>${x.ai?'<span class="chip">AI 연관</span>':""}</div>
+  <div class="d-num" style="background:${col(x.s)};color:${dark?"#fff":"#10202b"}"><div class="v">${esc(x.v)}</div><div class="l">${esc(x.k)} · ${esc(x.l)}</div></div>
+  <div class="d-title">${esc(x.t)}</div>
+  <div class="d-sec">핵심 내용</div>
+  <ul class="d-pts">${x.p.map(p=>`<li>${esc(p)}</li>`).join("")}</ul>
+  <div class="d-sec">TNBfolio 코멘트</div>
+  <div class="d-why">${esc(x.why)}</div>
+  <div class="d-sec">관련</div>
+  <div class="d-co">${x.co.map(c=>`<span>${esc(c)}</span>`).join("")}</div>
+  <a class="d-go" href="${x.u}" target="_blank" rel="noopener">${esc(x.src)} 원문 기사 열기 ↗</a>
+  <div class="d-src">${esc(x.u.replace(/^https?:\/\/(www\.)?/,""))}</div>`;
+ document.getElementById("prev").disabled=i===0;document.getElementById("next").disabled=i===seq.length-1;
+ dr.classList.add("on");dim.classList.add("on");dr.setAttribute("aria-hidden","false");document.getElementById("dbody").scrollTop=0;
+}
+function close(){dr.classList.remove("on");dim.classList.remove("on");dr.setAttribute("aria-hidden","true");cur=null}
+function step(d){if(!cur)return;const i=cur.seq.findIndex(x=>x.id===cur.id)+d;if(i>=0&&i<cur.seq.length)open(cur.seq[i].id)}
+document.getElementById("map").onclick=e=>{const t=e.target.closest(".tile");if(t)open(+t.dataset.id)};
+document.getElementById("tblWrap").onclick=e=>{const t=e.target.closest("tr.r");if(t)open(+t.dataset.id)};
+document.getElementById("close").onclick=close;dim.onclick=close;
+document.getElementById("prev").onclick=()=>step(-1);document.getElementById("next").onclick=()=>step(1);
+document.addEventListener("keydown",e=>{if(!cur)return;if(e.key==="Escape")close();if(e.key==="ArrowLeft")step(-1);if(e.key==="ArrowRight")step(1)});
+
+draw();
+
+function downloadHTML(){
+ const blob=new Blob(["<!DOCTYPE html>\n"+document.documentElement.outerHTML],{type:"text/html"});
+ const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="news_heatmap_10월12일.html";
+ document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(a.href);
+}
+</script>
+</body>
+</html>
