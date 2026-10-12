@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>10월 12일 장 마감 전 뉴스 대시보드</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --card-bg: #ffffff;
+      --border-color: #e2e8f0;
+      --text-main: #1e293b;
+      --text-sub: #475569;
+      --text-muted: #64748b;
+      --radius: 12px;
+      --shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+      --color-developed: #2563eb;
+      --bg-developed: #eff6ff;
+      --border-developed: #bfdbfe;
+
+      --color-asia: #16a34a;
+      --bg-asia: #f0fdf4;
+      --border-asia: #bbf7d0;
+
+      --color-domestic: #0d9488;
+      --bg-domestic: #f0fdfa;
+      --border-domestic: #99f6e4;
+
+      --color-energy: #d97706;
+      --bg-energy: #fffbeb;
+      --border-energy: #fde68a;
+
+      --color-tech: #7c3aed;
+      --bg-tech: #faf5ff;
+      --border-tech: #e9d5ff;
+
+      --color-mobility: #0284c7;
+      --bg-mobility: #f0f9ff;
+      --border-mobility: #bae6fd;
+
+      --color-media: #e11d48;
+      --bg-media: #fff1f2;
+      --border-media: #fecdd3;
+
+      --color-crypto: #4f46e5;
+      --bg-crypto: #eef2ff;
+      --border-crypto: #c7d2fe;
+
+      --color-industry: #dc2626;
+      --bg-industry: #fef2f2;
+      --border-industry: #fecaca;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.5;
+      padding: 24px 16px;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .header-branding {
+      font-size: 12px;
+      font-weight: 700;
+      color: #6366f1;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .header-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .btn-download {
+      padding: 8px 14px;
+      font-size: 13px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #1e293b;
+      cursor: pointer;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      transition: all 0.2s ease;
+    }
+
+    .btn-download:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 20px;
+      scrollbar-width: thin;
+    }
+
+    .tab-btn {
+      padding: 8px 14px;
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-sub);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tab-btn:hover {
+      background: #f1f5f9;
+      color: var(--text-main);
+    }
+
+    .tab-btn.active {
+      background: #1e293b;
+      color: #ffffff;
+      border-color: #1e293b;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-top: 4px solid var(--theme-border-top, #cbd5e1);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+    }
+
+    .card[data-cat="developed"] { --theme-color: var(--color-developed); --theme-bg: var(--bg-developed); --theme-border-top: var(--color-developed); }
+    .card[data-cat="asia"] { --theme-color: var(--color-asia); --theme-bg: var(--bg-asia); --theme-border-top: var(--color-asia); }
+    .card[data-cat="domestic"] { --theme-color: var(--color-domestic); --theme-bg: var(--bg-domestic); --theme-border-top: var(--color-domestic); }
+    .card[data-cat="energy"] { --theme-color: var(--color-energy); --theme-bg: var(--bg-energy); --theme-border-top: var(--color-energy); }
+    .card[data-cat="tech"] { --theme-color: var(--color-tech); --theme-bg: var(--bg-tech); --theme-border-top: var(--color-tech); }
+    .card[data-cat="mobility"] { --theme-color: var(--color-mobility); --theme-bg: var(--bg-mobility); --theme-border-top: var(--color-mobility); }
+    .card[data-cat="media"] { --theme-color: var(--color-media); --theme-bg: var(--bg-media); --theme-border-top: var(--color-media); }
+    .card[data-cat="crypto"] { --theme-color: var(--color-crypto); --theme-bg: var(--bg-crypto); --theme-border-top: var(--color-crypto); }
+    .card[data-cat="industry"] { --theme-color: var(--color-industry); --theme-bg: var(--bg-industry); --theme-border-top: var(--color-industry); }
+
+    .card-header {
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .card-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--theme-bg);
+      color: var(--theme-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .card-category {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .card-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: var(--theme-bg);
+      color: var(--theme-color);
+      font-weight: 600;
+    }
+
+    .card-body {
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .news-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid #f8fafc;
+    }
+
+    .news-item:last-child {
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    .news-link {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+      text-decoration: none;
+      line-height: 1.4;
+      transition: color 0.15s ease;
+    }
+
+    .news-link:hover {
+      color: var(--theme-color);
+      text-decoration: underline;
+    }
+
+    .news-url {
+      font-size: 11px;
+      color: var(--text-muted);
+      word-break: break-all;
+      text-decoration: none;
+    }
+
+    .news-bullets {
+      list-style-type: none;
+      padding-left: 0;
+      margin-top: 2px;
+    }
+
+    .news-bullets li {
+      font-size: 12.5px;
+      color: var(--text-sub);
+      line-height: 1.45;
+      position: relative;
+      padding-left: 14px;
+      margin-bottom: 4px;
+    }
+
+    .news-bullets li:last-child {
+      margin-bottom: 0;
+    }
+
+    .news-bullets li::before {
+      content: "•";
+      position: absolute;
+      left: 2px;
+      top: 0;
+      color: var(--theme-color);
+      font-size: 14px;
+    }
+  </style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div>
+        <div class="header-branding">by TNBfolio</div>
+        <h1 class="header-title">10월 12일 장 마감 전 뉴스</h1>
+      </div>
+      <button class="btn-download" onclick="downloadHTML()">
+        <i class="ti ti-download"></i> HTML 다운로드
+      </button>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab-btn active" onclick="filterCards('all', this)"><i class="ti ti-layout-grid"></i> 전체</button>
+      <button class="tab-btn" onclick="filterCards('developed', this)"><i class="ti ti-world"></i> 선진국 경제·증시</button>
+      <button class="tab-btn" onclick="filterCards('asia', this)"><i class="ti ti-building-bank"></i> 아시아·이머징</button>
+      <button class="tab-btn" onclick="filterCards('domestic', this)"><i class="ti ti-coin"></i> 국내·금융</button>
+      <button class="tab-btn" onclick="filterCards('energy', this)"><i class="ti ti-bolt"></i> 에너지·화학·원자재</button>
+      <button class="tab-btn" onclick="filterCards('tech', this)"><i class="ti ti-cpu"></i> 테크</button>
+      <button class="tab-btn" onclick="filterCards('mobility', this)"><i class="ti ti-robot"></i> 모빌리티·배터리·로봇</button>
+      <button class="tab-btn" onclick="filterCards('crypto', this)"><i class="ti ti-currency-bitcoin"></i> 크립토·바이오·소비</button>
+      <button class="tab-btn" onclick="filterCards('industry', this)"><i class="ti ti-ship"></i> 조선·기계·물류·방산</button>
+    </nav>
+
+    <main class="grid">
+      <!-- 선진국 경제 및 증시 -->
+      <section class="card" data-cat="developed">
+        <div class="card-header">
+          <div class="card-title-wrap">
+            <div class="card-icon"><i class="ti ti-world"></i></div>
+            <div class="card-category">선진국 경제 및 증시</div>
+          </div>
+          <span class="card-badge">Developed</span>
+        </div>
+        <div class="card-body">
+          <article class="news-item">
+            <a class="news-link" href="https://news.einfomax.co.kr/news/articleView.html?idxno=4438685" target="_blank">美, AI탓 외국 반도체에 더 의존적…'국가 안보 문제 제기'</a>
+            <ul class="news-bullets">
+              <li>2026년 8개월간 반도체 수입 905억 달러로 전년 동기 대비 약 2배 급증</li>
+              <li>초당적 '반도체법'에도 급증하는 최첨단 AI 수요 충당에는 역부족 상태</li>
+            </ul>
+            <a class="news-url" href="https://news.einfomax.co.kr/news/articleView.html?idxno=4438685" target="_blank">news.einfomax.co.kr/news/articleView.html?idxno=4438685</a>
+          </article>
+        </div>
+      </section>
+
+      <!-- 아시아, 이머징 경제 및 증시 -->
+      <section class="card" data-cat="asia">
+        <div class="card-header">
+          <div class="card-title-wrap">
+            <div class="card-icon"><i class="ti ti-building-bank"></i></div>
+            <div class="card-category">아시아, 이머징 경제 및 증시</div>
+          </div>
+          <span class="card-badge">Asia / Emerging</span>
+        </div>
+        <div class="card-body">
+          <article class="news-item">
+            <a class="news-link" href="https://news.einfomax.co.kr/news/articleView.html?idxno=4438712" target="_blank">中 '부채 이자 비중' 美 넘었다…AI 대결서 부담</a>
+            <ul class="news-bullets">
+              <li>정부 지출 중 부채 이자 비중 19% 기록하며 미국의 14%를 상회</li>
+              <li>신용 확대에 따른 부실기업 연명으로 AI·첨단기술 신규 재정 투입 여력 위축</li>
+            </ul>
+            <a class="news-url" href="https://news.einfomax.co.kr/news/articleView.html?idxno=4438712" target="_blank">news.einfomax.co.kr/news/articleView.html?idxno=4438712</a>
+          </article>
+          <article class="news-item">
+            <a class="news-link" href="https://www.newsis.com/view/NISX20261012_0003822060" target="_blank">日서 AI 악용 해킹 확산…예약정보 유출·물류 차질</a>
+            <ul class="news-bullets">
+              <li>예약관리 서비스 침해로 최대 445만 명 대상 정보 유출 및 물류센터 가동 장애</li>
+              <li>보안 툴 내 AI 생성 랜섬웨어 코드 정황 포착 등 고도화된 사이버 위협 대두</li>
+            </ul>
+            <a class="news-url" href="https://www.newsis.com/view/NISX20261012_0003822060" target="_blank">newsis.com/view/NISX20261012_0003822060</a>
+          </article>
+        </div>
+      </section>
+
+      <!-- 국내, 금융 -->
+      <section class="card" data-cat="domestic">
+        <div class="card-header">
+          <div class="card-title-wrap">
+            <div class="card-icon"><i class="ti ti-coin"></i></div>
+            <div class="card-category">국내, 금융</div>
+          </div>
+          <span class="card-badge">Domestic</span>
+        </div>
+        <div class="card-body">
+          <article class="news-item">
+            <a class="news-link" href="https://www.khan.co.kr/article/202610121115031/?utm_source=khan_rss&utm_medium=rss&utm_campaign=total_news" target="_blank">증시 하락하니 3분기 증권결제대금 16% 줄었다</a>
+            <ul class="news-bullets">
+              <li>3분기 하루 평균 결제대금 35조 4000억 원 집계로 전 분기 대비 16.5% 감소</li>
+              <li>국내 증시 조정 및 관망세 심화로 장내 주식시장 일평균 거래대금 34.1% 급감</li>
+            </ul>
+            <a class="news-url" href="https://www.khan.co.kr/article/202610121115031/?utm_source=khan_rss&utm_medium=rss&utm_campaign=total_news" target="_blank">khan.co.kr/article/202610121115031</a>
+          </article>
+          <article class="news-item">
+            <a class="news-link" href="https://www.seoulfn.com/news/articleView.html?idxno=639811" target="_blank">AI 해킹사태 후폭풍···은행 요구불예금, 일주일새 20조 급감</a>
+            <ul class="news-bullets">
+              <li>금융권 연쇄 고객정보 유출 이슈로 5대 시중은행 요구불예금 7일 만에 20조 원 이상 유출</li>
+              <li>안전 자산 선호 변동과 함께 정기예금 잔액 또한 감소세로 전환</li>
+            </ul>
+            <a class="news-url" href="https://www.seoulfn.com/news/articleView.html?idxno=639811" target="_blank">seoulfn.com/news/articleView.html?idxno=639811</a>
+          </article>
+        </div>
+      </section>
+
+      <!-- 에너지, 화학 / 금속, 원자재 -->
+      <section class="card" data-cat="energy">
+        <div class="card-header">
+          <div class="card-title-wrap">
+            <div class="card-icon"><i class="ti ti-bolt"></i></div>
+            <div class="card-category">에너지, 화학 / 금속, 원자재</div>
+          </div>
+          <span class="card-badge">Energy & Materials</span>
+        </div>
+        <div class="card-body">
+          <article class="news-item">
+            <a class="news-link" href="https://biz.newdaily.co.kr/site/data/html/2026/10/12/2026101200148.html" target="_blank">HVDC 국산화 속도 내는 효성重 … 서해안 에너지고속도로 사업서 주도권 잡는다</a>
+            <ul class="news-bullets">
+              <li>한전 '대용량 전압형 HVDC 밸브·제어기 국산화' 주관사 선정 및 HILS 검증 구축</li>
+              <li>창원공장에 3300억 원 투입해 전용 변압기 공장 신설 등 자체 밸류체인 완성</li>
+            </ul>
+            <a class="news-url" href="https://biz.newdaily.co.kr/site/data/html/2026/10/12/2026101200148.html" target="_blank">biz.newdaily.co.kr/site/data/html/2026/10/12/2026101200148.html</a>
+          </article>
+          <article class="news-item">
+            <a class="news-link" href="https://www.digitaltoday.co.kr/news/articleView.html?idxno=706323" target="_blank">AI 데이터센터 전력난에 배터리 부상…가스터빈보다 저렴해졌다</a>
+            <ul class="news-bullets">
+              <li>우드 매켄지, 조사 대상 43개 시장 전체에서 4시간형 BESS가 개방형 가스터빈 대비 비용 우위 기록</li>
+              <li>가스터빈 조달 적체 심화에 따라 태양광+BESS 결합 전력망이 유력 대안으로 부상</li>
+            </ul>
+            <a class="news-url" href="https://www.digitaltoday.co.kr/news/articleView.html?idxno=706323" target="_blank">digitaltoday.co.kr/news/articleView.html?idxno=706323</a>
+          </article>
+        </div>
+      </section>
+
+      <!-- 테크 -->
+      <section class="card" data-cat="tech">
+        <div class="card-header">
+          <div class="card-title-wrap">
+            <div class="card-icon"><i class="ti ti-cpu"></i></div>
+            <div class="card-category">테크</div>
+          </div>
+          <span class="card-badge">Tech</span>
+        </div>
+        <div class="card-body">
+          <article class="news-item">
+            <a class="news-link" href="https://www.metroseoul.co.kr/article/20261012500353" target="_blank">AWS, 피지컬 AI 개발 스택 오픈소스로 공개…엔비디아 기술 결합</a>
+            <ul class="news-bullets">
+              <li>엔비디아 아이작 심·랩 등과 연계한 'AWS 피지컬 AI 툴체인' 오픈소스 배포</li>
+              <li>합성 데이터 생성부터 현장 엣지 기기 배포 및 상호 운용 라이프사이클 전 과정 지원</li>
+            </ul>
+            <a class="news-url" href="https://www.metroseoul.co.kr/article/20261012500353" target="_blank">metroseoul.co.kr/article/20261012500353</a>
+          </article>
+          <article class="news-item">
+            <a class="news-link" href="https://www.mt.co.kr/politics/2026/10/12/2026101209424562529" target="_blank">김남준 "AI 구독료 상승에 가계 年 부담 100만원…서비스 수지 적자 우려"</a>
+            <ul class="news-bullets">
+              <li>상반기 지식서비스 수지 적자 64억 달러 지적 및 자체 '소버린 AI' 인프라 확충 강조</li>
+              <li>해외 플랫폼 경유 '크립토카드' 결제 확산에 따른 외환·과세 사각지대 모니터링 요구</li>
+            </ul>
+            <a class="news-url" href="https://www.mt.co.kr/politics/2026/10/12/2026101209424562529" target="_blank">mt.co.kr/politics/2026/10/12/2026101209424562529</a>
+          </article>
+        </div>
+      </section>
+
+      <!-- 모빌리티, 배터리, 로보틱스 -->
+      <section class="card" data-cat="mobility">
+        <div class="card-header">
+          <div class="card-title-wrap">
+            <div class="card-icon"><i class="ti ti-robot"></i></div>
+            <div class="card-category">모빌리티, 배터리, 로보틱스</div>
+          </div>
+          <span class="card-badge">Mobility & Robotics</span>
+        </div>
+        <div class="card-body">
+          <article class="news-item">
+            <a class="news-link" href="https://www.newspim.com/news/view/20261012000415" target="_blank">1000대 상장사 신사업, 신재생에너지·로봇에 쏠렸다</a>
+            <ul class="news-bullets">
+              <li>한경협 분석 결과 상위 1000대 상장사 신산업 정관 목적 75.5%가 에너지·제조·AI에 집중</li>
+              <li>신재생에너지(18.9%)와 로봇(11.3%) 비중이 1~2위 차지하며 미래 포트폴리오 재편</li>
+            </ul>
+            <a class="news-url" href="https://www.newspim.com/news/view/20261012000415" target="_blank">newspim.com/news/view/20261012000415</a>
+          </article>
+        </div>
+      </section>
+
+      <!-- 크립토, 스테이블코인 / 바이오, 헬스케어 / 내수, 유통 -->
+      <section class="card" data-cat="crypto">
+        <div class="card-header">
+          <div class="card-title-wrap">
+            <div class="card-icon"><i class="ti ti-currency-bitcoin"></i></div>
+            <div class="card-category">크립토 / 바이오 / 내수·유통</div>
+          </div>
+          <span class="card-badge">Crypto & Bio</span>
+        </div>
+        <div class="card-body">
+          <article class="news-item">
+            <a class="news-link" href="https://www.newspim.com/news/view/20261012000585" target="_blank">갤럭시아머니트리, CU POS 연동 스테이블코인 결제 실증 완료</a>
+            <ul class="news-bullets">
+              <li>BGF리테일 편의점 POS 시스템과 연동한 스테이블코인 MPM·CPM 결제 PoC 완료</li>
+              <li>가맹점 추가 학습 없이 기존 결제 인프라 상에서 실물 결제 연동 검증</li>
+            </ul>
+            <a class="news-url" href="https://www.newspim.com/news/view/20261012000585" target="_blank">newspim.com/news/view/20261012000585</a>
+          </article>
+          <article class="news-item">
+            <a class="news-link" href="https://www.etnews.com/20261012000217" target="_blank">수이, AI 에이전트 인프라 선도…“5년 내 전통 금융거래 사라질 것”</a>
+            <ul class="news-bullets">
+              <li>삼성월렛 및 하시(Hashi) 파트너십 구축, 초당 4천만 건 처리 기반 결제 환경 제시</li>
+              <li>원화 스테이블코인 규제 도입 대응 및 AI 에이전트 온체인 결제 생태계 확장 추진</li>
+            </ul>
+            <a class="news-url" href="https://www.etnews.com/20261012000217" target="_blank">etnews.com/20261012000217</a>
+          </article>
+          <article class="news-item">
+            <a class="news-link" href="https://www.etnews.com/20261012000167" target="_blank">대웅바이오-랩지노믹스, 알츠하이머 혈액진단 '루미펄스' 시장 확대</a>
+            <ul class="news-bullets">
+              <li>FDA 승인 획득 기반 혈액 내 타우·아밀로이드 지표 비율 분석 체외진단 플랫폼 상용화</li>
+              <li>PET 검사 전 선별 진단 솔루션으로 고비용 검사 부담 경감 추진</li>
+            </ul>
+            <a class="news-url" href="https://www.etnews.com/20261012000167" target="_blank">etnews.com/20261012000167</a>
+          </article>
+          <article class="news-item">
+            <a class="news-link" href="https://www.etnews.com/20261012000196" target="_blank">루닛, 美 디스커버리와 협력…글로벌 제약사에 AI 병리 분석 공급</a>
+            <ul class="news-bullets">
+              <li>미국 디스커버리 라이프 사이언스 검사망에 '루닛 스코프' 접목해 글로벌 신약 개발 지원</li>
+              <li>바이오마커 발굴 및 정량적 디지털 병리 데이터 표준화 공급망 확보</li>
+            </ul>
+            <a class="news-url" href="https://www.etnews.com/20261012000196" target="_blank">etnews.com/20261012000196</a>
+          </article>
+        </div>
+      </section>
+
+      <!-- 기계, 건설, 조선, 항공, 방산 / 중동분쟁 -->
+      <section class="card" data-cat="industry">
+        <div class="card-header">
+          <div class="card-title-wrap">
+            <div class="card-icon"><i class="ti ti-ship"></i></div>
+            <div class="card-category">기계, 건설, 조선, 항공, 방산</div>
+          </div>
+          <span class="card-badge">Industry</span>
+        </div>
+        <div class="card-body">
+          <article class="news-item">
+            <a class="news-link" href="https://www.mt.co.kr/economy/2026/10/12/2026101210285640036" target="_blank">AI 조선소 건립에 5년간 1.4조 투입…'3대 플래그십 프로젝트' 추진</a>
+            <ul class="news-bullets">
+              <li>목포·영암 AI 스마트 등대공장 구축 및 거제·부산·군산 조선 생태계 AX 통합 지원</li>
+              <li>HD한국조선해양, 한화오션, 삼성중공업 참여 민관 R&D를 통해 공정 혁신 가속</li>
+            </ul>
+            <a class="news-url" href="https://www.mt.co.kr/economy/2026/10/12/2026101210285640036" target="_blank">mt.co.kr/economy/2026/10/12/2026101210285640036</a>
+          </article>
+          <article class="news-item">
+            <a class="news-link" href="https://www.newsis.com/view/NISX20261012_0003821949" target="_blank">황종우 "북극항로 시범운항서 쇄빙선 없이 2~3개월 운항 가능성 확인"</a>
+            <ul class="news-bullets">
+              <li>국적선 아크로호 북극항로 50일 왕복 완주, 수에즈 운하 우회 대비 운항거리 35% 단축</li>
+              <li>하절기 비쇄빙선 자력 운항 타당성 입증 및 신규 물류 루트 개척 가능성 확인</li>
+            </ul>
+            <a class="news-url" href="https://www.newsis.com/view/NISX20261012_0003821949" target="_blank">newsis.com/view/NISX20261012_0003821949</a>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    function filterCards(cat, btn) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const cards = document.querySelectorAll('.card');
+      cards.forEach(card => {
+        if (cat === 'all' || card.getAttribute('data-cat') === cat) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    function downloadHTML() {
+      const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+      const blob = new Blob([htmlContent], { type: "text/html" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+
+      const titleText = document.querySelector('.header-title').innerText;
+      const dateMatch = titleText.match(/(\d+월\s*\d+일)/);
+      const fileName = dateMatch ? `news_digest_${dateMatch[1].replace(/\s+/g, '')}.html` : 'news_digest.html';
+
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    }
+  </script>
+</body>
+</html>
