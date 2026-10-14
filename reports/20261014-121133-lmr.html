@@ -1,0 +1,562 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head><body>
+<title>LMR 배터리 딥다이브</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Noto+Serif+KR:wght@500;700;900&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600;700&display=swap">
+<style>
+/* Layout: 리서치 노트형 단일 컬럼(본문 ~68ch) + 표지 하단 Key Takeaways 2단, Exhibit 번호 체계. TNBfolio 하우스 스타일, 흰 바탕 고정(단일 테마) */
+:root{
+  color-scheme: light;
+  --bg:#ffffff;
+  --ink:#1B2A4A;        /* Pentagon Blue */
+  --body:#2f3747;
+  --muted:#6b7385;
+  --rule:#dfe3ea;
+  --tint:#f5f7fa;
+  --gold:#9A7B2F;
+  --red:#C8392B;
+  --blue:#1A5C9E;
+  --green:#2E7D52;
+  --mn:#6a4c93;
+  --f-display:"DM Serif Display","Noto Serif KR",Georgia,serif;
+  --f-head:"Noto Serif KR","Apple SD Gothic Neo",serif;
+  --f-body:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--body);font-family:var(--f-body);font-size:16px;line-height:1.75;margin:0}
+.wrap{max-width:1040px;margin:0 auto;padding-inline:20px;padding-block:0 64px}
+a{color:var(--blue)}
+h1,h2,h3{font-family:var(--f-head);color:var(--ink);text-wrap:balance;margin:0}
+p{margin:0}
+.mono{font-family:var(--f-mono)}
+.num{font-variant-numeric:tabular-nums}
+
+/* masthead */
+.mast{border-bottom:3px solid var(--ink);display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:8px 24px;padding-block:28px 12px}
+.brand{font-family:var(--f-display);font-size:30px;color:var(--ink);letter-spacing:.01em}
+.brand b{color:var(--gold);font-weight:400}
+.meta{font-family:var(--f-mono);font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;display:flex;gap:18px;flex-wrap:wrap}
+.strip{display:flex;flex-wrap:wrap;gap:6px 18px;font-family:var(--f-mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);padding-block:10px;border-bottom:1px solid var(--rule)}
+
+/* cover */
+.cover{padding-block:40px 28px;display:grid;gap:18px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--red)}
+.cover h1{font-size:clamp(34px,6vw,58px);font-weight:900;line-height:1.15;letter-spacing:-.01em}
+.cover .dek{font-size:clamp(17px,2.2vw,20px);color:var(--body);max-width:62ch;line-height:1.65}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);margin-block:8px 0}
+.kpi{padding:18px 16px;border-right:1px solid var(--rule);min-width:0}
+.kpi:last-child{border-right:0}
+.kpi .v{font-family:var(--f-display);font-size:38px;line-height:1.05;color:var(--ink)}
+.kpi .v em{font-style:normal;color:var(--red)}
+.kpi .l{font-size:13px;color:var(--muted);line-height:1.45;margin-top:8px}
+
+/* takeaways */
+.kt{display:grid;grid-template-columns:220px 1fr;gap:24px;padding-block:32px;border-bottom:1px solid var(--rule)}
+.kt h2{font-size:22px}
+.kt h2 small{display:block;font-family:var(--f-mono);font-size:11px;color:var(--gold);letter-spacing:.12em;text-transform:uppercase;margin-top:6px;font-weight:400}
+.kt ol{margin:0;padding-left:1.3em;display:grid;gap:12px;min-width:0}
+.kt li{padding-left:4px}
+.kt li b{color:var(--ink)}
+@media (max-width:720px){.kt{grid-template-columns:1fr;gap:12px}}
+
+/* sections */
+section.s{padding-block:44px 8px;border-bottom:1px solid var(--rule)}
+.s-head{display:flex;gap:16px;align-items:baseline;margin-bottom:20px;flex-wrap:wrap}
+.s-no{font-family:var(--f-mono);font-size:13px;color:var(--gold);letter-spacing:.1em}
+.s-head h2{font-size:clamp(24px,3.4vw,32px);font-weight:700}
+.prose{max-width:68ch;display:grid;gap:16px;margin-bottom:28px}
+.prose b{color:var(--ink)}
+h3{font-size:19px;margin-block:8px 0}
+
+/* exhibits */
+figure.ex{margin:0 0 36px;border-top:2px solid var(--ink);padding-top:12px}
+figure.ex figcaption.t{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;color:var(--ink);font-weight:600;margin-bottom:4px}
+figure.ex .sub{font-size:14px;color:var(--muted);margin-bottom:14px}
+figure.ex .src{font-size:12px;color:var(--muted);margin-top:10px;border-top:1px solid var(--rule);padding-top:8px}
+.scroll{overflow-x:auto}
+svg{display:block;max-width:100%;height:auto}
+svg text{font-family:var(--f-body)}
+
+table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:560px}
+th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+thead th{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--ink);font-weight:600}
+tbody th{color:var(--ink);font-weight:700;white-space:nowrap}
+td.hl{background:var(--tint);color:var(--ink);font-weight:500}
+.tag{display:inline-block;font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;padding:2px 7px;border:1px solid currentColor;border-radius:3px;white-space:nowrap}
+.tag.g{color:var(--green)}.tag.r{color:var(--red)}.tag.b{color:var(--blue)}.tag.y{color:var(--gold)}
+
+/* value chain */
+.chain{display:grid;grid-template-columns:1fr;border-top:1px solid var(--rule)}
+.node{padding:14px 4px;border-bottom:1px solid var(--rule);min-width:0;display:grid;grid-template-columns:110px 130px 1fr 260px;gap:8px 20px;align-items:baseline}
+@media (max-width:760px){.node{grid-template-columns:1fr}}
+.node .st{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;color:var(--gold);text-transform:uppercase}
+.node h4{margin:0;font-family:var(--f-head);font-size:17px;color:var(--ink)}
+.node ul{margin:0;padding-left:1.1em;font-size:14px;line-height:1.6;display:grid;gap:4px}
+.node .who{font-size:13.5px;color:var(--ink);font-weight:700}
+
+/* timeline */
+.tl{display:grid;gap:0;border-left:2px solid var(--ink);margin-left:6px}
+.tl .ev{display:grid;grid-template-columns:130px 1fr;gap:16px;padding:10px 0 14px 20px;position:relative}
+.tl .ev::before{content:"";position:absolute;left:-7px;top:17px;width:12px;height:12px;border-radius:50%;background:var(--bg);border:2px solid var(--ink)}
+.tl .ev.key::before{background:var(--red);border-color:var(--red)}
+.tl .d{font-family:var(--f-mono);font-size:13px;color:var(--ink);font-weight:600;padding-top:2px}
+.tl .ev p{min-width:0}
+@media (max-width:560px){.tl .ev{grid-template-columns:1fr;gap:2px}}
+
+/* bull bear */
+.bb{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.bb h3{display:flex;gap:10px;align-items:center;padding-bottom:8px;border-bottom:2px solid currentColor;margin-bottom:12px}
+.bb .bull h3{color:var(--green)}.bb .bear h3{color:var(--red)}
+.bb ul{margin:0;padding-left:1.1em;display:grid;gap:10px;font-size:15px}
+.bb > div{min-width:0}
+@media (max-width:720px){.bb{grid-template-columns:1fr}}
+
+.watch td:first-child{font-family:var(--f-mono);white-space:nowrap;color:var(--ink);font-weight:600}
+
+.concl{background:var(--ink);color:#fff;padding:32px 28px;margin-block:44px 0}
+.concl .eyebrow{color:#d9c38a}
+.concl p{font-family:var(--f-head);font-size:clamp(19px,2.6vw,24px);line-height:1.6;margin-top:12px;max-width:52ch;color:#fff}
+.disc{font-size:12px;color:var(--muted);line-height:1.7;padding-top:24px;display:grid;gap:8px}
+.foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;border-top:3px solid var(--ink);margin-top:28px;padding-top:12px;font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.foot b{color:var(--red);font-weight:700}
+</style>
+
+<div class="wrap">
+  <header class="mast">
+    <div class="brand">TNB<b>folio</b></div>
+    <div class="meta"><span>Thematic Deep Dive</span><span>2026.10.14</span><span>No. 2026-1014</span></div>
+  </header>
+  <div class="strip"><span>Batteries · Cathode Materials</span><span>Global / Korea Supply Chain</span><span>Industry Primer</span></div>
+
+  <section class="cover">
+    <div class="eyebrow">Next-Gen Cathode Chemistry</div>
+    <h1>LMR 배터리의 모든 것</h1>
+    <p class="dek">니켈의 성능과 LFP의 가격 사이, 기존 두 화학계가 채우지 못한 '그레이존'을 노리는 리튬망간리치(LMR). 2028년 GM과 LG에너지솔루션의 스프링힐 양산을 기점으로 소재·부품·장비 밸류체인이 다시 짜인다.</p>
+    <div class="kpis">
+      <div class="kpi"><div class="v num"><em>+33%</em></div><div class="l">LFP와 비슷한 비용에서 기대되는 에너지 밀도 개선폭</div></div>
+      <div class="kpi"><div class="v num">60~70%</div><div class="l">LMR 양극재 전이금속 조성 중 망간 비중</div></div>
+      <div class="kpi"><div class="v num">1.2~1.6</div><div class="l">전이금속 1개당 리튬 수 (NCM·NCA 약 1)</div></div>
+      <div class="kpi"><div class="v num">2028</div><div class="l">얼티엄셀즈 스프링힐 세계 첫 LMR 각형 셀 양산 목표</div></div>
+      <div class="kpi"><div class="v num">400<span style="font-size:20px">mi+</span></div><div class="l">GM 중형 전기 픽업 1회 충전 주행거리 목표 (약 643km)</div></div>
+    </div>
+  </section>
+
+  <section class="kt">
+    <h2>Key Takeaways<small>핵심 요약</small></h2>
+    <ol>
+      <li><b>정의.</b> LMR은 리튬과 망간을 풍부하게 담은 층상 구조 양극재다. 전이금속층 일부까지 리튬이 차지해 NCM보다 리튬을 약 1.2배, 많게는 1.6배 이상 함유한다.</li>
+      <li><b>포지셔닝.</b> NCM급 에너지 밀도와 LFP급 소재 비용을 동시에 겨냥한다. 1세대는 Standard EV의 NCM을, 2세대는 LFP 시장을 겨냥한다.</li>
+      <li><b>난제.</b> 충·방전 반복 시 전압이 떨어지는 문제와 고전압 활성화 과정의 구조 불안정이 상용화를 늦춰왔다. 활성화 전압과 구동 전압을 분리하는 셀 설계, 실리콘 음극과의 결합이 해법으로 제시됐다.</li>
+      <li><b>상용화.</b> 얼티엄셀즈는 2026년 말 스프링힐 공장 개조에 착수해 2028년까지 LMR 각형 셀 양산 체계를 완료한다. LFP·LMR 관련 투자는 2030년까지 총 10억 달러다.</li>
+      <li><b>밸류체인.</b> 양극재(포스코퓨처엠 검증), 각형 캔·캡(LG에너지솔루션 협력사 실사), 셀 장비(피엔티·원익피앤이·엠플러스·쎄크) 등 한국 소부장이 GM의 LMR 공급망 전반에 걸쳐 있다.</li>
+    </ol>
+  </section>
+
+  <!-- 1 -->
+  <section class="s" id="definition">
+    <div class="s-head"><span class="s-no">01</span><h2>LMR이란 무엇인가</h2></div>
+    <div class="prose">
+      <p>LMR은 <b>Lithium Manganese Rich</b>의 약자로, 리튬(Li)과 망간(Mn)을 풍부하게 함유한 양극재를 뜻한다. NCM·NCA 같은 삼원계처럼 리튬이 자리한 '리튬층'과 망간·니켈이 자리한 '전이금속층'이 번갈아 쌓인 층상 구조를 갖는다.</p>
+      <p>차이는 <b>전이금속층 일부에 리튬이 들어간다</b>는 점이다. 일반 양극재는 리튬과 전이금속이 각자의 층에 배열되지만, LMR은 망간이나 니켈이 있어야 할 자리 일부를 리튬이 차지한다. 그 결과 NCM·NCA가 전이금속과 리튬을 약 1대 1로 담는 데 비해, LMR은 전이금속 1개당 리튬을 약 1.2~1.6개까지 담는다.</p>
+      <p>망간은 전이금속 조성의 약 60~70%를 차지한다. 니켈은 소량, 코발트는 매우 낮은 수준이다. 높은 용량과 낮은 원가가 같은 구조에서 나오는 이유다.</p>
+    </div>
+
+    <figure class="ex">
+      <figcaption class="t">EXHIBIT 1 · LMR 양극재의 층상 구조 (개념도)</figcaption>
+      <div class="sub">전이금속층 일부를 리튬이 차지하는 것이 기존 층상 양극재와의 결정적 차이</div>
+      <div class="scroll">
+      <svg viewBox="0 0 760 270" role="img" aria-label="리튬층과 전이금속층이 번갈아 쌓이고 전이금속층 일부에 리튬이 들어간 구조 개념도">
+        <g id="layers">
+          <!-- row labels -->
+          <text x="0" y="48" font-size="13" fill="#6b7385">리튬층</text>
+          <text x="0" y="98" font-size="13" fill="#6b7385">전이금속층</text>
+          <text x="0" y="148" font-size="13" fill="#6b7385">리튬층</text>
+          <text x="0" y="198" font-size="13" fill="#6b7385">전이금속층</text>
+          <line x1="90" y1="70" x2="560" y2="70" stroke="#dfe3ea"/>
+          <line x1="90" y1="120" x2="560" y2="120" stroke="#dfe3ea"/>
+          <line x1="90" y1="170" x2="560" y2="170" stroke="#dfe3ea"/>
+        </g>
+        <g fill="#2E7D52">
+          <circle cx="110" cy="44" r="10"/><circle cx="160" cy="44" r="10"/><circle cx="210" cy="44" r="10"/><circle cx="260" cy="44" r="10"/><circle cx="310" cy="44" r="10"/><circle cx="360" cy="44" r="10"/><circle cx="410" cy="44" r="10"/><circle cx="460" cy="44" r="10"/><circle cx="510" cy="44" r="10"/>
+          <circle cx="110" cy="144" r="10"/><circle cx="160" cy="144" r="10"/><circle cx="210" cy="144" r="10"/><circle cx="260" cy="144" r="10"/><circle cx="310" cy="144" r="10"/><circle cx="360" cy="144" r="10"/><circle cx="410" cy="144" r="10"/><circle cx="460" cy="144" r="10"/><circle cx="510" cy="144" r="10"/>
+        </g>
+        <g>
+          <rect x="99" y="83" width="22" height="22" fill="#6a4c93"/><rect x="149" y="83" width="22" height="22" fill="#6a4c93"/><circle cx="210" cy="94" r="10" fill="#2E7D52" stroke="#C8392B" stroke-width="3"/><rect x="249" y="83" width="22" height="22" fill="#1A5C9E"/><rect x="299" y="83" width="22" height="22" fill="#6a4c93"/><rect x="349" y="83" width="22" height="22" fill="#6a4c93"/><circle cx="410" cy="94" r="10" fill="#2E7D52" stroke="#C8392B" stroke-width="3"/><rect x="449" y="83" width="22" height="22" fill="#6a4c93"/><rect x="499" y="83" width="22" height="22" fill="#1A5C9E"/>
+          <rect x="99" y="183" width="22" height="22" fill="#6a4c93"/><circle cx="160" cy="194" r="10" fill="#2E7D52" stroke="#C8392B" stroke-width="3"/><rect x="199" y="183" width="22" height="22" fill="#6a4c93"/><rect x="249" y="183" width="22" height="22" fill="#6a4c93"/><rect x="299" y="183" width="22" height="22" fill="#1A5C9E"/><circle cx="360" cy="194" r="10" fill="#2E7D52" stroke="#C8392B" stroke-width="3"/><rect x="399" y="183" width="22" height="22" fill="#6a4c93"/><rect x="449" y="183" width="22" height="22" fill="#6a4c93"/><rect x="499" y="183" width="22" height="22" fill="#6a4c93"/>
+        </g>
+        <!-- legend -->
+        <g font-size="13" fill="#2f3747">
+          <circle cx="600" cy="50" r="9" fill="#2E7D52"/><text x="618" y="55">리튬(Li)</text>
+          <rect x="591" y="81" width="18" height="18" fill="#6a4c93"/><text x="618" y="95">망간(Mn)</text>
+          <rect x="591" y="121" width="18" height="18" fill="#1A5C9E"/><text x="618" y="135">니켈(Ni)</text>
+          <circle cx="600" cy="174" r="9" fill="#2E7D52" stroke="#C8392B" stroke-width="3"/><text x="618" y="172">전이금속층에</text><text x="618" y="190">들어간 리튬</text>
+        </g>
+        <text x="90" y="245" font-size="12.5" fill="#6b7385">개념도로 실제 원자 배열 비율과 다르다. 망간은 전이금속 조성의 약 60~70%.</text>
+      </svg>
+      </div>
+      <div class="src">자료: LG에너지솔루션 배터리인사이드, TNBfolio 재구성</div>
+    </figure>
+
+    <figure class="ex">
+      <figcaption class="t">EXHIBIT 2 · 전이금속 1개당 리튬 함량</figcaption>
+      <div class="sub">LMR은 같은 전이금속으로 더 많은 리튬을 품어 이론 용량이 높다</div>
+      <div class="scroll">
+      <svg viewBox="0 0 760 170" role="img" aria-label="NCM·NCA 약 1.0, LMR 1.2에서 1.6">
+        <g font-size="12" fill="#6b7385" text-anchor="middle">
+          <line x1="170" y1="20" x2="170" y2="130" stroke="#dfe3ea"/><text x="170" y="150">0</text>
+          <line x1="310" y1="20" x2="310" y2="130" stroke="#dfe3ea"/><text x="310" y="150">0.5</text>
+          <line x1="450" y1="20" x2="450" y2="130" stroke="#dfe3ea"/><text x="450" y="150">1.0</text>
+          <line x1="590" y1="20" x2="590" y2="130" stroke="#dfe3ea"/><text x="590" y="150">1.5</text>
+          <line x1="646" y1="20" x2="646" y2="130" stroke="#dfe3ea"/><text x="646" y="150">1.7</text>
+        </g>
+        <text x="0" y="56" font-size="14" fill="#1B2A4A" font-weight="700">NCM · NCA</text>
+        <rect x="170" y="38" width="280" height="26" fill="#9aa3b5"/>
+        <text x="460" y="56" font-size="13" fill="#2f3747" class="num">약 1.0</text>
+        <text x="0" y="106" font-size="14" fill="#1B2A4A" font-weight="700">LMR</text>
+        <rect x="170" y="88" width="336" height="26" fill="#C8392B"/>
+        <rect x="506" y="88" width="112" height="26" fill="#C8392B" fill-opacity=".35"/>
+        <text x="628" y="106" font-size="13" fill="#2f3747">1.2~1.6</text>
+      </svg>
+      </div>
+      <div class="src">자료: LG에너지솔루션 배터리인사이드. 진한 막대는 하단(1.2), 옅은 구간은 상단(1.6)까지의 범위</div>
+    </figure>
+  </section>
+
+  <!-- 2 -->
+  <section class="s" id="why">
+    <div class="s-head"><span class="s-no">02</span><h2>왜 지금 LMR인가: '그레이존'</h2></div>
+    <div class="prose">
+      <p>시장은 지금까지 두 가지 선택지로 나뉘었다. <b>NCM</b>은 에너지 밀도가 높지만 니켈·코발트 같은 고가 금속에 의존한다. <b>LFP</b>는 가격 경쟁력이 높지만 소재 특성상 에너지 밀도를 더 끌어올리기 어렵다.</p>
+      <p>그 사이에 LFP보다 에너지 밀도가 높으면서 NCM보다 가격 부담이 낮은 배터리 수요가 존재한다. LG에너지솔루션은 이 영역을 '그레이존(Gray Zone)'이라 부르고, LMR을 그 빈칸의 새 선택지로 제시한다. 대표 수요처는 탑재 공간 제약은 적지만 긴 주행거리와 가격 경쟁력을 함께 요구하는 상용 전기트럭과 전기 픽업트럭이다.</p>
+      <p>LMR 자체는 학계가 오래전부터 주목한 소재다. 최근 다시 부상한 이유는 두 가지다. 분석 기술이 발전해 산소 산화·환원 반응, 구조 변화, 성능 저하의 원인을 정밀하게 파악할 수 있게 됐고, 전기차 시장이 승용차를 넘어 상용차 등으로 넓어지며 수요 측 요구가 맞물렸다.</p>
+      <p>또 하나의 강점은 <b>설계의 폭</b>이다. 소재 조성과 셀 설계에 따라 에너지 밀도와 가격의 균형을 고객과 차종에 맞춰 조절할 수 있다. 하나의 고정된 성능이 아니라 스펙트럼으로 공급할 수 있는 화학계라는 의미다.</p>
+    </div>
+
+    <figure class="ex">
+      <figcaption class="t">EXHIBIT 3 · 화학계 포지셔닝 맵 (정성)</figcaption>
+      <div class="sub">NCM과 LFP 사이의 빈 영역을 LMR이 채우고, 2세대는 LFP 영역까지 진입을 노린다</div>
+      <div class="scroll">
+      <svg viewBox="0 0 760 360" role="img" aria-label="가격 경쟁력과 에너지 밀도 축 위의 NCM, LFP, LMR 위치">
+        <rect x="120" y="20" width="600" height="280" fill="#f5f7fa"/>
+        <line x1="120" y1="300" x2="720" y2="300" stroke="#1B2A4A" stroke-width="1.5"/>
+        <line x1="120" y1="20" x2="120" y2="300" stroke="#1B2A4A" stroke-width="1.5"/>
+        <text x="420" y="330" font-size="13" fill="#2f3747" text-anchor="middle">가격 경쟁력 →</text>
+        <text x="130" y="322" font-size="11.5" fill="#6b7385">낮음</text>
+        <text x="710" y="322" font-size="11.5" fill="#6b7385" text-anchor="end">높음</text>
+        <text x="20" y="40" font-size="13" fill="#2f3747">에너지 밀도</text>
+        <text x="20" y="58" font-size="11.5" fill="#6b7385">높음</text>
+        <text x="20" y="296" font-size="11.5" fill="#6b7385">낮음</text>
+        <!-- gray zone -->
+        <rect x="430" y="40" width="270" height="140" fill="none" stroke="#9A7B2F" stroke-dasharray="6 5" stroke-width="1.5"/>
+        <text x="690" y="62" font-size="12" fill="#9A7B2F" text-anchor="end" font-weight="700">그레이존</text>
+        <!-- NCM -->
+        <circle cx="220" cy="80" r="34" fill="#1A5C9E"/>
+        <text x="220" y="85" font-size="15" fill="#ffffff" text-anchor="middle" font-weight="700">NCM</text>
+        <text x="265" y="130" font-size="12" fill="#2f3747">니켈·코발트 의존</text>
+        <!-- LFP -->
+        <circle cx="620" cy="240" r="34" fill="#2E7D52"/>
+        <text x="620" y="245" font-size="15" fill="#ffffff" text-anchor="middle" font-weight="700">LFP</text>
+        <text x="470" y="270" font-size="12" fill="#2f3747">밀도 개선 한계</text>
+        <!-- LMR gen1 -->
+        <circle cx="500" cy="100" r="34" fill="#C8392B"/>
+        <text x="500" y="98" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">LMR</text>
+        <text x="500" y="115" font-size="11" fill="#ffffff" text-anchor="middle">1세대</text>
+        <!-- LMR gen2 -->
+        <circle cx="630" cy="125" r="30" fill="none" stroke="#C8392B" stroke-width="2" stroke-dasharray="4 4"/>
+        <text x="630" y="122" font-size="12.5" fill="#C8392B" text-anchor="middle" font-weight="700">LMR</text>
+        <text x="630" y="138" font-size="11" fill="#C8392B" text-anchor="middle">2세대</text>
+        <line x1="537" y1="108" x2="596" y2="119" stroke="#C8392B" stroke-width="1.5"/>
+        <polygon points="598,119 588,113 587,124" fill="#C8392B"/>
+        <line x1="262" y1="85" x2="462" y2="98" stroke="#C8392B" stroke-width="1.2" stroke-dasharray="3 4"/>
+        <text x="300" y="72" font-size="11.5" fill="#C8392B">Standard EV에서 NCM 보완·대체</text>
+      </svg>
+      </div>
+      <div class="src">자료: LG에너지솔루션 배터리인사이드 비교표 및 로드맵을 바탕으로 TNBfolio 작성. 정성적 위치이며 수치 축이 아니다</div>
+    </figure>
+  </section>
+
+  <!-- 3 -->
+  <section class="s" id="compare">
+    <div class="s-head"><span class="s-no">03</span><h2>NCM · LFP · LMR 비교</h2></div>
+    <div class="prose">
+      <p>LMR의 이론 용량은 약 300~350mAh/g으로 NCM(약 275~280mAh/g), LFP(약 170mAh/g)보다 높다. 실제 셀 에너지 밀도는 NCM과 유사한 수준으로 평가되며, 소재 비용은 설계에 따라 LFP와 비슷한 수준까지 낮출 수 있다.</p>
+      <p>공급망 측면에서도 차별점이 있다. 코발트 함량이 매우 낮아 특정 지역에 편중된 코발트 공급망 의존도를 줄일 수 있다. 업계에서는 저렴한 망간을 쓰면서도 LFP 대비 재활용 여건이 유리하다는 점을 가격 경쟁력 요인으로 꼽는다.</p>
+    </div>
+
+    <figure class="ex">
+      <figcaption class="t">EXHIBIT 4 · 양극재 화학계 비교</figcaption>
+      <div class="scroll">
+      <table>
+        <thead><tr><th>항목</th><th>NCM</th><th>LFP</th><th>LMR</th></tr></thead>
+        <tbody>
+          <tr><th>주요 소재</th><td>니켈, 코발트, 망간</td><td>리튬, 철, 인</td><td class="hl">리튬·망간 중심 (소량 니켈, 저코발트)</td></tr>
+          <tr><th>이론 용량</th><td class="num">약 275~280mAh/g</td><td class="num">약 170mAh/g</td><td class="hl num">약 300~350mAh/g</td></tr>
+          <tr><th>에너지 밀도</th><td><span class="tag g">높음</span></td><td><span class="tag r">낮음</span></td><td class="hl"><span class="tag g">NCM과 유사한 높은 수준</span></td></tr>
+          <tr><th>가격 경쟁력</th><td><span class="tag r">낮음</span> 니켈·코발트 의존</td><td><span class="tag g">높음</span></td><td class="hl"><span class="tag g">높음</span> 저렴한 망간 중심</td></tr>
+          <tr><th>공급망</th><td>코발트 편중 리스크</td><td>철·인 기반</td><td class="hl">코발트 의존도 낮음</td></tr>
+          <tr><th>핵심 과제</th><td>원가</td><td>밀도 상향 한계</td><td class="hl">전압 강하, 구조 안정성, 제조 단가</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="src">자료: LG에너지솔루션 배터리인사이드, 디일렉, TNBfolio 정리</div>
+    </figure>
+
+    <figure class="ex">
+      <figcaption class="t">EXHIBIT 5 · 양극재별 이론 용량 (mAh/g)</figcaption>
+      <div class="sub">LMR은 하단 기준으로도 NCM 상단을 웃돈다</div>
+      <div class="scroll">
+      <svg viewBox="0 0 780 210" role="img" aria-label="이론 용량: LMR 300에서 350, NCM 275에서 280, LFP 약 170">
+        <g font-size="12" fill="#6b7385" text-anchor="middle">
+          <line x1="150" y1="16" x2="150" y2="170" stroke="#dfe3ea"/><text x="150" y="190">0</text>
+          <line x1="285" y1="16" x2="285" y2="170" stroke="#dfe3ea"/><text x="285" y="190">100</text>
+          <line x1="420" y1="16" x2="420" y2="170" stroke="#dfe3ea"/><text x="420" y="190">200</text>
+          <line x1="555" y1="16" x2="555" y2="170" stroke="#dfe3ea"/><text x="555" y="190">300</text>
+          <line x1="690" y1="16" x2="690" y2="170" stroke="#dfe3ea"/><text x="690" y="190">400</text>
+        </g>
+        <text x="0" y="46" font-size="14" font-weight="700" fill="#1B2A4A">LMR</text>
+        <rect x="150" y="28" width="405" height="28" fill="#C8392B"/>
+        <rect x="555" y="28" width="67.5" height="28" fill="#C8392B" fill-opacity=".35"/>
+        <text x="630" y="47" font-size="13" fill="#2f3747">300~350</text>
+        <text x="0" y="96" font-size="14" font-weight="700" fill="#1B2A4A">NCM</text>
+        <rect x="150" y="78" width="371" height="28" fill="#1A5C9E"/>
+        <rect x="521" y="78" width="7" height="28" fill="#1A5C9E" fill-opacity=".45"/>
+        <text x="536" y="97" font-size="13" fill="#2f3747">275~280</text>
+        <text x="0" y="146" font-size="14" font-weight="700" fill="#1B2A4A">LFP</text>
+        <rect x="150" y="128" width="229.5" height="28" fill="#2E7D52"/>
+        <text x="388" y="147" font-size="13" fill="#2f3747">약 170</text>
+      </svg>
+      </div>
+      <div class="src">자료: LG에너지솔루션 배터리인사이드</div>
+    </figure>
+  </section>
+
+  <!-- 4 -->
+  <section class="s" id="tech">
+    <div class="s-head"><span class="s-no">04</span><h2>기술 난제와 해법</h2></div>
+    <div class="prose">
+      <h3>왜 상용화가 오래 걸렸나</h3>
+      <p>충전 시에는 양극에서 리튬이 빠져나가는 동시에 전이금속이 전자를 내놓는 산화 반응이 일어나야 한다. 그런데 LMR은 리튬 양에 비해 반응에 참여할 전이금속이 부족하고, 주성분인 망간은 이미 산화가 많이 진행된 상태다. 전이금속만으로는 많은 리튬을 꺼내 쓰기 어렵다.</p>
+      <p>그래서 초기 충전 때 높은 전압을 걸어 <b>산소까지 산화·환원 반응에 참여</b>시킨다. 이 과정에서 많은 리튬이 빠져나가며 결정 구조가 변하거나 산소가 이탈할 수 있고, 이는 수명과 내구성 저하로 이어진다. 충·방전을 반복할수록 <b>전압이 떨어지는 문제</b>도 상용화의 걸림돌이었다. GM과 포스코퓨처엠은 양극재 내부 구조를 안정화하고 표면에 보호막을 입히는 기술을 개발하고 있다.</p>
+      <h3>LG에너지솔루션의 해법: LMR Cell Chemistry</h3>
+      <p>첫째, <b>활성화 전압과 구동 전압을 분리</b>했다. Li₂MnO₃상의 추가 용량을 쓰려면 초기 충전에서 4.6V 이상을 가해 산소 반응을 활성화해야 한다. 한 번 활성화를 거치면 약 4.3V부터 산소 반응이 시작되므로, 이후 상한 전압을 낮춰도 안정적으로 구동된다. 이 아이디어는 약 10년 전 한 연구원이 제안해 특허로 남겨둔 것이 출발점이다.</p>
+      <p>둘째, <b>실리콘계 음극재와 결합</b>했다. 실리콘 음극은 흑연보다 리튬을 많이 저장해 용량과 급속 충전에 유리하지만, 초기 충전에서 일부 리튬이 다시 쓰이지 않는 비가역 손실이 생긴다. LMR에 풍부한 리튬과 고전압 활성화에서 확보되는 추가 용량이 이 손실을 메운다. 두 소재의 약점을 서로 보완하는 구조로, 2022년 7월 특허로 출원됐다.</p>
+    </div>
+
+    <figure class="ex">
+      <figcaption class="t">EXHIBIT 6 · LMR의 전압 설계 구간</figcaption>
+      <div class="sub">한 번의 고전압 활성화 후 낮은 상한 전압에서 구동하는 것이 핵심. 다음 과제는 4.50V 이상 구동</div>
+      <div class="scroll">
+      <svg viewBox="0 0 760 270" role="img" aria-label="4.3V 산소 반응 시작, 4.5V 이상 향후 구동 목표, 4.6V 이상 초기 활성화">
+        <g font-family="JetBrains Mono, monospace" font-size="12" fill="#6b7385" text-anchor="end">
+          <text x="90" y="244">4.2V</text><text x="90" y="194">4.3V</text><text x="90" y="144">4.4V</text><text x="90" y="94">4.5V</text><text x="90" y="44">4.6V</text>
+        </g>
+        <line x1="100" y1="240" x2="740" y2="240" stroke="#dfe3ea"/>
+        <line x1="100" y1="140" x2="740" y2="140" stroke="#dfe3ea"/>
+        <!-- activation -->
+        <rect x="100" y="16" width="640" height="24" fill="#C8392B" fill-opacity=".12"/>
+        <line x1="100" y1="40" x2="740" y2="40" stroke="#C8392B" stroke-width="2"/>
+        <text x="112" y="33" font-size="13" fill="#C8392B" font-weight="700">4.6V 이상 · 초기 충전 고전압 활성화 (Li₂MnO₃상 산소 반응 개시)</text>
+        <!-- target -->
+        <line x1="100" y1="90" x2="740" y2="90" stroke="#9A7B2F" stroke-width="2" stroke-dasharray="7 5"/>
+        <text x="112" y="82" font-size="13" fill="#9A7B2F" font-weight="700">4.50V 이상 · 향후 고전압 구동 목표 (성능·수명 유지가 과제)</text>
+        <!-- onset -->
+        <line x1="100" y1="190" x2="740" y2="190" stroke="#1B2A4A" stroke-width="2"/>
+        <text x="112" y="182" font-size="13" fill="#1B2A4A" font-weight="700">약 4.3V · 활성화 이후 산소 반응이 시작되는 전압</text>
+        <rect x="100" y="190" width="640" height="50" fill="#1A5C9E" fill-opacity=".08"/>
+        <text x="112" y="222" font-size="12.5" fill="#1A5C9E">활성화 후에는 상한 전압을 낮춰 구동해 수명·급속 충전 성능 확보</text>
+      </svg>
+      </div>
+      <div class="src">자료: LG에너지솔루션 배터리인사이드, TNBfolio 재구성. 세로축 간격은 개념적 배치</div>
+    </figure>
+
+    <div class="prose">
+      <h3>남은 과제</h3>
+      <p><b>고전압 구동.</b> 4.50V 이상에서도 성능과 수명을 안정적으로 유지하는 셀 설계가 필요하다. 에너지 잠재력을 실제 제품 성능으로 옮기는 마지막 관문이다.</p>
+      <p><b>제조 단가.</b> 기존 양극재 제조에는 물을 쓰는 습식 공정이 들어가 폐수 처리 비용이 발생한다. 물 사용과 폐수를 줄이거나 없애는 신공정이 필요하다. 원재료뿐 아니라 공정 비용까지 낮춰야 LMR의 가격 경쟁력이 완성된다.</p>
+      <p><b>전극 공정.</b> 건식 전극 공정(Dry Electrode Process)과 LMR을 결합하는 연구가 진행 중이다. 소재 개발에는 AI가 유망 조성을 선별하고 자동화 설비가 검증하는 AX 방식 도입이 준비되고 있다.</p>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="s" id="gm">
+    <div class="s-head"><span class="s-no">05</span><h2>GM–LG에너지솔루션 상용화 경로</h2></div>
+    <div class="prose">
+      <p>GM은 LMR을 10년 이상 개발해 왔고, LG에너지솔루션과 <b>LMR 각형 배터리</b>를 공동 개발해 2028년 상용화를 추진한다. 고니켈은 최장 주행거리가 필요한 차종에 계속 쓰고, LMR은 더 낮은 비용으로 긴 주행거리를 내는 차세대 주력으로 키우는 전략이다.</p>
+      <p><b>폼팩터는 각형</b>이다. 금속 케이스를 쓰는 각형은 구조적 안정성이 높지만 기구 설계가 복잡하다. 지난해 공개된 GM 자체 제작 시제품은 양·음극 단자를 상단에 둔 탑터미널 방식으로, 길이보다 높이가 긴 형태였다. 양산형은 단자를 양쪽 측면에 두는 <b>사이드터미널</b> 방식으로 바뀐다. 셀 높이를 낮추고 길이를 늘려 차체를 키우지 않고도 공간 활용과 용량을 높이려는 설계로 풀이된다.</p>
+      <p>생산은 얼티엄셀즈 테네시주 <b>스프링힐 공장(UC2)</b>이 맡는다. 2026년 말 공장 개조와 설비 전환에 착수해 2028년까지 마무리한다. 하이니켈 파우치를 만들던 이 공장은 2026년 6월부터 LG에너지솔루션 ESS 자회사 버테크 고객용 LFP 셀도 생산 중이어서, LMR이 더해지면 하이니켈·LFP·LMR 세 화학계와 파우치·각형 두 폼팩터를 아우르는 복합 거점이 된다.</p>
+      <p>얼티엄셀즈는 LFP·LMR 생산 프로그램과 관련 공장 개선 투자가 2030년까지 총 10억 달러에 이를 것으로 예상했다. LMR 라인 구축으로 약 500개 일자리가 추가되며, 현재 스프링힐 근무 인원은 약 1,200명이다.</p>
+      <p>개발 인프라도 갖췄다. GM은 미시간주 워런에 약 50만 제곱피트 규모의 배터리셀개발센터(BCDC)를 구축했고, 월러스 배터리셀혁신센터와 합쳐 약 9억 달러(약 1조 2,000억원)를 투입했다. BCDC에는 연산 500MWh 규모 파일럿 라인이 있어 하루 수천 개의 테스트 셀을 만들 수 있으며, 신규 배터리 개발 기간을 최대 1년 단축하는 것이 목표다.</p>
+    </div>
+
+    <figure class="ex">
+      <figcaption class="t">EXHIBIT 7 · LMR 상용화 타임라인</figcaption>
+      <div class="tl">
+        <div class="ev"><div class="d">2009</div><p>LG에너지솔루션, LMR 양극재 선행 연구 착수 (약 17년 연구의 출발점)</p></div>
+        <div class="ev"><div class="d">2010</div><p>LG에너지솔루션, LMR 관련 첫 특허 확보</p></div>
+        <div class="ev"><div class="d">2022.07</div><p>LMR 양극재와 실리콘계 음극재를 결합한 'LMR Cell Chemistry' 특허 출원</p></div>
+        <div class="ev key"><div class="d">2025.05</div><p>GM·LG에너지솔루션, LMR 각형 배터리 공동 상용화 계획 공개 (2028년 미국 상업 생산 목표)</p></div>
+        <div class="ev"><div class="d">2026 상반기</div><p>LG에너지솔루션 LMR 관련 출원 특허 누적 300건 이상</p></div>
+        <div class="ev"><div class="d">2026.06</div><p>스프링힐 공장, ESS용 LFP 셀 생산 개시. GM, 피크에너지와 그리드용 나트륨이온 공동 개발 발표</p></div>
+        <div class="ev key"><div class="d">2026.09.29</div><p>얼티엄셀즈, 스프링힐 공장 LMR 각형 생산 체계 구축 공식 발표</p></div>
+        <div class="ev"><div class="d">2026.10</div><p>GM, 국내 각형 캔·캡 협력사 현장 실사 진행 보도</p></div>
+        <div class="ev key"><div class="d">2026 말</div><p>스프링힐 공장 개조·설비 전환 착수</p></div>
+        <div class="ev key"><div class="d">2028</div><p>개조 완료, 세계 첫 LMR 각형 셀 대량 생산 목표</p></div>
+        <div class="ev"><div class="d">~2030</div><p>LFP·LMR 관련 누적 투자 총 10억 달러 예상</p></div>
+      </div>
+      <div class="src">자료: 디일렉, LG에너지솔루션, 언론 보도 종합</div>
+    </figure>
+  </section>
+
+  <!-- 6 -->
+  <section class="s" id="chain">
+    <div class="s-head"><span class="s-no">06</span><h2>밸류체인 지도</h2></div>
+    <div class="prose">
+      <p>GM의 LMR 공급망은 소재부터 장비까지 한국 기업 비중이 높다. 각형 폼팩터 채택으로 캔·캡 협력사 확보가 새로운 과제가 됐고, 실사 대상은 삼성SDI가 아닌 LG에너지솔루션 협력사 가운데 각형 캔·캡 제조가 가능한 업체로 파악된다.</p>
+    </div>
+    <figure class="ex">
+      <figcaption class="t">EXHIBIT 8 · LMR 배터리 밸류체인</figcaption>
+      <div class="sub">업스트림에서 완성차까지 단계별 역할과 확인된 참여 기업</div>
+      <div class="chain">
+        <div class="node"><span class="st">Upstream</span><h4>원재료</h4><ul><li>망간이 전이금속의 약 60~70%</li><li>리튬 함량 확대</li><li>니켈 소량, 코발트 최소화</li></ul><span class="who">코발트 공급망 의존도 축소</span></div>
+        <div class="node"><span class="st">Material</span><h4>양극재</h4><ul><li>원료 배합·합성·열처리 공정 시험</li><li>구조 안정화, 표면 보호막 기술</li><li>습식 공정 비용 절감이 과제</li></ul><span class="who">포스코퓨처엠 (세종 파일럿, GM과 검증)</span></div>
+        <div class="node"><span class="st">Material</span><h4>음극재</h4><ul><li>실리콘계 음극과 결합</li><li>LMR 잉여 리튬이 초기 비가역 손실 보완</li></ul><span class="who">LG에너지솔루션 LMR Cell Chemistry</span></div>
+        <div class="node"><span class="st">Component</span><h4>각형 캔 · 캡</h4><ul><li>사이드터미널 각형 셀용 금속 케이스</li><li>기구 설계 복잡도 상승</li></ul><span class="who">LG에너지솔루션 협력사 (GM 실사 중)</span></div>
+        <div class="node"><span class="st">Equipment</span><h4>셀 장비</h4><ul><li>BCDC 연산 500MWh 파일럿 라인</li><li>건식 전극 공정 결합 연구</li></ul><span class="who">피엔티 · 원익피앤이 · 엠플러스 · 쎄크</span></div>
+        <div class="node"><span class="st">Cell</span><h4>셀 양산</h4><ul><li>스프링힐 UC2 개조, 2028년 완료</li><li>하이니켈·LFP·LMR 복합 거점</li></ul><span class="who">얼티엄셀즈 (LG에너지솔루션·GM JV)</span></div>
+        <div class="node"><span class="st">OEM</span><h4>완성차</h4><ul><li>중형 전기 픽업, 대형 SUV 우선</li><li>400마일(약 643km) 이상 목표</li></ul><span class="who">GM</span></div>
+      </div>
+      <div class="src">자료: 디일렉, LG에너지솔루션, 언론 보도 종합. 기업명은 원문에서 확인된 참여 사실만 기재</div>
+    </figure>
+  </section>
+
+  <!-- 7 -->
+  <section class="s" id="demand">
+    <div class="s-head"><span class="s-no">07</span><h2>수요처와 로드맵</h2></div>
+    <div class="prose">
+      <p>LG에너지솔루션의 <b>1세대 LMR</b>은 소형부터 중형까지 가격과 성능의 균형을 중시하는 Standard 전기차 시장에서 NCM 계열을 보완·대체하는 것이 목표다. <b>2세대 LMR</b>은 LFP가 주로 쓰이는 시장까지 겨냥한다. 리튬을 더 많이 활용하는 기술이 확보되면 LFP보다 가격 경쟁력이 높은 배터리도 가능하다는 판단이다.</p>
+      <p>적용 순서는 전기 픽업·상용 전기트럭처럼 긴 주행거리와 가격을 함께 요구하는 분야가 먼저다. 이후 저가형 승용 전기차, 장기적으로는 도심항공교통(UAM) 같은 미래 모빌리티로 확장한다.</p>
+      <p>같은 크기에 더 많은 에너지를 담거나, 같은 주행거리를 더 작고 가벼운 팩으로 낼 수 있다는 점에서 배터리 용량이 큰 전기 픽업트럭과 대형 SUV의 원가 절감 효과가 특히 클 것으로 예상된다. 경쟁 구도도 여기서 선명하다. GM은 LMR로 400마일 이상을 노리는 반면, 경쟁 픽업은 LFP를 택했다.</p>
+    </div>
+
+    <figure class="ex">
+      <figcaption class="t">EXHIBIT 9 · 전기 픽업트럭 1회 충전 주행거리 (km)</figcaption>
+      <div class="sub">GM LMR 목표치와 LFP 탑재 경쟁 모델 비교</div>
+      <div class="scroll">
+      <svg viewBox="0 0 780 230" role="img" aria-label="GM LMR 목표 643km 이상, 포드 LFP 픽업 약 480km, KGM 무쏘 EV AWD 342km">
+        <g font-size="12" fill="#6b7385" text-anchor="middle">
+          <line x1="250" y1="14" x2="250" y2="170" stroke="#dfe3ea"/><text x="250" y="190">0</text>
+          <line x1="350" y1="14" x2="350" y2="170" stroke="#dfe3ea"/><text x="350" y="190">200</text>
+          <line x1="450" y1="14" x2="450" y2="170" stroke="#dfe3ea"/><text x="450" y="190">400</text>
+          <line x1="550" y1="14" x2="550" y2="170" stroke="#dfe3ea"/><text x="550" y="190">600</text>
+          <line x1="650" y1="14" x2="650" y2="170" stroke="#dfe3ea"/><text x="650" y="190">800</text>
+        </g>
+        <text x="0" y="40" font-size="13.5" font-weight="700" fill="#1B2A4A">GM 중형 픽업 (LMR)</text>
+        <text x="0" y="57" font-size="11.5" fill="#6b7385">목표치</text>
+        <rect x="250" y="26" width="321.5" height="30" fill="#C8392B"/>
+        <text x="580" y="46" font-size="13" fill="#2f3747">643km 이상 (400마일+)</text>
+        <text x="0" y="92" font-size="13.5" font-weight="700" fill="#1B2A4A">포드 3만달러 픽업 (LFP)</text>
+        <text x="0" y="109" font-size="11.5" fill="#6b7385">CATL 기술 이전, 개발 중</text>
+        <rect x="250" y="78" width="240" height="30" fill="#2E7D52"/>
+        <text x="499" y="98" font-size="13" fill="#2f3747">약 480km (약 300마일)</text>
+        <text x="0" y="144" font-size="13.5" font-weight="700" fill="#1B2A4A">KGM 무쏘 EV AWD (LFP)</text>
+        <text x="0" y="161" font-size="11.5" fill="#6b7385">BYD 배터리 탑재</text>
+        <rect x="250" y="130" width="171" height="30" fill="#2E7D52" fill-opacity=".7"/>
+        <text x="430" y="150" font-size="13" fill="#2f3747">342km</text>
+      </svg>
+      </div>
+      <div class="src">자료: 디일렉. GM 수치는 목표치, 포드 수치는 알려진 개발 사양</div>
+    </figure>
+  </section>
+
+  <!-- 8 -->
+  <section class="s" id="bullbear">
+    <div class="s-head"><span class="s-no">08</span><h2>장단점 매트릭스</h2></div>
+    <figure class="ex" style="border-top:0;padding-top:0">
+      <div class="bb">
+        <div class="bull">
+          <h3>강점</h3>
+          <ul>
+            <li>NCM급 에너지 밀도와 LFP급 소재 비용의 동시 확보. LFP 대비 에너지 밀도 약 33% 개선 기대</li>
+            <li>망간 중심 조성으로 니켈·코발트 가격 변동과 코발트 공급망 편중 리스크 완화</li>
+            <li>조성과 셀 설계로 밀도와 가격 균형을 조절하는 유연성. 차종별 맞춤 공급 가능</li>
+            <li>같은 주행거리를 더 작고 가벼운 팩으로 구현. 대용량 픽업·SUV에서 원가 효과 극대화</li>
+            <li>LFP 대비 유리한 재활용 여건에 대한 업계 평가</li>
+            <li>2028년 양산 거점과 일정이 확정되며 기술이 연구 단계를 벗어남</li>
+          </ul>
+        </div>
+        <div class="bear">
+          <h3>약점 · 리스크</h3>
+          <ul>
+            <li>충·방전 반복 시 전압이 떨어지는 문제. 양산 수준의 장기 신뢰성 검증이 아직 남음</li>
+            <li>고전압 활성화 과정의 결정 구조 변화와 산소 이탈. 수명·내구성 저하 요인</li>
+            <li>4.50V 이상 고전압 구동 시 성능·수명 유지 기술이 미완성</li>
+            <li>습식 양극재 공정의 폐수 처리 비용. 공정 혁신 없이는 원가 우위가 제한적</li>
+            <li>각형 폼팩터의 복잡한 기구 설계와 신규 캔·캡 공급망 구축 부담</li>
+            <li>2028년까지 이어지는 긴 양산 준비 기간. 그사이 LFP의 원가 하락이 경쟁 기준선을 낮출 수 있음</li>
+          </ul>
+        </div>
+      </div>
+      <div class="src">자료: 디일렉, LG에너지솔루션 배터리인사이드, 언론 보도 종합, TNBfolio 정리</div>
+    </figure>
+  </section>
+
+  <!-- 9 -->
+  <section class="s" id="watch">
+    <div class="s-head"><span class="s-no">09</span><h2>체크포인트</h2></div>
+    <figure class="ex">
+      <figcaption class="t">EXHIBIT 10 · 향후 확인할 이정표</figcaption>
+      <div class="scroll">
+      <table class="watch">
+        <thead><tr><th>시점</th><th>이벤트</th><th>확인 포인트</th></tr></thead>
+        <tbody>
+          <tr><td>진행 중</td><td>각형 캔·캡 협력사 선정</td><td>GM 실사 대상 중 최종 공급사 확정 여부</td></tr>
+          <tr><td>진행 중</td><td>포스코퓨처엠 LMR 양극재 검증</td><td>성능·양산성 검증 통과, 파일럿에서 양산 라인 전환</td></tr>
+          <tr><td>2026 말</td><td>스프링힐 공장 개조 착수</td><td>설비 전환 일정 준수, 장비 발주 규모</td></tr>
+          <tr><td>~2028</td><td>스프링힐 개조 완료·양산 개시</td><td>세계 첫 LMR 각형 셀 대량 생산 실현</td></tr>
+          <tr><td>중장기</td><td>4.50V 이상 고전압 구동</td><td>수명 저하 없는 셀 설계 확보</td></tr>
+          <tr><td>중장기</td><td>무폐수 신공정·건식 전극</td><td>제조 단가 하락으로 LFP 대비 가격 우위 확보 여부</td></tr>
+          <tr><td>중장기</td><td>2세대 LMR</td><td>LFP 시장 진입, 저가형 승용 EV 적용</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </figure>
+  </section>
+
+  <div class="concl">
+    <div class="eyebrow">Bottom Line</div>
+    <p>LMR은 더 이상 실험실의 소재가 아니다. 2028년 스프링힐 양산이 기술의 결론이라면, 그 전까지의 2년은 양극재·각형 부품·장비로 이어지는 한국 소부장 밸류체인이 실적으로 검증받는 시간이다.</p>
+  </div>
+
+  <div class="disc">
+    <p>본 자료는 공개된 기사와 기업 자료를 바탕으로 작성된 산업 분석 자료로, 특정 종목의 매수·매도를 권유하지 않는다. 기업별 참여 내용은 원문에서 확인된 범위에 한해 기재했으며 수주 규모나 실적 영향은 추정하지 않았다.</p>
+    <p>투자 판단의 최종 책임은 투자자 본인에게 있다.</p>
+  </div>
+
+  <footer class="foot"><span>TNBfolio Thematic Deep Dive · 2026.10.14 · No. 2026-1014</span><b>@TNBfolio</b></footer>
+</div>
+
+</body></html>
