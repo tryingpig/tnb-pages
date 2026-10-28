@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>10월 28일 매크로&전략 히트맵</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; word-break: keep-all; }
+body { background: #ffffff; color: #10202b; padding: 24px; line-height: 1.5; }
+.wrap { max-width: 1440px; margin: 0 auto; }
+
+/* Top Header */
+.top-bar { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; border-bottom: 1px solid #e5e7eb; padding-bottom: 16px; }
+.brand { font-size: 13px; font-weight: 800; color: #0f69ff; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 4px; }
+.title-row { display: flex; align-items: baseline; gap: 12px; }
+h1 { font-size: 26px; font-weight: 800; color: #141c26; }
+.meta-tag { font-size: 14px; font-weight: 600; color: #8a94a3; }
+.btn-dl { background: #141c26; color: #ffffff; border: none; padding: 9px 16px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background .2s; }
+.btn-dl:hover { background: #2c3e50; }
+
+/* Controls & Legend */
+.control-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 16px; }
+.tabs { display: flex; gap: 8px; }
+.tab-btn { background: #ffffff; border: 1px solid #e5e7eb; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; color: #4b5563; cursor: pointer; transition: all .15s; }
+.tab-btn:hover { background: #f9fafb; border-color: #d1d5db; }
+.tab-btn.active { background: #141c26; color: #ffffff; border-color: #141c26; }
+
+.legend { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #6b7280; }
+.legend-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; border: 1px solid #e5e7eb; }
+.l-step { width: 14px; height: 100%; }
+
+/* Heatmap Grid Architecture */
+.map { display: flex; flex-direction: row; gap: 6px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 4px; min-height: 850px; max-height: 1200px; box-sizing: border-box; }
+.col { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.sec { background: #ffffff; display: flex; flex-direction: column; border-radius: 6px; }
+.sh { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; border-bottom: 1px solid #e5e7eb; margin-bottom: 6px; font-size: 13px; font-weight: 800; color: #141c26; }
+.sh-r { font-size: 12px; font-weight: 800; }
+.sb { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.srow { display: flex; flex-direction: row; gap: 6px; min-height: 200px; max-height: 300px; flex: 1; }
+
+/* Tile */
+.tile {
+  text-decoration: none; color: #10202b; border-radius: 4px; padding: 12px;
+  position: relative; display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+  box-shadow: inset 0 0 0 1px rgba(16,32,43,.06); outline: 2px solid #ffffff;
+  container-type: size; overflow: hidden; transition: filter .15s, outline .15s;
+}
+.tile:hover { filter: brightness(0.96); outline: 2px solid #10202b; z-index: 2; }
+.tile.hidden { display: none !important; }
+
+.tg { position: absolute; top: 8px; right: 8px; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 800; background: rgba(255,255,255,0.7); color: #10202b; }
+.who { font-size: 11px; font-weight: 800; color: rgba(16,32,43,0.75); margin-bottom: 2px; }
+.hd { font-size: 13px; font-weight: 800; color: #10202b; line-height: 1.25; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ld { font-size: 11px; font-weight: 700; color: rgba(16,32,43,0.85); margin-bottom: 4px; }
+.kw { font-weight: 900; letter-spacing: -0.5px; line-height: 1; margin-bottom: 6px; white-space: nowrap; font-size: clamp(16px, min(14cqw, 20cqh), 64px); }
+
+.st { display: grid; grid-template-columns: 1fr; gap: 4px; width: 100%; margin-top: 4px; }
+.st-i { background: rgba(255,255,255,0.6); border-left: 3px solid #10202b; padding: 2px 6px; font-size: 10px; display: flex; align-items: baseline; gap: 4px; border-radius: 1px; }
+.st-i b { font-weight: 900; color: #10202b; }
+.st-i span { color: rgba(16,32,43,0.7); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cl { font-size: 10px; font-weight: 800; color: #10202b; border-top: 1px solid rgba(16,32,43,0.2); padding-top: 4px; margin-top: 4px; width: 100%; }
+
+/* Responsive Container Queries */
+.ld, .hd, .st, .cl { display: none; }
+@container (min-height: 110px) { .ld { display: block; } }
+@container (min-width: 170px) and (min-height: 140px) { .hd { display: -webkit-box; } }
+@container (min-width: 200px) and (min-height: 200px) { .st { display: grid; } .st-i:nth-child(n+3) { display: none; } }
+@container (min-width: 280px) and (min-height: 250px) { .st-i:nth-child(n+3) { display: flex; } }
+@container (min-width: 380px) and (min-height: 240px) { .st { grid-template-columns: 1fr 1fr; } }
+@container (min-width: 320px) and (min-height: 340px) { .cl { display: block; } }
+@container (max-height: 70px) { .who { display: none; } }
+@container (max-width: 110px) { .tg { display: none; } }
+
+/* Slide-out Sheet */
+.sheet { position: fixed; top: 0; right: -620px; width: 580px; height: 100vh; background: #ffffff; box-shadow: -4px 0 24px rgba(15,23,32,0.15); z-index: 100; transition: right .25s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; }
+.sheet:target { right: 0; }
+.sheet-dim { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15,23,32,.4); z-index: 90; opacity: 0; pointer-events: none; transition: opacity .25s; }
+.sheet:target ~ .sheet-dim { opacity: 1; pointer-events: auto; }
+
+.sheet-head { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid #e5e7eb; }
+.nav-btns { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; }
+.nav-link { text-decoration: none; color: #141c26; padding: 4px 10px; border: 1px solid #e5e7eb; border-radius: 4px; }
+.nav-link.disabled { color: #d1d5db; border-color: #f3f4f6; pointer-events: none; }
+.close-btn { text-decoration: none; color: #141c26; font-size: 20px; font-weight: 800; line-height: 1; }
+
+.sheet-body { padding: 24px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 20px; }
+
+/* Metadata Chip Bar */
+.chip-bar { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 4px; background: #f3f4f6; color: #4b5563; }
+.chip.sec-chip { background: #141c26; color: #ffffff; }
+
+/* TNB Card Original Spec */
+.cd { border-top: 6px solid var(--ac); background: #ffffff; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); padding: 18px; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; }
+.cd-e { font-size: 11px; font-weight: 800; color: #8a94a3; text-transform: uppercase; margin-bottom: 4px; }
+.cd-t { font-size: 17px; font-weight: 900; color: #141c26; line-height: 1.3; margin-bottom: 4px; }
+.cd-s { font-size: 12px; font-weight: 600; color: #6b7280; margin-bottom: 14px; }
+.cd-l { font-size: 11px; font-weight: 800; color: #4b5563; }
+.cd-k { font-size: 34px; font-weight: 900; color: var(--ac); line-height: 1.1; margin: 2px 0 6px; }
+.cd-b { font-size: 13px; font-weight: 800; color: #141c26; margin-bottom: 4px; }
+.cd-m { font-size: 12px; color: #4b5563; line-height: 1.4; margin-bottom: 14px; }
+.cd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; border-top: 1px dashed #e5e7eb; padding-top: 12px; margin-bottom: 14px; }
+.cd-r { background: #f9fafb; padding: 8px; border-radius: 4px; }
+.cd-r-v { font-size: 15px; font-weight: 900; color: #141c26; }
+.cd-r-t { font-size: 11px; font-weight: 700; color: #374151; }
+.cd-r-d { font-size: 10px; color: #9ca3af; }
+.cd-ft { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #9ca3af; border-top: 1px solid #f3f4f6; padding-top: 8px; }
+
+/* Text & Insight */
+.p-text { font-size: 14px; line-height: 1.65; color: #1f2937; display: flex; flex-direction: column; gap: 10px; }
+.p-text p b { color: #141c26; }
+.p-q { background: #f3f4f6; border-left: 4px solid var(--ac); padding: 12px 14px; font-size: 13px; font-weight: 800; color: #111827; border-radius: 0 4px 4px 0; }
+.tag-bar { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font-size: 11px; font-weight: 700; color: #4b5563; background: #e5e7eb; padding: 3px 8px; border-radius: 12px; }
+
+/* Footer & Notes */
+.note-bar { margin-top: 12px; font-size: 12px; font-weight: 600; color: #8a94a3; display: flex; justify-content: space-between; }
+.ft-info { margin-top: 4px; font-size: 11px; font-weight: 500; color: #9ca3af; }
+
+/* Mobile Adaptation */
+@media (max-width: 720px) {
+  body { padding: 12px; }
+  .map { flex-direction: column; height: auto; max-height: none; }
+  .col { width: 100% !important; flex: none !important; }
+  .srow { flex-direction: column; max-height: none; }
+  .tile { width: 100% !important; height: auto !important; min-height: 140px; margin-bottom: 4px; }
+  .sheet { width: 100%; height: 88vh; top: auto; bottom: -100vh; right: 0; border-radius: 16px 16px 0 0; }
+  .sheet:target { bottom: 0; }
+}
+</style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top-bar">
+    <div>
+      <div class="brand">BY TNBFOLIO</div>
+      <div class="title-row">
+        <h1>10월 28일 매크로&전략 히트맵</h1>
+        <span class="meta-tag">25건 · 6개 섹터</span>
+      </div>
+    </div>
+    <button class="btn-dl" onclick="downloadHTML()">HTML 다운로드</button>
+  </div>
+
+  <div class="control-bar">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="filterTiles('all', this)">전체 25</button>
+      <button class="tab-btn" onclick="filterTiles('ai', this)">AI 연관 5</button>
+      <button class="tab-btn" onclick="filterTiles('opp', this)">기회(≥+1.0) 4</button>
+      <button class="tab-btn" onclick="filterTiles('risk', this)">리스크(≤-1.0) 13</button>
+    </div>
+    <div class="legend">
+      <span>리스크</span>
+      <div class="legend-bar">
+        <div class="l-step" style="background:#d6203a" title="≤-3.0"></div>
+        <div class="l-step" style="background:#e2485a" title="-2.4"></div>
+        <div class="l-step" style="background:#ec8591" title="-1.8"></div>
+        <div class="l-step" style="background:#f3b4bc" title="-1.2"></div>
+        <div class="l-step" style="background:#f8d8dc" title="-0.6"></div>
+        <div class="l-step" style="background:#e3e5ea" title="0.0"></div>
+        <div class="l-step" style="background:#d5f0e8" title="+0.6"></div>
+        <div class="l-step" style="background:#b4e4d7" title="+1.2"></div>
+        <div class="l-step" style="background:#87d4c0" title="+1.8"></div>
+        <div class="l-step" style="background:#4fc0a3" title="+2.4"></div>
+        <div class="l-step" style="background:#17a688" title="≥+3.0"></div>
+      </div>
+      <span>기회</span>
+    </div>
+  </div>
+
+  <!-- Heatmap Map Container -->
+  <div class="map" id="heatmapRoot">
+    <!-- COL 1: 지정학 & 정책 (Trump 3분할, Meloni, Healey, UK DMO, UK OBR, WB) -->
+    <div class="col" style="flex: 28;">
+      <div class="sec" style="flex: 1;">
+        <div class="sh"><span>지정학 & 글로벌 재정</span><span class="sh-r" style="color:#d6203a">-1.3</span></div>
+        <div class="sb">
+          <div class="srow" style="flex: 1;">
+            <a class="tile" href="#n1" data-w="9" data-s="-2.4" data-ai="0" style="flex: 9; background: #e2485a;">
+              <span class="tg">리스크 -2.4</span><span class="who">도널드 트럼프 · 미국 대통령</span>
+              <div class="hd">대이란 추가 군사 공습 및 종전 시점 독점 결정</div>
+              <div class="ld">원유 공급망 긴장 고조</div>
+              <div class="kw">공습 불사</div>
+              <div class="st">
+                <div class="st-i"><b>독점</b><span>작전 종결 결정</span></div>
+                <div class="st-i"><b>대선 후</b><span>추가 공습 가능</span></div>
+                <div class="st-i"><b>유가</b><span>지정학 프리미엄</span></div>
+                <div class="st-i"><b>중동</b><span>군사 긴장 재점화</span></div>
+              </div>
+              <div class="cl">유가 상방 압력 확대로 신흥국 긴축 압박 가중</div>
+            </a>
+            <a class="tile" href="#n2" data-w="6" data-s="1.2" data-ai="0" style="flex: 6; background: #b4e4d7;">
+              <span class="tg">기회 +1.2</span><span class="who">도널드 트럼프 · 미국 대통령</span>
+              <div class="hd">우크라이나 종전 협상 진전 및 정상회담 추진</div>
+              <div class="ld">동유럽 긴장 완화 가시화</div>
+              <div class="kw">종전 추진</div>
+              <div class="st">
+                <div class="st-i"><b>3자</b><span>푸틴·젤렌스키 회담</span></div>
+                <div class="st-i"><b>협상</b><span>진전 가속화</span></div>
+              </div>
+            </a>
+          </div>
+          <div class="srow" style="flex: 1;">
+            <a class="tile" href="#n3" data-w="8" data-s="-2.4" data-ai="0" style="flex: 8; background: #e2485a;">
+              <span class="tg">리스크 -2.4</span><span class="who">세계은행 · World Bank</span>
+              <div class="hd">중동 분쟁 격화 시 유가 32% 폭등 및 공급 5.2% 급감 경고</div>
+              <div class="ld">글로벌 인플레 재점화</div>
+              <div class="kw">+32% 폭등</div>
+              <div class="st">
+                <div class="st-i"><b>+32%</b><span>2026 에너지 폭등</span></div>
+                <div class="st-i"><b>-5.2%</b><span>원유 공급 급감</span></div>
+                <div class="st-i"><b>$87억</b><span>취약국 긴급 지원</span></div>
+                <div class="st-i"><b>신고가</b><span>원자재·귀금속</span></div>
+              </div>
+            </a>
+            <a class="tile" href="#n4" data-w="6" data-s="-1.2" data-ai="0" style="flex: 6; background: #f3b4bc;">
+              <span class="tg">리스크 -1.2</span><span class="who">영국 예산책임청 · OBR</span>
+              <div class="hd">2026년 인플레 3.1% 상향 및 재정 여력 고갈</div>
+              <div class="ld">영국 스태그플레이션 위기</div>
+              <div class="kw">3.75% 정점</div>
+              <div class="st">
+                <div class="st-i"><b>3.1%</b><span>26년 물가 상향</span></div>
+                <div class="st-i"><b>650억£</b><span>순차입금 확대</span></div>
+                <div class="st-i"><b>56%</b><span>준칙 달성 확률</span></div>
+                <div class="st-i"><b>102억£</b><span>실질 재정 여력</span></div>
+              </div>
+            </a>
+          </div>
+          <div class="srow" style="flex: 1;">
+            <a class="tile" href="#n5" data-w="5" data-s="-0.6" data-ai="0" style="flex: 5; background: #f8d8dc;">
+              <span class="tg">체크 -0.6</span><span class="who">존 힐리 · 영국 재무장관</span>
+              <div class="hd">은행 추가부담금 6% 인상 및 방위비 GDP 3% 증액</div>
+              <div class="ld">재정건전화·방위비 양립</div>
+              <div class="kw">은행세 6%</div>
+              <div class="st">
+                <div class="st-i"><b>204억£</b><span>국부펀드 투입</span></div>
+                <div class="st-i"><b>3.0%</b><span>30년 국방비 목표</span></div>
+              </div>
+            </a>
+            <a class="tile" href="#n6" data-w="5" data-s="-0.6" data-ai="0" style="flex: 5; background: #f8d8dc;">
+              <span class="tg">체크 -0.6</span><span class="who">볼로디미르 젤렌스키 · 우크라이나 대통령</span>
+              <div class="hd">11월 10일 3자 정상회담 기대 및 영토 담판 추진</div>
+              <div class="ld">정상 간 직접 결단 요구</div>
+              <div class="kw">정상 담판</div>
+              <div class="st">
+                <div class="st-i"><b>11/10</b><span>회담 기대 시점</span></div>
+                <div class="st-i"><b>영토</b><span>정상 담판 원칙</span></div>
+              </div>
+            </a>
+            <a class="tile" href="#n7" data-w="4" data-s="0.0" data-ai="0" style="flex: 4; background: #e3e5ea;">
+              <span class="tg">체크 0.0</span><span class="who">도널드 트럼프 · 미국 대통령</span>
+              <div class="hd">샤리아 법 금지 및 소말리아 해적 강경 대응 예고</div>
+              <div class="ld">국제 규범·외교 노선</div>
+              <div class="kw">원칙 집행</div>
+              <div class="st">
+                <div class="st-i"><b>금지</b><span>샤리아 법 전면</span></div>
+                <div class="st-i"><b>핵감축</b><span>아시아 순방 의제</span></div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COL 2: 중앙은행 & 금리 (Fed, Warsh, BoC, Macklem, Rogers, Bullock, Bessent Macro) -->
+    <div class="col" style="flex: 27;">
+      <div class="sec" style="flex: 1;">
+        <div class="sh"><span>중앙은행 & 통화정책</span><span class="sh-r" style="color:#d6203a">-1.1</span></div>
+        <div class="sb">
+          <div class="srow" style="flex: 1;">
+            <a class="tile" href="#n8" data-w="9" data-s="-1.2" data-ai="0" style="flex: 9; background: #f3b4bc;">
+              <span class="tg">리스크 -1.2</span><span class="who">케빈 워시 · 미 연준 의장</span>
+              <div class="hd">3%대 견고한 성장 속 2% 물가 목표 절대 사수 표명</div>
+              <div class="ld">금리 인하 기대 차단</div>
+              <div class="kw">2% 사수</div>
+              <div class="st">
+                <div class="st-i"><b>3%+</b><span>3Q GDP 호조</span></div>
+                <div class="st-i"><b>배제</b><span>포워드 가이던스</span></div>
+                <div class="st-i"><b>6회로</b><span>27년 FOMC 축소</span></div>
+                <div class="st-i"><b>선행</b><span>한국 경제 모니터링</span></div>
+              </div>
+            </a>
+            <a class="tile" href="#n9" data-w="7" data-s="-1.8" data-ai="0" style="flex: 7; background: #ec8591;">
+              <span class="tg">리스크 -1.8</span><span class="who">연방준비제도 · Federal Reserve</span>
+              <div class="hd">기준금리 3.75~4.00% 동결 속 25bp 인상 2인 소수의견 출현</div>
+              <div class="ld">매파적 균열 가시화</div>
+              <div class="kw">소수의견 2인</div>
+              <div class="st">
+                <div class="st-i"><b>3.75~4%</b><span>기준금리 동결</span></div>
+                <div class="st-i"><b>2인</b><span>인상 소수의견</span></div>
+                <div class="st-i"><b>유지</b><span>역레포·지준금리</span></div>
+                <div class="st-i"><b>견조</b><span>일자리·투자</span></div>
+              </div>
+            </a>
+          </div>
+          <div class="srow" style="flex: 1;">
+            <a class="tile" href="#n10" data-w="8" data-s="-2.4" data-ai="0" style="flex: 8; background: #e2485a;">
+              <span class="tg">리스크 -2.4</span><span class="who">캐나다 중앙은행 · Bank of Canada</span>
+              <div class="hd">고유가 물가 전이 차단 위해 2.50%로 전격 25bp 금리 인상</div>
+              <div class="ld">글로벌 긴축 재점화 신호</div>
+              <div class="kw">+25bp 인상</div>
+              <div class="st">
+                <div class="st-i"><b>2.50%</b><span>기준금리 인상</span></div>
+                <div class="st-i"><b>$100</b><span>브렌트유 전제</span></div>
+                <div class="st-i"><b>3.5%</b><span>26년 물가 재가열</span></div>
+                <div class="st-i"><b>2028년</b><span>목표 달성 지연</span></div>
+              </div>
+            </a>
+            <a class="tile" href="#n11" data-w="5" data-s="-1.8" data-ai="0" style="flex: 5; background: #ec8591;">
+              <span class="tg">리스크 -1.8</span><span class="who">미셸 블록 · 호주 중앙은행 총재</span>
+              <div class="hd">유가 급등과 소비 지연으로 물가 목표 상회 불용 재천명</div>
+              <div class="ld">추가 긴축 경고 지속</div>
+              <div class="kw">물가 불용</div>
+              <div class="st">
+                <div class="st-i"><b>수용불가</b><span>목표 상회 물가</span></div>
+                <div class="st-i"><b>파급</b><span>금리 인상 시차</span></div>
+              </div>
+            </a>
+          </div>
+          <div class="srow" style="flex: 1;">
+            <a class="tile" href="#n12" data-w="5" data-s="-1.2" data-ai="0" style="flex: 5; background: #f3b4bc;">
+              <span class="tg">리스크 -1.2</span><span class="who">티프 맥클렘 · 캐나다 중앙은행 총재</span>
+              <div class="hd">유가발 물가 확산 선제 차단 위해 금리 인상 불가피 진단</div>
+              <div class="ld">사전 경로 없는 데이터 의존</div>
+              <div class="kw">선제 차단</div>
+              <div class="st">
+                <div class="st-i"><b>제약</b><span>정책 완충 여력</span></div>
+                <div class="st-i"><b>완화적</b><span>현재 금리 영역</span></div>
+              </div>
+            </a>
+            <a class="tile" href="#n13" data-w="4" data-s="-1.2" data-ai="0" style="flex: 4; background: #f3b4bc;">
+              <span class="tg">리스크 -1.2</span><span class="who">캐롤린 로저스 · 캐나다 중은 수석부총재</span>
+              <div class="hd">물가 상방 위험 강력 공감 속 동결과 인상안 치열 검토</div>
+              <div class="ld">중동 분쟁 단기 종식 회의론</div>
+              <div class="kw">상방 위험</div>
+              <div class="st">
+                <div class="st-i"><b>낮음</b><span>단기 평화 가능성</span></div>
+                <div class="st-i"><b>제한</b><span>주택 경기 회복</span></div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COL 3: 테크 & AI 인프라 (Oracle, TrendForce, Alphabet, Google Cloud, Anthropic) -->
+    <div class="col" style="flex: 23;">
+      <div class="sec" style="flex: 1;">
+        <div class="sh"><span>AI 인프라 & 반도체</span><span class="sh-r" style="color:#13a688">+1.5</span></div>
+        <div class="sb">
+          <div class="srow" style="flex: 1;">
+            <a class="tile" href="#n14" data-w="9" data-s="2.4" data-ai="1" style="flex: 9; background: #4fc0a3;">
+              <span class="tg">기회 +2.4</span><span class="who">트렌드포스 · TrendForce</span>
+              <div class="hd">에이전틱 AI 확산으로 랙 아키텍처 GPU:CPU 1:1 재편</div>
+              <div class="ld">서버용 CPU·메모리 슈퍼사이클</div>
+              <div class="kw">1:1 재편</div>
+              <div class="st">
+                <div class="st-i"><b>1:1</b><span>GPU:CPU 랙 구조</span></div>
+                <div class="st-i"><b>30%</b><span>27년 ARM 점유율</span></div>
+                <div class="st-i"><b>27%</b><span>AMD 점유율 확장</span></div>
+                <div class="st-i"><b>병목</b><span>인텔 공급난 지속</span></div>
+              </div>
+              <div class="cl">추론 고도화로 고성능 범용 서버 및 D램 가치 급등</div>
+            </a>
+          </div>
+          <div class="srow" style="flex: 1;">
+            <a class="tile" href="#n15" data-w="8" data-s="1.8" data-ai="1" style="flex: 8; background: #87d4c0;">
+              <span class="tg">기회 +1.8</span><span class="who">오라클 · Oracle</span>
+              <div class="hd">2030년 매출 2,250억 달러 가이던스 및 28년 FCF 흑자 전환</div>
+              <div class="ld">AI 설비투자 건전성 입증</div>
+              <div class="kw">2,250억$</div>
+              <div class="st">
+                <div class="st-i"><b>+35%</b><span>30년까지 연성장</span></div>
+                <div class="st-i"><b>40%</b><span>29년 영업이익률</span></div>
+                <div class="st-i"><b>$300억</b><span>29년 FCF 목표</span></div>
+                <div class="st-i"><b>피크</b><span>28년 AI CapEx</span></div>
+              </div>
+            </a>
+          </div>
+          <div class="srow" style="flex: 1;">
+            <a class="tile" href="#n16" data-w="6" data-s="1.2" data-ai="1" style="flex: 6; background: #b4e4d7;">
+              <span class="tg">기회 +1.2</span><span class="who">토마스 쿠리안 · 구글 클라우드 CEO</span>
+              <div class="hd">메타·애플 AI 모델 학습 TPU 전폭 지원 및 동맹 강화</div>
+              <div class="ld">자체 AI 가속기 생태계 확장</div>
+              <div class="kw">TPU 동맹</div>
+              <div class="st">
+                <div class="st-i"><b>메타·애플</b><span>학습 전폭 지원</span></div>
+                <div class="st-i"><b>앤트로픽</b><span>전략 동맹 공고</span></div>
+              </div>
+            </a>
+            <a class="tile" href="#n17" data-w="5" data-s="0.6" data-ai="1" style="flex: 5; background: #d5f0e8;">
+              <span class="tg">체크 +0.6</span><span class="who">순다르 피차이 · 알파벳 CEO</span>
+              <div class="hd">연간 환산 매출 5,000억 달러 돌파 및 제미나이 4 정부 평가</div>
+              <div class="ld">검색 쿼리 5년래 최고 성장</div>
+              <div class="kw">5,000억$</div>
+              <div class="st">
+                <div class="st-i"><b>아르곤</b><span>개발 생산성 혁신</span></div>
+                <div class="st-i"><b>검색 쿼리</b><span>5년 내 최고속</span></div>
+              </div>
+            </a>
+          </div>
+          <div class="srow" style="flex: 1;">
+            <a class="tile" href="#n18" data-w="4" data-s="0.6" data-ai="1" style="flex: 4; background: #d5f0e8;">
+              <span class="tg">체크 +0.6</span><span class="who">앤트로픽 · Anthropic</span>
+              <div class="hd">미국 연방총무청 조달 클로드 공급 단가 40% 대폭 인하</div>
+              <div class="ld">B2G 공공 AI 시장 침투</div>
+              <div class="kw">-40% 인하</div>
+              <div class="st">
+                <div class="st-i"><b>40%</b><span>조달 단가 인하</span></div>
+                <div class="st-i"><b>FedRAMP</b><span>보안 인증 추진</span></div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COL 4: 시장 전략 & 신용 리스크 (Bessent, GS, GSAM, BofA, Fitch, Gundlach, Dutta, Barclays, UBS, DMO, Meloni) -->
+    <div class="col" style="flex: 22;">
+      <div class="sec" style="flex: 1;">
+        <div class="sh"><span>시장 전략 & 크레딧</span><span class="sh-r" style="color:#d6203a">-0.8</span></div>
+        <div class="sb">
+          <div class="srow" style="flex: 1;">
+            <a class="tile" href="#n19" data-w="8" data-s="0.0" data-ai="0" style="flex: 8; background: #e3e5ea;">
+              <span class="tg">체크 0.0</span><span class="who">스콧 베센트 · 미국 재무장관</span>
+              <div class="hd">미국 3% 고성장 자신 속 유럽 저성장 및 고유가 경계</div>
+              <div class="ld">AI 부채는 시스템 리스크 아님</div>
+              <div class="kw">3% 성장</div>
+              <div class="st">
+                <div class="st-i"><b>0배럴</b><span>이란 해상 원유선적</span></div>
+                <div class="st-i"><b>-25%</b><span>이란 경제 충격</span></div>
+                <div class="st-i"><b>안정적</b><span>빅테크 AI 신용</span></div>
+                <div class="st-i"><b>달러 강화</b><span>스테이블코인 효과</span></div>
+              </div>
+            </a>
+            <a class="tile" href="#n20" data-w="7" data-s="-1.8" data-ai="0" style="flex: 7; background: #ec8591;">
+              <span class="tg">리스크 -1.8</span><span class="who">피치 레이팅스 · Fitch Ratings</span>
+              <div class="hd">AI 회수 지연·고유가·긴축 겹쳐 2027년 기업 신용위험 경고</div>
+              <div class="ld">호르무즈 봉쇄 시 유가 쇼크</div>
+              <div class="kw">신용 리스크</div>
+              <div class="st">
+                <div class="st-i"><b>4.25%</b><span>연내 1회 추가인상</span></div>
+                <div class="st-i"><b>경고</b><span>27년 신용 리스크</span></div>
+                <div class="st-i"><b>방어</b><span>미국 은행 증권손실</span></div>
+                <div class="st-i"><b>위험</b><span>호르무즈 봉쇄 시</span></div>
+              </div>
+            </a>
+          </div>
+          <div class="srow" style="flex: 1;">
+            <a class="tile" href="#n21" data-w="7" data-s="-1.8" data-ai="0" style="flex: 7; background: #ec8591;">
+              <span class="tg">리스크 -1.8</span><span class="who">제프리 건들락 · 더블라인캐피털 CEO</span>
+              <div class="hd">연준 인상 지연은 뒷북이며 12월 금리 인상 불가피 주장</div>
+              <div class="ld">빅테크 편중 자산시장 취약</div>
+              <div class="kw">12월 인상</div>
+              <div class="st">
+                <div class="st-i"><b>30%</b><span>채권 비중 고수</span></div>
+                <div class="st-i"><b>20%</b><span>원자재·현금 각각</span></div>
+                <div class="st-i"><b>뒷북</b><span>연준 완화적 스탠스</span></div>
+                <div class="st-i"><b>6회로</b><span>FOMC 회의 축소안</span></div>
+              </div>
+            </a>
+            <a class="tile" href="#n22" data-w="6" data-s="-0.6" data-ai="0" style="flex: 6; background: #f8d8dc;">
+              <span class="tg">체크 -0.6</span><span class="who">골드만삭스 · Goldman Sachs</span>
+              <div class="hd">추가 인상 1회에 그쳐 초소형 사이클 종료 후 주식 초과 성과</div>
+              <div class="ld">AI 투자가 단기 물가 60bp 자극</div>
+              <div class="kw">1회 후 종료</div>
+              <div class="st">
+                <div class="st-i"><b>1회</b><span>추가 인상 그쳐</span></div>
+                <div class="st-i"><b>+60bp</b><span>AI 인프라발 물가</span></div>
+                <div class="st-i"><b>소멸</b><span>27년 하반기 충격</span></div>
+                <div class="st-i"><b>우위</b><span>긴축 종료기 주식</span></div>
+              </div>
+            </a>
+          </div>
+          <div class="srow" style="flex: 1;">
+            <a class="tile" href="#n23" data-w="5" data-s="-1.2" data-ai="0" style="flex: 5; background: #f3b4bc;">
+              <span class="tg">리스크 -1.2</span><span class="who">뱅크오브아메리카 · BofA</span>
+              <div class="hd">개인 펀드 투매 및 마진부채 둔화… 중간선거 후 안도 랠리</div>
+              <div class="ld">방어주 쏠림 버블 피로감</div>
+              <div class="kw">마진부채 둔화</div>
+              <div class="st">
+                <div class="st-i"><b>투매</b><span>개인 주식펀드 이탈</span></div>
+                <div class="st-i"><b>안도</b><span>중간선거 후 랠리</span></div>
+              </div>
+            </a>
+            <a class="tile" href="#n24" data-w="4" data-s="0.6" data-ai="0" style="flex: 4; background: #d5f0e8;">
+              <span class="tg">체크 +0.6</span><span class="who">UBS · 스위스 투자은행</span>
+              <div class="hd">긴축 지속에도 S&P 500은 2027년 6월 8,400선 도달 전망</div>
+              <div class="ld">실적 주도 강세장 견지</div>
+              <div class="kw">8,400선</div>
+              <div class="st">
+                <div class="st-i"><b>8,400</b><span>27년 S&P 목표치</span></div>
+                <div class="st-i"><b>2회</b><span>추가 인상 전망</span></div>
+              </div>
+            </a>
+            <a class="tile" href="#n25" data-w="4" data-s="-0.6" data-ai="0" style="flex: 4; background: #f8d8dc;">
+              <span class="tg">체크 -0.6</span><span class="who">닐 두타 · 르네상스 매크로</span>
+              <div class="hd">워시 의장 소통 불투명성으로 시장 통화정책 신호 혼선</div>
+              <div class="ld">깜짝 인상 있어야 워시 체제 확립</div>
+              <div class="kw">신호 혼선</div>
+              <div class="st">
+                <div class="st-i"><b>혼선</b><span>시장 가이던스 결여</span></div>
+                <div class="st-i"><b>입증</b><span>동결 논리 설명 촉구</span></div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note-bar">
+    <span>블록 = 섹터 · 타일 크기 = 파급력 · 색 = 국내 증시 관점 시그널 · 타일을 누르면 카드 원본과 본문이 열린다</span>
+    <span>Source: 10월 28일 매크로 & 전략 Brief</span>
+  </div>
+  <div class="ft-info">
+    by TNBfolio · 시그널 점수와 파급력은 편집 판단이며 투자 권유가 아니다.
+  </div>
+</div>
+
+<!-- Slide-out Sheets (n1 to n25) -->
+
+<!-- n1 -->
+<section class="sheet" id="n1">
+  <div class="sheet-head">
+    <div class="nav-btns">
+      <a class="nav-link disabled" href="#">이전</a>
+      <a class="nav-link" href="#n2">다음</a>
+      <span>1 / 25</span>
+    </div>
+    <a class="close-btn" href="#">&times;</a>
+  </div>
+  <div class="sheet-body">
+    <div class="chip-bar">
+      <span class="chip sec-chip">지정학 & 글로벌 재정</span>
+      <span class="chip" style="background:#e2485a; color:#fff;">리스크 -2.4</span>
+      <span class="chip">파급력 9</span>
+    </div>
+    <div class="cd" style="--ac:#d6203a;">
+      <div class="cd-e">대이란 군사 작전</div>
+      <div class="cd-t">도널드 트럼프 "대이란 공습 지속 및 종전 시점 독점 결정"</div>
+      <div class="cd-s">미 대선 종료 이후 추가 군사 공습 가능성 열어둬</div>
+      <div class="cd-l">중동 지정학 불안 장기화</div>
+      <div class="cd-k">공습 불사</div>
+      <div class="cd-b">작전 종결은 전적으로 본인 결단에 귀속</div>
+      <div class="cd-m">이란에 대한 군사적 압박을 강화하며 국제 원유 공급선 불안을 직접적으로 자극.</div>
+      <div class="cd-grid">
+        <div class="cd-r"><div class="cd-r-v">전적 결정</div><div class="cd-r-t">종전 권한</div><div class="cd-r-d">트럼프 독점</div></div>
+        <div class="cd-r"><div class="cd-r-v">대선 이후</div><div class="cd-r-t">추가 공습</div><div class="cd-r-d">군사 행동 시사</div></div>
+        <div class="cd-r"><div class="cd-r-v">원유 공급망</div><div class="cd-r-t">호르무즈 위험</div><div class="cd-r-d">유가 상방 압력</div></div>
+        <div class="cd-r"><div class="cd-r-v">긴축 자극</div><div class="cd-r-t">인플레 전이</div><div class="cd-r-d">금리 하방 경직</div></div>
+      </div>
+      <div class="cd-ft"><span>Source: Donald Trump, US President (Oct 2026)</span><span style="color:var(--ac);">@TNBfolio</span></div>
+    </div>
+    <div class="p-text">
+      <p><b>속보:</b> 도널드 트럼프 미국 대통령은 대이란 군사 작전의 종결 시점은 전적으로 본인의 결정에 달려 있으며 대선 종료 이후 추가 공습 가능성을 배제하지 않는다고 밝혔다.</p>
+      <p>트럼프 대통령은 이란에 대한 군사적 압박을 유지하겠다는 의지를 분명히 함으로써 호르무즈 해협 등 주요 원유 수송로의 긴장도를 한층 끌어올렸다.</p>
+      <p>이러한 강경 발언은 대선 이후 지정학적 불안이 조기에 해소되기 어렵다는 시장의 우려를 확산시키고 있다.</p>
+    </div>
+    <div class="p-q">'중동 긴장의 상시화는 국제 유가의 하방을 완전히 차단하며 신흥국 통화와 증시에 지속적인 하방 압력을 가한다.'</div>
+    <div class="tag-bar"><span class="tag">국제유가</span><span class="tag">지정학리스크</span><span class="tag">방산</span><span class="tag">정유</span></div>
+  </div>
+</section>
+
+<!-- n2 -->
+<section class="sheet" id="n2">
+  <div class="sheet-head">
+    <div class="nav-btns">
+      <a class="nav-link" href="#n1">이전</a>
+      <a class="nav-link" href="#n3">다음</a>
+      <span>2 / 25</span>
+    </div>
+    <a class="close-btn" href="#">&times;</a>
+  </div>
+  <div class="sheet-body">
+    <div class="chip-bar">
+      <span class="chip sec-chip">지정학 & 글로벌 재정</span>
+      <span class="chip" style="background:#b4e4d7; color:#10202b;">기회 +1.2</span>
+      <span class="chip">파급력 6</span>
+    </div>
+    <div class="cd" style="--ac:#13a688;">
+      <div class="cd-e">동유럽 평화 회담</div>
+      <div class="cd-t">도널드 트럼프 "우크라이나 종전 협상 진전, 푸틴·젤렌스키 회담 추진"</div>
+      <div class="cd-s">3자 종전 정상회담 개최를 통한 조기 종전 시도</div>
+      <div class="cd-l">유럽 전선 평화 모멘텀</div>
+      <div class="cd-k">종전 추진</div>
+      <div class="cd-b">정상 간 직접 담판을 통한 전쟁 종식 시도</div>
+      <div class="cd-m">러시아와 우크라이나 정상을 한자리에 모아 전격 종전 합의를 도출하겠다는 구상.</div>
+      <div class="cd-grid">
+        <div class="cd-r"><div class="cd-r-v">3자 회담</div><div class="cd-r-t">정상급 담판</div><div class="cd-r-d">트럼프·푸틴·젤렌스키</div></div>
+        <div class="cd-r"><div class="cd-r-v">재건 기대</div><div class="cd-r-t">유럽 리스크 완화</div><div class="cd-r-d">공급망 복원</div></div>
+      </div>
+      <div class="cd-ft"><span>Source: Donald Trump, US President (Oct 2026)</span><span style="color:var(--ac);">@TNBfolio</span></div>
+    </div>
+    <div class="p-text">
+      <p><b>속보:</b> 도널드 트럼프 미국 대통령은 우크라이나 종전 협상이 진전을 보임에 따라 조만간 푸틴 및 젤렌스키와 정상회담을 추진한다고 밝혔다.</p>
+      <p>트럼프 대통령은 지지부진하던 실무 협상 대신 정상 간의 직접 담판을 통해 전쟁을 종식시키겠다는 방침을 확인했다.</p>
+      <p>이는 유럽 경제를 짓누르던 지정학적 불확실성을 완화하고 재건 프로젝트에 대한 기대감을 고조시키는 긍정적 시그널이다.</p>
+    </div>
+    <div class="p-q">'우크라이나 전선의 조기 종전 합의는 유럽발 지정학적 위험 프리미엄을 걷어내는 가장 강력한 완화 트리거다.'</div>
+    <div class="tag-bar"><span class="tag">우크라이나재건</span><span class="tag">건설기계</span><span class="tag">유럽증시</span></div>
+  </div>
+</section>
+
+<!-- n3 -->
+<section class="sheet" id="n3">
+  <div class="sheet-head">
+    <div class="nav-btns">
+      <a class="nav-link" href="#n2">이전</a>
+      <a class="nav-link" href="#n4">다음</a>
+      <span>3 / 25</span>
+    </div>
+    <a class="close-btn" href="#">&times;</a>
+  </div>
+  <div class="sheet-body">
+    <div class="chip-bar">
+      <span class="chip sec-chip">지정학 & 글로벌 재정</span>
+      <span class="chip" style="background:#e2485a; color:#fff;">리스크 -2.4</span>
+      <span class="chip">파급력 8</span>
+    </div>
+    <div class="cd" style="--ac:#d6203a;">
+      <div class="cd-e">글로벌 원자재 보고서</div>
+      <div class="cd-t">세계은행 "중동 분쟁 여파로 2026년 에너지 32% 폭등 경고"</div>
+      <div class="cd-s">원유 공급 5.2% 급감 및 곡물·원자재 동반 랠리</div>
+      <div class="cd-l">스태그플레이션 위험 재점화</div>
+      <div class="cd-k">+32% 폭등</div>
+      <div class="cd-b">에너지와 식량 충격이 글로벌 인플레이션을 재발화</div>
+      <div class="cd-m">산업 금속과 귀금속이 동반 신고가를 경신하는 가운데 신흥국 위기 고조.</div>
+      <div class="cd-grid">
+        <div class="cd-r"><div class="cd-r-v">+32%</div><div class="cd-r-t">26년 에너지 가격</div><div class="cd-r-d">폭등 전망</div></div>
+        <div class="cd-r"><div class="cd-r-v">-5.2%</div><div class="cd-r-t">원유 공급 급감</div><div class="cd-r-d">중동 분쟁 영향</div></div>
+        <div class="cd-r"><div class="cd-r-v">$87억</div><div class="cd-r-t">긴급 자금 지원</div><div class="cd-r-d">25개 취약국</div></div>
+        <div class="cd-r"><div class="cd-r-v">신고가</div><div class="cd-r-t">금속·귀금속</div><div class="cd-r-d">원자재 전방위 랠리</div></div>
+      </div>
+      <div class="cd-ft"><span>Source: World Bank (Oct 2026)</span><span style="color:var(--ac);">@TNBfolio</span></div>
+    </div>
+    <div class="p-text">
+      <p><b>속보:</b> 세계은행은 중동 분쟁 여파로 2026년 에너지 가격은 32% 폭등하며 글로벌 원유 공급은 5.2% 급감할 것이라고 진단했다.</p>
+      <p>세계은행은 공급 차질과 기상 이변이 겹쳐 전체 원자재 및 식량 가격 상승이 글로벌 인플레이션을 재점화할 수 있다고 경고했다.</p>
+      <p>산업 금속과 귀금속 가격이 동반 신고가를 경신하는 가운데 25개 취약국에 87억 달러의 긴급 자금을 투입한 상태다.</p>
+    </div>
+    <div class="p-q">'원자재와 유가의 동반 폭등은 제조업 중심 한국 증시에 가장 가혹한 원가 압박이자 마진 쇼크로 직결된다.'</div>
+    <div class="tag-bar"><span class="tag">에너지</span><span class="tag">원자재</span><span class="tag">인플레이션</span><span class="tag">금속</span></div>
+  </div>
+</section>
+
+<!-- n4 -->
+<section class="sheet" id="n4">
+  <div class="sheet-head">
+    <div class="nav-btns">
+      <a class="nav-link" href="#n3">이전</a>
+      <a class="nav-link" href="#n5">다음</a>
+      <span>4 / 25</span>
+    </div>
+    <a class="close-btn" href="#">&times;</a>
+  </div>
+  <div class="sheet-body">
+    <div class="chip-bar">
+      <span class="chip sec-chip">지정학 & 글로벌 재정</span>
+      <span class="chip" style="background:#f3b4bc; color:#10202b;">리스크 -1.2</span>
+      <span class="chip">파급력 6</span>
+    </div>
+    <div class="cd" style="--ac:#d6203a;">
+      <div class="cd-e">영국 거시재정 전망</div>
+      <div class="cd-t">OBR "2026년 인플레 3.1% 상향 및 국채 차입금 650억 파운드 확대"</div>
+      <div class="cd-s">재정 준칙 달성 확률 56%로 급락, 실질 여력은 102억 파운드 불과</div>
+      <div class="cd-l">선진국 재정 취약성 노출</div>
+      <div class="cd-k">3.75% 정점</div>
+      <div class="cd-b">고유가 장기화 시 차입금 170억 파운드 폭증 위험</div>
+      <div class="cd-m">금리 1% 변동 시 이자 비용이 160억 파운드 출렁이며 재정 버퍼 소진.</div>
+      <div class="cd-grid">
+        <div class="cd-r"><div class="cd-r-v">3.1%</div><div class="cd-r-t">26년 CPI 전망</div><div class="cd-r-d">대폭 상향</div></div>
+        <div class="cd-r"><div class="cd-r-v">+650억£</div><div class="cd-r-t">순차입 전망</div><div class="cd-r-d">2031년까지</div></div>
+        <div class="cd-r"><div class="cd-r-v">56%</div><div class="cd-r-t">준칙 달성 확률</div><div class="cd-r-d">기존 대비 후퇴</div></div>
+        <div class="cd-r"><div class="cd-r-v">102억£</div><div class="cd-r-t">실질 재정 여력</div><div class="cd-r-d">완충력 취약</div></div>
+      </div>
+      <div class="cd-ft"><span>Source: Office for Budget Responsibility (Oct 2026)</span><span style="color:var(--ac);">@TNBfolio</span></div>
+    </div>
+    <div class="p-text">
+      <p><b>속보:</b> 영국 예산책임청(OBR)은 불확실성 심화로 2026년 인플레이션 전망치를 3.1%로 대폭 상향하고 2027년 초 3.75%로 정점을 기록할 것이라고 전망했다.</p>
+      <p>OBR은 2031년까지의 순차입금 전망치가 650억 파운드 늘어났으며 유류세 감면 연장 등으로 실질 재정 여력은 102억 파운드에 불과하다고 진단했다.</p>
+      <p>금리 1%포인트 변동 시 이자 비용이 160억 파운드 요동치며 재정 목표 완충력이 극히 취약한 상태다.</p>
+    </div>
+    <div class="p-q">'선진국 정부의 재정 여력 고갈과 인플레 고착화는 글로벌 국채 금리의 장기 상방 리스크를 견인한다.'</div>
+    <div class="tag-bar"><span class="tag">영국국채</span><span class="tag">길트</span><span class="tag">재정적자</span><span class="tag">글로벌금리</span></div>
+  </div>
+</section>
+
+<!-- n5 -->
+<section class="sheet" id="n5">
+  <div class="sheet-head">
+    <div class="nav-btns">
+      <a class="nav-link" href="#n4">이전</a>
+      <a class="nav-link" href="#n6">다음</a>
+      <span>5 / 25</span>
+    </div>
+    <a class="close-btn" href="#">&times;</a>
+  </div>
+  <div class="sheet-body">
+    <div class="chip-bar">
+      <span class="chip sec-chip">지정학 & 글로벌 재정</span>
+      <span class="chip" style="background:#f8d8dc; color:#10202b;">체크 -0.6</span>
+      <span class="chip">파급력 5</span>
+    </div>
+    <div class="cd" style="--ac:#d6203a;">
+      <div class="cd-e">영국 예산안 발표</div>
+      <div class="cd-t">존 힐리 "은행세 6% 인상 및 2030년 국방 지출 GDP 3% 달성"</div>
+      <div class="cd-s">자산처분 공제 축소 속 롤스로이스 엔진 개발 및 국부펀드 204억 파운드 투입</div>
+      <div class="cd-l">증세와 전략 산업 지원</div>
+      <div class="cd-k">은행세 6%</div>
+      <div class="cd-b">복지 삭감과 세수 확충을 통해 나토 안보 분담금 충당</div>
+      <div class="cd-m">은행세 인상에는 일몰 조항을 부여하고 영란은행에 자본 규제 완화를 공식 요청.</div>
+      <div class="cd-grid">
+        <div class="cd-r"><div class="cd-r-v">6%</div><div class="cd-r-t">은행 추가부담금</div><div class="cd-r-d">일몰 부여</div></div>
+        <div class="cd-r"><div class="cd-r-v">3.0%</div><div class="cd-r-t">국방지출 GDP비</div><div class="cd-r-d">2030년 목표</div></div>
+        <div class="cd-r"><div class="cd-r-v">204억£</div><div class="cd-r-t">국부펀드 투입</div><div class="cd-r-d">전략 산업 육성</div></div>
+        <div class="cd-r"><div class="cd-r-v">650억£</div><div class="cd-r-t">복지·연금 절감</div><div class="cd-r-d">2050년까지</div></div>
+      </div>
+      <div class="cd-ft"><span>Source: John Healey, UK Chancellor (Oct 2026)</span><span style="color:var(--ac);">@TNBfolio</span></div>
+    </div>
+    <div class="p-text">
+      <p><b>속보:</b> 존 힐리 영국 재무장관은 금융권 추가 부담금을 6%로 인상하되 자산 처분 공제 축소와 함께 국부펀드에 204억 파운드를 투입한다고 발표했다.</p>
+      <p>힐리 장관은 타 부처 지출 조정을 통해 우크라이나 100억 파운드 지원 재원을 마련하고 2030년까지 국방 지출을 GDP 대비 3%로 확대하겠다고 밝혔다.</p>
+      <p>아울러 기업 경영 비용 완화와 데이터센터 규제 합리화를 추진하겠다고 덧붙였다.</p>
+    </div>
+    <div class="p-q">'유럽의 안보 비용 증액과 방위비 팽창은 각국 재정 압박을 키우지만 글로벌 방산 생태계에는 견조한 일감이 된다.'</div>
+    <div class="tag-bar"><span class="tag">영국예산</span><span class="tag">방위비</span><span class="tag">은행세</span><span class="tag">국부펀드</span></div>
+  </div>
+</section>
+
+<!-- n6 -->
+<section class="sheet" id="n6">
+  <div class="sheet-head">
+    <div class="nav-btns">
+      <a class="nav-link" href="#n5">이전</a>
+      <a class="nav-link" href="#n7">다음</a>
+      <span>6 / 25</span>
+    </div>
+    <a class="close-btn" href="#">&times;</a>
+  </div>
+  <div class="sheet-body">
+    <div class="chip-bar">
+      <span class="chip sec-chip">지정학 & 글로벌 재정</span>
+      <span class="chip" style="background:#f8d8dc; color:#10202b;">체크 -0.6</span>
+      <span class="chip">파급력 5</span>
+    </div>
+    <div class="cd" style="--ac:#d6203a;">
+      <div class="cd-e">종전 협상 구상</div>
+      <div class="cd-t">볼로디미르 젤렌스키 "11월 10일까지 3자 정상회담 기대… 영토는 정상 담판"</div>
+      <div class="cd-s">에너지 휴전 실효성 상실, 유럽의 일치된 결속 촉구</div>
+      <div class="cd-l">직접 결단 요구</div>
+      <div class="cd-k">정상 담판</div>
+      <div class="cd-b">민감한 영토 문제는 실무진 배제하고 오직 정상 간 담판</div>
+      <div class="cd-m">자국의 주권 안보 보장이 최우선이나 러시아 측 안보 우려도 일정 부분 고려 대상이라고 언급.</div>
+      <div class="cd-grid">
+        <div class="cd-r"><div class="cd-r-v">11월 10일</div><div class="cd-r-t">3자 회담 시점</div><div class="cd-r-d">미 대선 직후</div></div>
+        <div class="cd-r"><div class="cd-r-v">영토 담판</div><div class="cd-r-t">실무진 배제</div><div class="cd-r-d">정상 독점</div></div>
+      </div>
+      <div class="cd-ft"><span>Source: Volodymyr Zelenskiy, Ukraine President (Oct 2026)</span><span style="color:var(--ac);">@TNBfolio</span></div>
+    </div>
+    <div class="p-text">
+      <p><b>속보:</b> 볼로디미르 젤렌스키 우크라이나 대통령은 미국 대선 직후인 11월 10일까지 3자 종전 정상회담 성사를 기대하고 있다고 밝혔다.</p>
+      <p>젤렌스키 대통령은 민감한 영토 문제는 실무진을 배제하고 오직 정상 간 담판으로만 다룰 방침임을 확인했다.</p>
+      <p>또한 에너지 휴전의 실효성은 상실되었으며 전쟁 종식을 위해 유럽의 일치된 결속이 요구된다고 강조했다.</p>
+    </div>
+    <div class="p-q">'영토 담판을 전제로 한 종전 회담 구상은 현실화 시 휴전의 급물살을 타겠으나 협상 결렬 시 실망 매물 충격을 부른다.'</div>
+    <div class="tag-bar"><span class="tag">우크라이나</span><span class="tag">종전회담</span><span class="tag">지정학</span></div>
+  </div>
+</section>
+
+<!-- n7 -->
+<section class="sheet" id="n7">
+  <div class="sheet-head">
+    <div class="nav-btns">
+      <a class="nav-link" href="#n6">이전</a>
+      <a class="nav-link" href="#n8">다음</a>
+      <span>7 / 25</span>
+    </div>
+    <a class="close-btn" href="#">&times;</a>
+  </div>
+  <div class="sheet-body">
+    <div class="chip-bar">
+      <span class="chip sec-chip">지정학 & 글로벌 재정</span>
+      <span class="chip" style="background:#e3e5ea; color:#10202b;">체크 0.0</span>
+      <span class="chip">파급력 4</span>
+    </div>
+    <div class="cd" style="--ac:#141c26;">
+      <div class="cd-e">외교·안보 기조</div>
+      <div class="cd-t">도널드 트럼프 "미국 내 샤리아 법 전면 금지 및 해적 강경 진압"</div>
+      <div class="cd-s">아시아 순방 중 전략 핵무기 감축 협상 테이블 운영 방침</div>
+      <div class="cd-l">보수 안보 노선 확인</div>
+      <div class="cd-k">원칙 집행</div>
+      <div class="cd-b">소말리아는 주권 국가 아닌 단순 토지 구역에 불과하다고 규정</div>
+      <div class="cd-m">해적 문제는 교전 수칙 미비 등 취약한 법 집행에서 기인한다며 강력한 무력 대응을 예고.</div>
+      <div class="cd-grid">
+        <div class="cd-r"><div class="cd-r-v">전면 금지</div><div class="cd-r-t">샤리아 법 적용</div><div class="cd-r-d">미국 내 배제</div></div>
+        <div class="cd-r"><div class="cd-r-v">핵감축</div><div class="cd-r-t">아시아 순방 의제</div><div class="cd-r-d">협상 테이블 마련</div></div>
+      </div>
+      <div class="cd-ft"><span>Source: Donald Trump, US President (Oct 2026)</span><span style="color:var(--ac);">@TNBfolio</span></div>
+    </div>
+    <div class="p-text">
+      <p><b>속보:</b> 도널드 트럼프 미국 대통령은 미국 내에서 샤리아 법 적용을 전면 금지하고 소말리아 해적 문제에 강경 대응하겠다고 밝혔다.</p>
+      <p>트럼프 대통령은 플라비오 보우소나루의 미국 입국을 지지한다고 언급하며 보수 진영 간 유대를 표명했다.</p>
+      <p>아울러 아시아 순방 일정 중 전략 핵무기 감축 협상 테이블을 운영할 방침이라고 설명했다.</p>
+    </div>
+    <div class="p-q">'정치적 선명성 강조 발언은 시장 직접 파급력은 낮으나 트럼프 2기의 보수적 법치 기조를 재확인시킨다.'</div>
+    <div class="tag-bar"><span class="tag">트럼프</span><span class="tag">안보외교</span><span class="tag">핵감축</span></div>
+  </div>
+</section>
+
+<!-- n8 -->
+<section class="sheet" id="n8">
+  <div class="sheet-head">
+    <div class="nav-btns">
+      <a class="nav-link" href="#n7">이전</a>
+      <a class="nav-link" href="#n9">다음</a>
+      <span>8 / 25</span>
+    </div>
+    <a class="close-btn" href="#">&times;</a>
+  </div>
+  <div class="sheet-body">
+    <div class="chip-bar">
+      <span class="chip sec-chip">중앙은행 & 통화정책</span>
+      <span class="chip" style="background:#f3b4bc; color:#10202b;">리스크 -1.2</span>
+      <span class="chip">파급력 9</span>
+    </div>
+    <div class="cd" style="--ac:#d6203a;">
+      <div class="cd-e">연준 의장 연설</div>
+      <div class="cd-t">케빈 워시 "3% 성장 속 2% 물가 목표 사수… 가이던스 예단 거부"</div>
+      <div class="cd-s">강한 성장이 곧장 물가 상승 아냐, 인위적 고용 침체 유도 배제</div>
+      <div class="cd-l">절대적 물가 안정 책무</div>
+      <div class="cd-k">2% 사수</div>
+      <div class="cd-b">9월 완화 축소는 유효 작동 중이며 단일 지표에 얽매이지 않는다</div>
+      <div class="cd-m">2027년부터 FOMC 횟수를 축소하고 한국 경제를 핵심 선행지표로 모니터링하겠다고 언급.</div>
+      <div class="cd-grid">
+        <div class="cd-r"><div class="cd-r-v">3%+</div><div class="cd-r-t">3분기 GDP</div><div class="cd-r-d">강한 성장 지속</div></div>
+        <div class="cd-r"><div class="cd-r-v">2.0%</div><div class="cd-r-t">근원물가 목표</div><div class="cd-r-d">타협 불가 책무</div></div>
+        <div class="cd-r"><div class="cd-r-v">배제</div><div class="cd-r-t">포워드 가이던스</div><div class="cd-r-d">예단 없는 데이터주의</div></div>
+        <div class="cd-r"><div class="cd-r-v">선행지표</div><div class="cd-r-t">한국 경제 관찰</div><div class="cd-r-d">글로벌 거시 가늠자</div></div>
+      </div>
+      <div class="cd-ft"><span>Source: Kevin Warsh, Fed Chair (Oct 2026)</span><span style="color:var(--ac);">@TNBfolio</span></div>
+    </div>
+    <div class="p-text">
+      <p><b>속보:</b> 케빈 워시 미 연준 의장은 3분기 GDP 성장률이 3%를 웃돌 정도로 견고하며 2% 근원 물가 목표 달성은 결코 타협할 수 없는 절대적 책무라고 강조했다.</p>
+      <p>워시 의장은 포워드 가이던스를 배제하며 연말 회의 결과에 대한 사전 예단을 거부하고 순수하게 데이터에 기반해 결정하겠다고 밝혔다.</p>
+      <p>아울러 한국 경제는 미국 거시경제 흐름을 가늠하는 핵심 선행지표로서 정책적 모니터링 가치가 매우 높다고 평가했다.</p>
+    </div>
+    <div class="p-q">'연준의 완화 기대 차단과 데이터 중심주의는 금리 조기 인하를 기대하던 위험자산의 단기 차익실현 빌미가 된다.'</div>
+    <div class="tag-bar"><span class="tag">연준</span><span class="tag">케빈워시</span><span class="tag">기준금리</span><span class="tag">한국경제</span></div>
+  </div>
+</section>
+
+<!-- n9 -->
+<section class="sheet" id="n9">
+  <div class="sheet-head">
+    <div class="nav-btns">
+      <a class="nav-link" href="#n8">이전</a>
+      <a class="nav-link" href="#n10">다음</a>
+      <span>9 / 25</span>
+    </div>
+    <a class="close-btn" href="#">&times;</a>
+  </div>
+  <div class="sheet-body">
+    <div class="chip-bar">
+      <span class="chip sec-chip">중앙은행 & 통화정책</span>
+      <span class="chip" style="background:#ec8591; color:#fff;">리스크 -1.8</span>
+      <span class="chip">파급력 7</span>
+    </div>
+    <div class="cd" style="--ac:#d6203a;">
+      <div class="cd-e">FOMC 정례회의</div>
+      <div class="cd-t">연방준비제도 "기준금리 3.75~4.00% 동결 속 25bp 인상 2인 소수의견"</div>
+      <div class="cd-s">역레포 및 지준금리 현행 유지, 2% 물가 복귀 검토 지속</div>
+      <div class="cd-l">긴축 기조 재부각</div>
+      <div class="cd-k">소수의견 2인</div>
+      <div class="cd-b">견조한 고용과 투자를 바탕으로 경제의 강력한 성장세 확인</div>
+      <div class="cd-m">만장일치 동결이 깨지고 인상 소수의견이 공식화되며 통화정책 긴장감이 고조.</div>
+      <div class="cd-grid">
+        <div class="cd-r"><div class="cd-r-v">3.75~4.0%</div><div class="cd-r-t">정책금리</div><div class="cd-r-d">동결 결정</div></div>
+        <div class="cd-r"><div class="cd-r-v">2인</div><div class="cd-r-t">인상 의견</div><div class="cd-r-d">+25bp 요구</div></div>
+        <div class="cd-r"><div class="cd-r-v">동결</div><div class="cd-r-t">역레포 금리</div><div class="cd-r-d">유동성 흡수 유지</div></div>
+        <div class="cd-r"><div class="cd-r-v">호조</div><div class="cd-r-t">일자리·투자</div><div class="cd-r-d">성장세 견고</div></div>
+      </div>
+      <div class="cd-ft"><span>Source: Federal Reserve (Oct 2026)</span><span style="color:var(--ac);">@TNBfolio</span></div>
+    </div>
+    <div class="p-text">
+      <p><b>속보:</b> 미국 연방준비제도는 기준금리를 3.75%~4.00%로 동결했으나 25bp 인상을 요구하는 2인의 소수의견이 공식 제기됐다고 발표했다.</p>
+      <p>연준은 역레포 및 지급준비금 금리를 현행 유지하며 2% 물가 목표의 적시 복귀를 위한 추가 지표 검토를 시사했다.</p>
+      <p>미국 경제는 양호한 일자리 창출과 견조한 자본 투자를 바탕으로 여전히 강력한 성장세를 지속하고 있다고 진단했다.</p>
+    </div>
+    <div class="p-q">'FOMC 내부의 인상 소수의견 출현은 시장의 조기 완화 기대를 일거에 무력화시키는 매파적 시그널이다.'</div>
+    <div class="tag-bar"><span class="tag">FOMC</span><span class="tag">금리동결</span><span class="tag">소수의견</span><span class="tag">매파연준</span></div>
+  </div>
+</section>
+
+<!-- n10 -->
+<section class="sheet" id="n10">
+  <div class="sheet-head">
+    <div class="nav-btns">
+      <a class="nav-link" href="#n9">이전</a>
+      <a class="nav-link" href="#n11">다음</a>
+      <span>10 / 25</span>
+    </div>
+    <a class="close-btn" href="#">&times;</a>
+  </div>
+  <div class="sheet-body">
+    <div class="chip-bar">
+      <span class="chip sec-chip">중앙은행 & 통화정책</span>
+      <span class="chip" style="background:#e2485a; color:#fff;">리스크 -2.4</span>
+      <span class="chip">파급력 8</span>
+    </div>
+    <div class="cd" style="--ac:#d6203a;">
+      <div class="cd-e">캐나다 통화정책 결정</div>
+      <div class="cd-t">캐나다 중앙은행 "고유가 전이 차단 위해 2.50%로 전격 25bp 금리 인상"</div>
+      <div class="cd-s">인플레는 2028년 중반까지 물가 목표치 상회 전망</div>
+      <div class="cd-l">글로벌 긴축 재점화 신호탄</div>
+      <div class="cd-k">+25bp 인상</div>
+      <div class="cd-b">브렌트유 배럴당 100달러 가정 및 기업 원가 전가 확산 경계</div>
+      <div class="cd-m">2026년 인플레이션이 3.5%까지 재가열된 뒤 2028년에서야 2.2%로 진정될 것이라는 비관적 경로.</div>
+      <div class="cd-grid">
+        <div class="cd-r"><div class="cd-r-v">2.50%</div><div class="cd-r-t">기준금리</div><div class="cd-r-d">+25bp 인상 단행</div></div>
+        <div class="cd-r"><div class="cd-r-v">$100</div><div class="cd-r-t">유가 전제</div><div class="cd-r-d">물가 상방 견인</div></div>
+        <div class="cd-r"><div class="cd-r-v">3.5%</div><div class="cd-r-t">26년 인플레 정점</div><div class="cd-r-d">재가열 우려</div></div>
+        <div class="cd-r"><div class="cd-r-v">2028년</div><div class="cd-r-t">목표 도달 시점</div><div class="cd-r-d">긴축 장기화</div></div>
+      </div>
+      <div class="cd-ft"><span>Source: Bank of Canada (Oct 2026)</span><span style="color:var(--ac);">@TNBfolio</span></div>
+    </div>
+    <div class="p-text">
+      <p><b>속보:</b> 캐나다 중앙은행은 고유가의 광범위한 물가 전이를 차단하기 위해 기준금리를 2.50%로 25bp 전격 인상했다고 밝혔다.</p>
+      <p>중은은 인플레이션이 2026년 말 3.5%까지 재가열된 후 2028년이 되어서야 2.2% 수준으로 진정될 것으로 전망했다.</p>
+      <p>브렌트유 100달러 가정과 기업의 원가 전가 확산이 물가 상방 압력을 지속적으로 견인하고 있다고 설명했다.</p>
+    </div>
+    <div class="p-q">'캐나다의 전격 금리 인상은 선진국 통화정책이 유가 급등에 반응해 다시 긴축으로 선회할 수 있음을 입증한 사건이다.'</div>
+    <div class="tag-bar"><span class="tag">캐나다중은</span><span class="tag">금리인상</span><span class="tag">고유가충격</span><span class="tag">긴축전환</span></div>
+  </div>
+</section>
+
+<!-- n11 -->
+<section class="sheet" id="n11">
+  <div class="sheet-head">
+    <div class="nav-btns">
+      <a class="nav-link" href="#n10">이전</a>
+      <a class="nav-link" href="#n12">다음</a>
+      <span>11 / 25</span>
+    </div>
+    <a class="close-btn" href="#">&times;</a>
+  </div>
+  <div class="sheet-body">
+    <div class="chip-bar">
+      <span class="chip sec-chip">중앙은행 & 통화정책</span>
+      <span class="chip" style="background:#ec8591; color:#fff;">리스크 -1.8</span>
+      <span class="chip">파급력 5</span>
+    </div>
+    <div class="cd" style="--ac:#d6203a;">
+      <div class="cd-e">호주 통화정책 기조</div>
+      <div class="cd-t">미셸 블록 "목표치 웃도는 물가는 불용… 과거 인상 파급 여전히 진행형"</div>
+      <div class="cd-s">중동 충격에 따른 유가 재급등과 소비 둔화 지연으로 물가 상회 경고</div>
+      <div class="cd-l">타협 없는 긴축 자세</div>
+      <div class="cd-k">물가 불용</div>
+      <div class="cd-b">현행 긴축 수준이 물가 목표 복귀에 부합하는지 엄격히 재평가</div>
+      <div class="cd-m">인플레이션이 기존 전망치를 크게 상회할 가능성을 경고하며 추가 긴축 가능성을 시사.</div>
+      <div class="cd-grid">
+        <div class="cd-r"><div class="cd-r-v">불용</div><div class="cd-r-t">목표 상회 물가</div><div class="cd-r-d">결코 수용 불가</div></div>
+        <div class="cd-r"><div class="cd-r-v">진행형</div><div class="cd-r-t">정책 파급 효과</div><div class="cd-r-d">시차 감안 평가</div></div>
+      </div>
+      <div class="cd-ft"><span>Source: Michele Bullock, RBA Governor (Oct 2026)</span><span style="color:var(--ac);">@TNBfolio</span></div>
+    </div>
+    <div class="p-text">
+      <p><b>속보:</b> 미셸 블록 호주 중앙은행 총재는 현행 긴축 수준이 물가 목표 복귀에 부합하는지 재평가 중이며 목표치를 웃도는 인플레이션은 결코 수용하지 않는다고 강조했다.</p>
+      <p>블록 총재는 통화정책의 시차를 감안할 때 과거 금리 인상의 파급 효과는 여전히 실물 경제 전반으로 확산되는 과정이라고 진단했다.</p>
+      <p>중동 충격에 따른 유가 재급등과 소비 둔화 지연으로 인플레이션은 기존 전망치를 크게 웃돌 전망이라고 덧붙였다.</p>
+    </div>
+    <div class="p-q">'호주 중앙은행의 완강한 매파 기조는 글로벌 자원국 통화들의 긴축 연대감을 한층 강화한다.'</div>
+    <div class="tag-bar"><span class="tag">호주중은</span><span class="tag">RBA</span><span class="tag">인플레불용</span><span class="tag">호주달러</span></div>
+  </div>
+</section>
+
+<!-- n12 -->
+<section class="sheet" id="n12">
+  <div class="sheet-head">
+    <div class="nav-btns">
+      <a class="nav-link" href="#n11">이전</a>
+      <a class="nav-link" href="#n13">다음</a>
+      <span>12 / 25</span>
+    </div>
+    <a class="close-btn" href="#">&times;</a>
+  </div>
+  <div class="sheet-body">
+    <div class="chip-bar">
+      <span class="chip sec-chip">중앙은행 & 통화정책</span>
+      <span class="chip" style="background:#f3b4bc; color:#10202b;">리스크 -1.2</span>
+      <span class="chip">파급력 5</span>
+    </div>
+    <div class="cd" style="--ac:#d6203a;">
+      <div class="cd-e">캐나다 통화정책 기자회견</div>
+      <div class="cd-t">티프 맥클렘 "고유가 확산 선제 차단 위해 금리 인상 불가피"</div>
+      <div class="cd-s">경기 회복으로 원가 완화 요인 소멸, 향후 경로는 철저히 데이터 연동</div>
+      <div class="cd-l">정책 여력 제약 고백</div>
+      <div class="cd-k">선제 차단</div>
+      <div class="cd-b">인상 이후에도 현재 금리 레벨은 성장을 훼손하지 않는 완화적 영역</div>
+      <div class="cd-m">에너지 설비투자 확대로 경기 방어력이 있으나 중동 정세 전개가 핵심 변수.</div>
+      <div class="cd-grid">
+        <div class="cd-r"><div class="cd-r-v">선제 인상</div><div class="cd-r-t">물가 차단 조치</div><div class="cd-r-d">불가피한 선택</div></div>
+        <div class="cd-r"><div class="cd-r-v">완화적</div><div class="cd-r-t">현 금리 수준</div><div class="cd-r-d">성장 훼손 없음</div></div>
+      </div>
+      <div class="cd-ft"><span>Source: Tiff Macklem, BoC Governor (Oct 2026)</span><span style="color:var(--ac);">@TNBfolio</span></div>
+    </div>
+    <div class="p-text">
+      <p><b>속보:</b> 티프 맥클렘 캐나다 중앙은행 총재는 고유가가 광범위한 가격 상승으로 확산되는 위험을 선제 차단하기 위해 금리 인상이 불가피했다고 밝혔다.</p>
+      <p>맥클렘 총재는 경기 회복으로 원가 부담 완화 요인이 줄어들었으며 정책 여력 또한 한층 제약되었다고 설명했다.</p>
+      <p>다만 인상 이후에도 현재 금리 레벨은 실물 경제 성장을 훼손하지 않는 완화적 영역에 위치한다고 덧붙였다.</p>
+    </div>
+    <div class="p-q">'중앙은행 총재가 현 금리를 여전히 완화적으로 평가한다는 것은 추가 인상의 문이 열려 있음을 뜻한다.'</div>
+    <div class="tag-bar"><span class="tag">캐나다중은</span><span class="tag">티프맥클렘</span><span class="tag">금리경로</span></div>
+  </div>
+</section>
+
+<!-- n13 -->
+<section class="sheet" id="n13">
+  <div class="sheet-head">
+    <div class="nav-btns">
+      <a class="nav-link" href="#n12">이전</a>
+      <a class="nav-link" href="#n14">다음</a>
+      <span>13 / 25</span>
+    </div>
+    <a class="close-btn" href="#">&times;</a>
+  </div>
+  <div class="sheet-body">
+    <div class="chip-bar">
+      <span class="chip sec-chip">중앙은행 & 통화정책</span>
+      <span class="chip" style="background:#f3b4bc; color:#10202b;">리스크 -1.2</span>
+      <span class="chip">파급력 4</span>
+    </div>
+    <div class="cd" style="--ac:#d6203a;">
+      <div class="cd-e">중은 내부 논의 공개</div>
+      <div class="cd-t">캐롤린 로저스 "물가 상방 위험 공감 속 동결·인상 면밀 비교 검토"</div>
+      <div class="cd-s">대외 불확실성 지속이 주택 경기 회복을 제한</div>
+      <div class="cd-l">중동 단기 평화 회의론</div>
+      <div class="cd-k">상방 위험</div>
+      <div class="cd-b">중동 분쟁이 단기간 내에 평화적으로 해결될 가능성은 극히 낮다</div>
+      <div class="cd-m">정책위원회 내부에서 물가 상방 위험에 대한 강력한 공감대가 형성되었음을 증언.</div>
+      <div class="cd-grid">
+        <div class="cd-r"><div class="cd-r-v">극히 낮음</div><div class="cd-r-t">단기 평화 가능성</div><div class="cd-r-d">중동 분쟁 장기화</div></div>
+        <div class="cd-r"><div class="cd-r-v">제한</div><div class="cd-r-t">주택경기 회복</div><div class="cd-r-d">불확실성 지속</div></div>
+      </div>
+      <div class="cd-ft"><span>Source: Carolyn Rogers, BoC Senior Deputy Governor (Oct 2026)</span><span style="color:var(--ac);">@TNBfolio</span></div>
+    </div>
+    <div class="p-text">
+      <p><b>속보:</b> 캐롤린 로저스 캐나다 중앙은행 수석부총재는 정책위원회 내부에서 물가 상방 위험에 대한 강력한 공감대 속에 동결과 인상안을 면밀히 비교 검토했다고 밝혔다.</p>
+      <p>로저스 부총재는 대외 불확실성 지속이 주택 경기 회복을 제한하고 있다고 진단했다.</p>
+      <p>특히 중동 분쟁이 단기간 내에 평화적으로 해결될 가능성은 극히 낮다고 강조했다.</p>
+    </div>
+    <div class="p-q">'중앙은행 고위 인사의 중동 분쟁 장기화 인정은 원자재발 인플레이션이 구조적임을 뒷받침한다.'</div>
+    <div class="tag-bar"><span class="tag">캐나다중은</span><span class="tag">주택경기</span><span class="tag">중동분쟁</span></div>
+  </div>
+</section>
+
+<!-- n14 -->
+<section class="sheet" id="n14">
+  <div class="sheet-head">
+    <div class="nav-btns">
+      <a class="nav-link" href="#n13">이전</a>
+      <a class="nav-link" href="#n15">다음</a>
+      <span>14 / 25</span>
+    </div>
+    <a class="close-btn" href="#">&times;</a>
+  </div>
+  <div class="sheet-body">
+    <div class="chip-bar">
+      <span class="chip sec-chip">AI 인프라 & 반도체</span>
+      <span class="chip" style="background:#4fc0a3; color:#10202b;">기회 +2.4</span>
+      <span class="chip">AI 연관</span>
+      <span class="chip">파급력 9</span>
+    </div>
+    <div class="cd" style="--ac:#13a688;">
+      <div class="cd-e">서버 아키텍처 대전환</div>
+      <div class="cd-t">트렌드포스 "에이전틱 AI 폭증으로 랙 내 GPU:CPU 비중 1:1 재편"</div>
+      <div class="cd-s">ARM 기반 점유율 2027년 30% 육박, AMD는 27%까지 확장</div>
+      <div class="cd-l">범용 연산 프로세서의 귀환</div>
+      <div class="cd-k">1:1 재편</div>
+      <div class="cd-b">추론 수요 폭증이 서버 아키텍처의 패러다임을 전면 수정</div>
+      <div class="cd-m">인텔은 패키징 병목으로 점유율이 위축되는 반면 AMD와 자체 ARM 칩이 급부상.</div>
+      <div class="cd-grid">
+        <div class="cd-r"><div class="cd-r-v">1:1</div><div class="cd-r-t">GPU:CPU 비중</div><div class="cd-r-d">랙 아키텍처 재편</div></div>
+        <div class="cd-r"><div class="cd-r-v">30%</div><div class="cd-r-t">27년 ARM 점유율</div><div class="cd-r-d">자체 칩 전환 가속</div></div>
+        <div class="cd-r"><div class="cd-r-v">27%</div><div class="cd-r-t">AMD 점유율</div><div class="cd-r-d">신제품 양산 효과</div></div>
+        <div class="cd-r"><div class="cd-r-v">병목 지속</div><div class="cd-r-t">인텔 제조 제약</div><div class="cd-r-d">패키징 공급난</div></div>
+      </div>
+      <div class="cd-ft"><span>Source: TrendForce (Oct 2026)</span><span style="color:var(--ac);">@TNBfolio</span></div>
+    </div>
+    <div class="p-text">
+      <p><b>속보:</b> 시장조사업체 트렌드포스는 에이전틱 AI 확산에 따른 추론 수요 폭증으로 랙 내 서버 아키텍처가 GPU 일변도에서 CPU 비중을 1:1 수준까지 확대하는 구조로 재편되고 있다고 분석했다.</p>
+      <p>트렌드포스는 ARM 기반 서버 CPU 점유율이 빅테크 자체 칩 양산에 힘입어 2026년 20%를 돌파하고 2027년 30%에 육박할 것으로 전망했다.</p>
+      <p>AMD는 신제품 양산으로 27%까지 점유율을 늘리는 반면 인텔은 패키징 병목과 제조 제약으로 공급난이 당분간 지속될 것이라고 덧붙였다.</p>
+    </div>
+    <div class="p-q">'추론용 서버 내 CPU 비중 1:1 확대는 서버향 D램 및 고성능 기판 수요를 폭발시키는 국내 반도체 최상위 기회다.'</div>
+    <div class="tag-bar"><span class="tag">서버CPU</span><span class="tag">반도체</span><span class="tag">삼성전자</span><span class="tag">SK하이닉스</span></div>
+  </div>
+</section>
+
+<!-- n15 -->
+<section class="sheet" id="n15">
+  <div class="sheet-head">
+    <div class="nav-btns">
+      <a class="nav-link" href="#n14">이전</a>
+      <a class="nav-link" href="#n16">다음</a>
+      <span>15 / 25</span>
+    </div>
+    <a class="close-btn" href="#">&times;</a>
+  </div>
+  <div class="sheet-body">
+    <div class="chip-bar">
+      <span class="chip sec-chip">AI 인프라 & 반도체</span>
+      <span class="chip" style="background:#87d4c0; color:#10202b;">기회 +1.8</span>
+      <span class="chip">AI 연관</span>
+      <span class="chip">파급력 8</span>
+    </div>
+    <div class="cd" style="--ac:#13a688;">
+      <div class="cd-e">중장기 가이던스 발표</div>
+      <div class="cd-t">오라클 "2030년 매출 2,250억 달러 목표 및 28년 CapEx 피크 후 FCF 흑자"</div>
+      <div class="cd-s">2027 회계연도 900억 달러 재확인, 29년 영업익률 40% 설정</div>
+      <div class="cd-l">AI 인프라 수익화 증명</div>
+      <div class="cd-k">2,250억$</div>
+      <div class="cd-b">AI 인프라 자본지출은 2028년 정점을 통과하며 현금흐름 대반전</div>
+      <div class="cd-m">고객 선급금과 벤더 금융을 총동원해 신규 부채 조달은 200억 달러로 강력히 통제.</div>
+      <div class="cd-grid">
+        <div class="cd-r"><div class="cd-r-v">2,250억$</div><div class="cd-r-t">2030년 매출</div><div class="cd-r-d">연평균 35% 성장</div></div>
+        <div class="cd-r"><div class="cd-r-v">40%</div><div class="cd-r-t">29년 OPM 목표</div><div class="cd-r-d">마진율 극대화</div></div>
+        <div class="cd-r"><div class="cd-r-v">$300억</div><div class="cd-r-t">29년 FCF 창출</div><div class="cd-r-d">잉여현금 대폭 흑자</div></div>
+        <div class="cd-r"><div class="cd-r-v">2028년</div><div class="cd-r-t">CapEx 피크아웃</div><div class="cd-r-d">투자 회수기 진입</div></div>
+      </div>
+      <div class="cd-ft"><span>Source: Oracle (Oct 2026)</span><span style="color:var(--ac);">@TNBfolio</span></div>
+    </div>
+    <div class="p-text">
+      <p><b>속보:</b> 오라클은 2027 회계연도 매출 900억 달러 전망을 재확인하고 2030년까지 연평균 35% 성장해 매출 2,250억 달러를 달성하겠다고 발표했다.</p>
+      <p>오라클은 AI 인프라 자본지출(CapEx)이 2028 회계연도에 정점을 찍은 후 잉여현금흐름이 본격 흑자 국면으로 전환될 것이라고 강조했다.</p>
+      <p>또한 고객 선급금과 벤더 금융을 총동원해 신규 부채 조달은 200억 달러 선으로 엄격히 통제하겠다고 설명했다.</p>
+    </div>
+    <div class="p-q">'오라클의 FCF 흑자 전환 로드맵은 AI 과잉투자론과 부채 위기론을 불식시키는 강력한 펀더멘털 방패다.'</div>
+    <div class="tag-bar"><span class="tag">오라클</span><span class="tag">클라우드</span><span class="tag">AI인프라</span><span class="tag">CapEx</span></div>
+  </div>
+</section>
+
+<!-- n16 -->
+<section class="sheet" id="n16">
+  <div class="sheet-head">
+    <div class="nav-btns">
+      <a class="nav-link" href="#n15">이전</a>
+      <a class="nav-link" href="#n17">다음</a>
+      <span>16 / 25</span>
+    </div>
+    <a class="close-btn" href="#">&times;</a>
+  </div>
+  <div class="sheet-body">
+    <div class="chip-bar">
+      <span class="chip sec-chip">AI 인프라 & 반도체</span>
+      <span class="chip" style="background:#b4e4d7; color:#10202b;">기회 +1.2</span>
+      <span class="chip">AI 연관</span>
+      <span class="chip">파급력 6</span>
+    </div>
+    <div class="cd" style="--ac:#13a688;">
+      <div class="cd-e">구글 클라우드 TPU 전략</div>
+      <div class="cd-t">토마스 쿠리안 "메타·애플 모델 학습 위해 TPU 최적화 협력 전방위 강화"</div>
+      <div class="cd-s">앤트로픽 및 브로드컴과 TPU 중심의 전략적 동맹 공고화</div>
+      <div class="cd-l">빅테크 가속기 다변화 가속</div>
+      <div class="cd-k">TPU 동맹</div>
+      <div class="cd-b">차세대 AI 모델 훈련 인프라로서 자체 ASIC 위상 확립</div>
+      <div class="cd-m">엔비디아 의존도를 낮추려는 빅테크 진영과 손잡고 TPU 클라우드 생태계를 전격 확장.</div>
+      <div class="cd-grid">
+        <div class="cd-r"><div class="cd-r-v">메타·애플</div><div class="cd-r-t">학습 지원 파트너</div><div class="cd-r-d">TPU 최적화 강화</div></div>
+        <div class="cd-r"><div class="cd-r-v">브로드컴</div><div class="cd-r-t">전략적 동맹</div><div class="cd-r-d">ASIC 공동 생태계</div></div>
+      </div>
+      <div class="cd-ft"><span>Source: Thomas Kurian, Google Cloud CEO (Oct 2026)</span><span style="color:var(--ac);">@TNBfolio</span></div>
+    </div>
+    <div class="p-text">
+      <p><b>속보:</b> 토마스 쿠리안 구글 클라우드 최고경영자(CEO)는 메타 및 애플의 차세대 AI 모델 훈련을 전폭 지원하기 위해 TPU 최적화 협력을 전방위로 강화했다고 밝혔다.</p>
+      <p>쿠리안 CEO는 앤트로픽과 브로드컴 등 글로벌 핵심 기술 기업들과 TPU 중심의 전략적 동맹을 공고히 유지하고 있다고 설명했다.</p>
+      <p>이는 독점적인 GPU 시장 구조에서 빅테크 맞춤형 가속기 생태계가 실질적인 대안으로 안착했음을 시사한다.</p>
+    </div>
+    <div class="p-q">'메타·애플의 TPU 학습 동참은 커스텀 ASIC 생태계의 비약적 성장을 의미하며 관련 HBM 공급망에 호재다.'</div>
+    <div class="tag-bar"><span class="tag">구글TPU</span><span class="tag">브로드컴</span><span class="tag">ASIC</span><span class="tag">AI가속기</span></div>
+  </div>
+</section>
+
+<!-- n17 -->
+<section class="sheet" id="n17">
+  <div class="sheet-head">
+    <div class="nav-btns">
+      <a class="nav-link" href="#n16">이전</a>
+      <a class="nav-link" href="#n18">다음</a>
+      <span>17 / 25</span>
+    </div>
+    <a class="close-btn" href="#">&times;</a>
+  </div>
+  <div class="sheet-body">
+    <div class="chip-bar">
+      <span class="chip sec-chip">AI 인프라 & 반도체</span>
+      <span class="chip" style="background:#d5f0e8; color:#10202b;">체크 +0.6</span>
+      <span class="chip">AI 연관</span>
+      <span class="chip">파급력 5</span>
+    </div>
+    <div class="cd" style="--ac:#13a688;">
+      <div class="cd-e">알파벳 실적 및 R&D</div>
+      <div class="cd-t">순다르 피차이 "연환산 매출 5,000억$ 도달… 제미나이 4 카본 정부 평가"</div>
+      <div class="cd-s">자체 AI 아르곤 도입으로 개발 생산성 혁신, 검색 쿼리 5년래 최고속</div>
+      <div class="cd-l">검색 제국의 견고한 성장</div>
+      <div class="cd-k">5,000억$</div>
+      <div class="cd-b">AI 검색 전환 속에서도 핵심 비즈니스의 빠른 확장세 입증</div>
+      <div class="cd-m">최상위 모델 제미나이 4 카본의 공공기관 평가 착수로 B2G 영역 지배력 확장.</div>
+      <div class="cd-grid">
+        <div class="cd-r"><div class="cd-r-v">5,000억$</div><div class="cd-r-t">연환산 매출</div><div class="cd-r-d">외형 성장 증명</div></div>
+        <div class="cd-r"><div class="cd-r-v">제미나이 4</div><div class="cd-r-t">카본 정부 평가</div><div class="cd-r-d">최상위 AI 모델</div></div>
+        <div class="cd-r"><div class="cd-r-v">아르곤</div><div class="cd-r-t">자체 AI 도입</div><div class="cd-r-d">개발 생산성 극대화</div></div>
+        <div class="cd-r"><div class="cd-r-v">최고속</div><div class="cd-r-t">검색 쿼리 증가</div><div class="cd-r-d">5년 내 가장 빠른 성장</div></div>
+      </div>
+      <div class="cd-ft"><span>Source: Sundar Pichai, Alphabet CEO (Oct 2026)</span><span style="color:var(--ac);">@TNBfolio</span></div>
+    </div>
+    <div class="p-text">
+      <p><b>속보:</b> 순다르 피차이 알파벳 최고경영자는 연간 환산 매출이 5,000억 달러에 도달하며 견조한 외형 성장을 증명했다고 강조했다.</p>
+      <p>피차이 CEO는 자체 개발 AI 아르곤 도입으로 개발 생산성을 혁신하고 최상위 모델 제미나이 4 카본의 정부 평가에 착수했다고 밝혔다.</p>
+      <p>아울러 구글 핵심 검색 쿼리 성장률은 최근 5년 내 가장 빠른 증가세를 보이고 있다고 덧붙였다.</p>
+    </div>
+    <div class="p-q">'검색 트래픽의 사상 최대 성장은 AI 검색 잠식 우려를 씻어내며 빅테크 현금 창출력의 건재함을 보여준다.'</div>
+    <div class="tag-bar"><span class="tag">구글</span><span class="tag">알파벳</span><span class="tag">제미나이4</span><span class="tag">검색광고</span></div>
+  </div>
+</section>
+
+<!-- n18 -->
+<section class="sheet" id="n18">
+  <div class="sheet-head">
+    <div class="nav-btns">
+      <a class="nav-link" href="#n17">이전</a>
+      <a class="nav-link" href="#n19">다음</a>
+      <span>18 / 25</span>
+    </div>
+    <a class="close-btn" href="#">&times;</a>
+  </div>
+  <div class="sheet-body">
+    <div class="chip-bar">
+      <span class="chip sec-chip">AI 인프라 & 반도체</span>
+      <span class="chip" style="background:#d5f0e8; color:#10202b;">체크 +0.6</span>
+      <span class="chip">AI 연관</span>
+      <span class="chip">파급력 4</span>
+    </div>
+    <div class="cd" style="--ac:#13a688;">
+      <div class="cd-e">공공 조달 AI 혁신</div>
+      <div class="cd-t">앤트로픽 "미 연방총무청 파트너십 통해 클로드 단가 40% 대폭 인하"</div>
+      <div class="cd-s">공공 최적화 지원 개시 및 FedRAMP 보안 인증 본격 추진</div>
+      <div class="cd-l">B2G 공공 시장 선점 드라이브</div>
+      <div class="cd-k">-40% 인하</div>
+      <div class="cd-b">연방정부 및 지자체 전반으로 클로드 공급 대상 전격 확대</div>
+      <div class="cd-m">엄격한 공공 보안 기준을 충족하며 대정부 엔터프라이즈 AI 점유율을 확장.</div>
+      <div class="cd-grid">
+        <div class="cd-r"><div class="cd-r-v">40% 인하</div><div class="cd-r-t">정부 조달 단가</div><div class="cd-r-d">가격 경쟁력 확보</div></div>
+        <div class="cd-r"><div class="cd-r-v">FedRAMP</div><div class="cd-r-t">보안 인증 추진</div><div class="cd-r-d">연방 보안 규격</div></div>
+      </div>
+      <div class="cd-ft"><span>Source: Anthropic (Oct 2026)</span><span style="color:var(--ac);">@TNBfolio</span></div>
+    </div>
+    <div class="p-text">
+      <p><b>속보:</b> 앤트로픽은 미국 연방총무청(GSA) 파트너십을 통해 정부 조달 클로드 공급 단가를 40% 인하하고 지자체 전반으로 대상을 넓혔다고 발표했다.</p>
+      <p>앤트로픽은 공공 최적화 지원 프로그램을 공식 개시하며 FedRAMP 보안 인증 획득을 본격 추진 중이라고 설명했다.</p>
+      <p>이는 공공 행정 부문에서 생성형 AI의 대규모 실사용 채택을 촉진하는 계기가 될 것으로 기대된다.</p>
+    </div>
+    <div class="p-q">'공공 부문의 파격적 단가 인하는 B2G 시장 침투를 앞당기는 동시에 모델 간 가격 출혈 경쟁을 자극할 수 있다.'</div>
+    <div class="tag-bar"><span class="tag">앤트로픽</span><span class="tag">클로드</span><span class="tag">공공AI</span><span class="tag">FedRAMP</span></div>
+  </div>
+</section>
+
+<!-- n19 -->
+<section class="sheet" id="n19">
+  <div class="sheet-head">
+    <div class="nav-btns">
+      <a class="nav-link" href="#n18">이전</a>
+      <a class="nav-link" href="#n20">다음</a>
+      <span>19 / 25</span>
+    </div>
+    <a class="close-btn" href="#">&times;</a>
+  </div>
+  <div class="sheet-body">
+    <div class="chip-bar">
+      <span class="chip sec-chip">시장 전략 & 크레딧</span>
+      <span class="chip" style="background:#e3e5ea; color:#10202b;">체크 0.0</span>
+      <span class="chip">파급력 8</span>
+    </div>
+    <div class="cd" style="--ac:#141c26;">
+      <div class="cd-e">미국 재무부 거시진단</div>
+      <div class="cd-t">스콧 베센트 "3% GDP 성장 견고, AI 부채 우려 미미… 유럽 저성장 경계"</div>
+      <div class="cd-s">대이란 봉쇄로 적재량 0배럴 달성, 고유가 지속 시 국채금리 하방경직</div>
+      <div class="cd-l">미국 예외주의와 공급 충격 대응</div>
+      <div class="cd-k">3% 성장</div>
+      <div class="cd-b">워시 연준의장 신뢰 표명 속 일시적 유가 충격에 유연한 대응 촉구</div>
+      <div class="cd-m">유럽은 저성장·고금리로 금융안정성이 위협받는 반면 미국은 실질 성장 체질을 유지.</div>
+      <div class="cd-grid">
+        <div class="cd-r"><div class="cd-r-v">0배럴</div><div class="cd-r-t">이란 해상 선적</div><div class="cd-r-d">제재 역사상 최대</div></div>
+        <div class="cd-r"><div class="cd-r-v">-25%</div><div class="cd-r-t">이란 경제 위축</div><div class="cd-r-d">구소련 붕괴 충격</div></div>
+        <div class="cd-r"><div class="cd-r-v">미미</div><div class="cd-r-t">네오클라우드 부채</div><div class="cd-r-d">금융 건전성 안전</div></div>
+        <div class="cd-r"><div class="cd-r-v">달러 공고</div><div class="cd-r-t">스테이블코인</div><div class="cd-r-d">기축통화 확산</div></div>
+      </div>
+      <div class="cd-ft"><span>Source: Scott Bessent, US Treasury Secretary (Oct 2026)</span><span style="color:var(--ac);">@TNBfolio</span></div>
+    </div>
+    <div class="p-text">
+      <p><b>속보:</b> 스콧 베센트 미국 재무장관은 추가 금리 인상이 정책 실패를 의미하지 않으며 3분기 미국 GDP 성장률은 3%를 웃도는 강한 확장세를 이어갈 것이라고 밝혔다.</p>
+      <p>베센트 장관은 8주 차 대이란 봉쇄로 해상 원유 선적량이 0배럴로 급감했으며 이란 경제가 최대 25% 위축될 것이라고 설명했다.</p>
+      <p>또한 AI 인프라 부채와 네오클라우드 위험은 전체 생태계 내 비중이 미미해 금융 시스템을 위협하지 않는다고 일축했다.</p>
+    </div>
+    <div class="p-q">'미국의 견조한 펀더멘털은 안전판이나, 장기 금리 하방 경직과 대이란 원유 봉쇄는 신흥국 유동성에 지속적 부담이다.'</div>
+    <div class="tag-bar"><span class="tag">스콧베센트</span><span class="tag">미국국채</span><span class="tag">이란제재</span><span class="tag">달러패권</span></div>
+  </div>
+</section>
+
+<!-- n20 -->
+<section class="sheet" id="n20">
+  <div class="sheet-head">
+    <div class="nav-btns">
+      <a class="nav-link" href="#n19">이전</a>
+      <a class="nav-link" href="#n21">다음</a>
+      <span>20 / 25</span>
+    </div>
+    <a class="close-btn" href="#">&times;</a>
+  </div>
+  <div class="sheet-body">
+    <div class="chip-bar">
+      <span class="chip sec-chip">시장 전략 & 크레딧</span>
+      <span class="chip" style="background:#ec8591; color:#fff;">리스크 -1.8</span>
+      <span class="chip">파급력 7</span>
+    </div>
+    <div class="cd" style="--ac:#d6203a;">
+      <div class="cd-e">글로벌 신용평가 경고</div>
+      <div class="cd-t">피치 "AI 투자회수 지연·고유가·긴축 겹쳐 2027년 기업 신용위험 심화"</div>
+      <div class="cd-s">연방기금금리 연내 4.25% 도달 후 내년 내내 긴축 기조 유지 전망</div>
+      <div class="cd-l">한계기업 채무불이행 경고</div>
+      <div class="cd-k">신용 리스크</div>
+      <div class="cd-b">호르무즈 해협 봉쇄 장기화 시 구조적 유가 쇼크 발발 가능</div>
+      <div class="cd-m">미국 은행권의 유가증권 방어력은 개선되었으나 글로벌 기업 섹터의 재무 부담은 급증.</div>
+      <div class="cd-grid">
+        <div class="cd-r"><div class="cd-r-v">4.25%</div><div class="cd-r-t">연내 최종 금리</div><div class="cd-r-d">1회 추가 인상</div></div>
+        <div class="cd-r"><div class="cd-r-v">2027년</div><div class="cd-r-t">신용 위험 가중</div><div class="cd-r-d">투자회수 지연 여파</div></div>
+        <div class="cd-r"><div class="cd-r-v">방어력</div><div class="cd-r-t">은행 증권 손실</div><div class="cd-r-d">포트폴리오 개선</div></div>
+        <div class="cd-r"><div class="cd-r-v">쇼크 우려</div><div class="cd-r-t">호르무즈 봉쇄 시</div><div class="cd-r-d">공급 차질 장기화</div></div>
+      </div>
+      <div class="cd-ft"><span>Source: Fitch Ratings (Oct 2026)</span><span style="color:var(--ac);">@TNBfolio</span></div>
+    </div>
+    <div class="p-text">
+      <p><b>속보:</b> 국제 신용평가사 피치는 AI 투자 회수 지연과 고유가 지속, 금융 긴축이 맞물려 2027년 글로벌 기업 신용 리스크를 심각하게 가중시키고 있다고 경고했다.</p>
+      <p>피치는 연방기금금리가 연내 1회 추가 인상되어 4.25%에 도달한 뒤 내년 내내 긴축 기조를 유지할 것으로 전망했다.</p>
+      <p>호르무즈 해협의 공급 봉쇄가 장기화될 경우 기준 전망치를 현저히 웃도는 구조적 유가 쇼크가 발생할 수 있다고 덧붙였다.</p>
+    </div>
+    <div class="p-q">'고금리 장기화와 AI 회수 지연이 겹칠 때 가장 먼저 무너지는 것은 하이일드 기업들의 신용 스프레드다.'</div>
+    <div class="tag-bar"><span class="tag">피치</span><span class="tag">신용등급</span><span class="tag">회사채</span><span class="tag">호르무즈</span></div>
+  </div>
+</section>
+
+<!-- n21 -->
+<section class="sheet" id="n21">
+  <div class="sheet-head">
+    <div class="nav-btns">
+      <a class="nav-link" href="#n20">이전</a>
+      <a class="nav-link" href="#n22">다음</a>
+      <span>21 / 25</span>
+    </div>
+    <a class="close-btn" href="#">&times;</a>
+  </div>
+  <div class="sheet-body">
+    <div class="chip-bar">
+      <span class="chip sec-chip">시장 전략 & 크레딧</span>
+      <span class="chip" style="background:#ec8591; color:#fff;">리스크 -1.8</span>
+      <span class="chip">파급력 7</span>
+    </div>
+    <div class="cd" style="--ac:#d6203a;">
+      <div class="cd-e">더블라인 자산배분</div>
+      <div class="cd-t">제프리 건들락 "연준 인상 지연은 뒷북… 유가 안정 없인 12월 인상 필수"</div>
+      <div class="cd-s">2년물 국채금리가 정책금리 상회, 빅테크 편중은 시장 취약성 요인</div>
+      <div class="cd-l">보수적 분산 포트폴리오 고수</div>
+      <div class="cd-k">12월 인상</div>
+      <div class="cd-b">AI 리스크를 피해 동일가중 주식, 채권 30%, 원자재·현금 각 20% 배분</div>
+      <div class="cd-m">거시 지표 노이즈를 걸러내기 위해 FOMC 정례회의 횟수를 6회로 축소해야 한다고 촉구.</div>
+      <div class="cd-grid">
+        <div class="cd-r"><div class="cd-r-v">필수적</div><div class="cd-r-t">12월 인상 단행</div><div class="cd-r-d">2년물 금리 신호</div></div>
+        <div class="cd-r"><div class="cd-r-v">30%</div><div class="cd-r-t">채권 포트폴리오</div><div class="cd-r-d">보수적 배분</div></div>
+        <div class="cd-r"><div class="cd-r-v">20% / 20%</div><div class="cd-r-t">원자재 및 현금</div><div class="cd-r-d">인플레·유동성 헷지</div></div>
+        <div class="cd-r"><div class="cd-r-v">연 6회</div><div class="cd-r-t">FOMC 축소 제안</div><div class="cd-r-d">정책 노이즈 방지</div></div>
+      </div>
+      <div class="cd-ft"><span>Source: Jeffrey Gundlach, DoubleLine CEO (Oct 2026)</span><span style="color:var(--ac);">@TNBfolio</span></div>
+    </div>
+    <div class="p-text">
+      <p><b>속보:</b> 제프리 건들락 더블라인캐피털 최고경영자는 소비자물가 급등과 원자재 강세에도 불구하고 금리 인상을 지연하는 연준의 태도는 완전히 뒤처진 대응이라고 강하게 비판했다.</p>
+      <p>건들락 CEO는 2년물 국채 금리가 오버나이트 금리를 크게 웃돌고 있어 12월 금리 인상이 필수적이라고 진단했다.</p>
+      <p>아울러 AI 리스크와 빅테크 고평가를 피해 주식은 동일가중으로 채권 30%, 원자재와 현금을 각각 20%씩 분산 유지하고 있다고 밝혔다.</p>
+    </div>
+    <div class="p-q">'채권왕의 방어적 배분과 12월 인상 주장은 기술주 밸류에이션 부담이 극에 달했음을 환기시킨다.'</div>
+    <div class="tag-bar"><span class="tag">건들락</span><span class="tag">자산배분</span><span class="tag">원자재헷지</span><span class="tag">2년물금리</span></div>
+  </div>
+</section>
+
+<!-- n22 -->
+<section class="sheet" id="n22">
+  <div class="sheet-head">
+    <div class="nav-btns">
+      <a class="nav-link" href="#n21">이전</a>
+      <a class="nav-link" href="#n23">다음</a>
+      <span>22 / 25</span>
+    </div>
+    <a class="close-btn" href="#">&times;</a>
+  </div>
+  <div class="sheet-body">
+    <div class="chip-bar">
+      <span class="chip sec-chip">시장 전략 & 크레딧</span>
+      <span class="chip" style="background:#f8d8dc; color:#10202b;">체크 -0.6</span>
+      <span class="chip">파급력 6</span>
+    </div>
+    <div class="cd" style="--ac:#d6203a;">
+      <div class="cd-e">골드만삭스 매크로 전략</div>
+      <div class="cd-t">골드만삭스 "추가 인상 1회 그쳐 소형 사이클 종료… 주식 초과 성과"</div>
+      <div class="cd-s">AI 인프라 투자가 2027년 초까지 물가 60bp 자극하나 하반기 소멸</div>
+      <div class="cd-l">긴축 사이클 조기 종료론</div>
+      <div class="cd-k">1회 후 종료</div>
+      <div class="cd-b">역사적으로 긴축 사이클의 조기 종료 국면에서 주식이 가장 우수</div>
+      <div class="cd-m">하드웨어 공급망 압박 완화로 단기 물가 충격은 2027년 하반기 중 완전 소멸 전망.</div>
+      <div class="cd-grid">
+        <div class="cd-r"><div class="cd-r-v">단 1회</div><div class="cd-r-t">추가 금리 인상</div><div class="cd-r-d">초소형 긴축</div></div>
+        <div class="cd-r"><div class="cd-r-v">+60bp</div><div class="cd-r-t">근원 PCE 압력</div><div class="cd-r-d">AI 인프라발</div></div>
+        <div class="cd-r"><div class="cd-r-v">27년 하반기</div><div class="cd-r-t">인플레 충격 소멸</div><div class="cd-r-d">공급망 압박 완화</div></div>
+        <div class="cd-r"><div class="cd-r-v">초과 성과</div><div class="cd-r-t">주식 자산 전망</div><div class="cd-r-d">역사적 패턴</div></div>
+      </div>
+      <div class="cd-ft"><span>Source: Goldman Sachs (Oct 2026)</span><span style="color:var(--ac);">@TNBfolio</span></div>
+    </div>
+    <div class="p-text">
+      <p><b>속보:</b> 골드만삭스는 시장의 3회 인상 베팅과 달리 연준의 추가 금리 인상은 1회에 그치며 초소형 긴축 사이클로 귀결될 것이라고 전망했다.</p>
+      <p>골드만삭스는 역사적으로 긴축 사이클의 조기 종료 국면에서 주식 자산이 뚜렷한 초과 성과를 기록했다고 진단했다.</p>
+      <p>AI 인프라 투자 물결이 메모리와 전력 수요를 통해 물가를 최대 60bp 자극하겠으나 이는 2027년 하반기 중 소멸될 것이라고 덧붙였다.</p>
+    </div>
+    <div class="p-q">'인상 사이클의 조기 마무리는 기술주에 일시적 안도감을 주나, AI 인프라발 60bp 물가 상승은 복병이다.'</div>
+    <div class="tag-bar"><span class="tag">골드만삭스</span><span class="tag">금리사이클</span><span class="tag">주식시장</span><span class="tag">AI물가</span></div>
+  </div>
+</section>
+
+<!-- n23 -->
+<section class="sheet" id="n23">
+  <div class="sheet-head">
+    <div class="nav-btns">
+      <a class="nav-link" href="#n22">이전</a>
+      <a class="nav-link" href="#n24">다음</a>
+      <span>23 / 25</span>
+    </div>
+    <a class="close-btn" href="#">&times;</a>
+  </div>
+  <div class="sheet-body">
+    <div class="chip-bar">
+      <span class="chip sec-chip">시장 전략 & 크레딧</span>
+      <span class="chip" style="background:#f3b4bc; color:#10202b;">리스크 -1.2</span>
+      <span class="chip">파급력 5</span>
+    </div>
+    <div class="cd" style="--ac:#d6203a;">
+      <div class="cd-e">미국 주식 수급 분석</div>
+      <div class="cd-t">BofA "개인 주식 투매 및 마진부채 둔화… 중간선거 후 안도 랠리"</div>
+      <div class="cd-s">방어주 자금 쏠림으로 버블 심화, 단기 정책 불확실성 해소 기대</div>
+      <div class="cd-l">투심 위축과 반등 조건</div>
+      <div class="cd-k">마진부채 둔화</div>
+      <div class="cd-b">증시 급락에 앞서 나타나는 마진부채 고점 현상이 5월 이후 지속</div>
+      <div class="cd-m">개인 투자자의 펀드 이탈이 이어지고 있으나 선거 종료 후 안도 랠리 가능성 상존.</div>
+      <div class="cd-grid">
+        <div class="cd-r"><div class="cd-r-v">자금 유출</div><div class="cd-r-t">주식 펀드 수급</div><div class="cd-r-d">개인 투매 지속</div></div>
+        <div class="cd-r"><div class="cd-r-v">안도 랠리</div><div class="cd-r-t">중간선거 이후</div><div class="cd-r-d">불확실성 해소</div></div>
+      </div>
+      <div class="cd-ft"><span>Source: Bank of America (Oct 2026)</span><span style="color:var(--ac);">@TNBfolio</span></div>
+    </div>
+    <div class="p-text">
+      <p><b>속보:</b> 뱅크오브아메리카는 개인 투자자의 투매로 미국 주식 펀드에서 대규모 자금 유출이 이어졌으며 통신 서비스의 유출 폭이 두드러졌다고 분석했다.</p>
+      <p>BofA는 증시 급락 전 나타나는 마진부채 증가세의 고점 둔화 현상이 5월 이후 뚜렷하게 관측되고 있다고 경고했다.</p>
+      <p>다만 중간선거 완료에 따른 정책적 불확실성 해소가 안도 랠리를 견인해 위험자산의 단기 반등을 이끌 수 있다고 설명했다.</p>
+    </div>
+    <div class="p-q">'마진부채 둔화는 레버리지 청산 압력을 뜻하지만 선거 후 불확실성 해소는 단기 기술적 반등의 기회가 된다.'</div>
+    <div class="tag-bar"><span class="tag">BofA</span><span class="tag">마진부채</span><span class="tag">수급분석</span><span class="tag">중간선거</span></div>
+  </div>
+</section>
+
+<!-- n24 -->
+<section class="sheet" id="n24">
+  <div class="sheet-head">
+    <div class="nav-btns">
+      <a class="nav-link" href="#n23">이전</a>
+      <a class="nav-link" href="#n25">다음</a>
+      <span>24 / 25</span>
+    </div>
+    <a class="close-btn" href="#">&times;</a>
+  </div>
+  <div class="sheet-body">
+    <div class="chip-bar">
+      <span class="chip sec-chip">시장 전략 & 크레딧</span>
+      <span class="chip" style="background:#d5f0e8; color:#10202b;">체크 +0.6</span>
+      <span class="chip">파급력 4</span>
+    </div>
+    <div class="cd" style="--ac:#13a688;">
+      <div class="cd-e">월가 증시 타깃</div>
+      <div class="cd-t">UBS "연준 2회 추가 인상 단행해도 S&P 500은 2027년 8,400 도달"</div>
+      <div class="cd-s">긴축 기조를 이겨내는 기업 실적 체력과 펀더멘털 신뢰</div>
+      <div class="cd-l">실적 주도 강세장 견지</div>
+      <div class="cd-k">8,400선</div>
+      <div class="cd-b">통화 긴축의 역풍을 뚫고 미국 기업 이익 모멘텀 지속</div>
+      <div class="cd-m">2027년 중반까지 두 차례의 금리 인상이 단행되더라도 지수의 중장기 상승 경로는 훼손되지 않는다는 시각.</div>
+      <div class="cd-grid">
+        <div class="cd-r"><div class="cd-r-v">8,400</div><div class="cd-r-t">S&P 500 목표</div><div class="cd-r-d">2027년 6월</div></div>
+        <div class="cd-r"><div class="cd-r-v">2회 인상</div><div class="cd-r-t">연준 추가 긴축</div><div class="cd-r-d">27년 중반까지</div></div>
+      </div>
+      <div class="cd-ft"><span>Source: UBS (Oct 2026)</span><span style="color:var(--ac);">@TNBfolio</span></div>
+    </div>
+    <div class="p-text">
+      <p><b>속보:</b> 스위스 투자은행 UBS는 연준이 2027년 중반까지 두 차례의 추가 금리 인상을 단행할 것으로 전망하면서도 증시 강세장을 점쳤다.</p>
+      <p>UBS는 통화 긴축 지속에도 불구하고 S&P 500 지수가 2027년 6월까지 8,400선에 도달할 것으로 본다고 분석했다.</p>
+      <p>이는 금리 부담보다 기업들의 강력한 실적 성장이 증시를 강력히 견인할 것이라는 강세론적 시각을 반영한다.</p>
+    </div>
+    <div class="p-q">'연준의 2회 추가 인상을 감내하고도 8,400을 전망하는 근거는 오직 견고한 테크 실적 모멘텀에 있다.'</div>
+    <div class="tag-bar"><span class="tag">UBS</span><span class="tag">SP500</span><span class="tag">타깃주가</span><span class="tag">실적장세</span></div>
+  </div>
+</section>
+
+<!-- n25 -->
+<section class="sheet" id="n25">
+  <div class="sheet-head">
+    <div class="nav-btns">
+      <a class="nav-link" href="#n24">이전</a>
+      <a class="nav-link disabled" href="#">다음</a>
+      <span>25 / 25</span>
+    </div>
+    <a class="close-btn" href="#">&times;</a>
+  </div>
+  <div class="sheet-body">
+    <div class="chip-bar">
+      <span class="chip sec-chip">시장 전략 & 크레딧</span>
+      <span class="chip" style="background:#f8d8dc; color:#10202b;">체크 -0.6</span>
+      <span class="chip">파급력 4</span>
+    </div>
+    <div class="cd" style="--ac:#d6203a;">
+      <div class="cd-e">통화정책 커뮤니케이션 분석</div>
+      <div class="cd-t">닐 두타 "워시 의장 소통 불투명성으로 시장 혼선… 깜짝 인상 필요"</div>
+      <div class="cd-s">가이던스 거부는 기존 연준 체제 수용 태도, 동결 정당성 입증 촉구</div>
+      <div class="cd-l">정책 커뮤니케이션 결여 비판</div>
+      <div class="cd-k">신호 혼선</div>
+      <div class="cd-b">12월 깜짝 인상이 현실화되어야 비로소 진정한 워시 체제의 확립</div>
+      <div class="cd-m">사전 가이던스 결여가 시장의 변동성을 키우고 정책 예측 가능성을 떨어뜨린다고 지적.</div>
+      <div class="cd-grid">
+        <div class="cd-r"><div class="cd-r-v">불투명</div><div class="cd-r-t">의장 소통 방식</div><div class="cd-r-d">시장 혼선 야기</div></div>
+        <div class="cd-r"><div class="cd-r-v">12월 인상</div><div class="cd-r-t">체제 확립 신호</div><div class="cd-r-d">행동 입증 촉구</div></div>
+      </div>
+      <div class="cd-ft"><span>Source: Neil Dutta, Renaissance Macro (Oct 2026)</span><span style="color:var(--ac);">@TNBfolio</span></div>
+    </div>
+    <div class="p-text">
+      <p><b>속보:</b> 닐 두타 르네상스 매크로 리서치 경제학 책임자는 케빈 워시 의장의 불투명한 커뮤니케이션으로 시장이 통화정책 신호 해석에 상당한 혼선을 겪고 있다고 비판했다.</p>
+      <p>두타 책임자는 가이던스 예단을 거부한 것은 기존 연준 3인방 체제의 기조를 사실상 수용한 것이라고 평가했다.</p>
+      <p>아울러 12월 깜짝 금리 인상이 현실화되어야 비로소 진정한 워시 체제가 확립되었다는 신호로 볼 수 있다고 덧붙였다.</p>
+    </div>
+    <div class="p-q">'연준의 불투명한 포워드 가이던스는 통화정책 회의마다 금융시장의 변동성 스파이크를 촉발하는 화약고다.'</div>
+    <div class="tag-bar"><span class="tag">르네상스매크로</span><span class="tag">케빈워시</span><span class="tag">가이던스</span><span class="tag">변동성</span></div>
+  </div>
+</section>
+
+<!-- Dim overlay for sheets -->
+<a class="sheet-dim" href="#"></a>
+
+<script>
+// Filter Function
+function filterTiles(type, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const tiles = document.querySelectorAll('.tile');
+  tiles.forEach(t => {
+    const s = parseFloat(t.getAttribute('data-s'));
+    const ai = t.getAttribute('data-ai') === '1';
+    let show = true;
+    if (type === 'ai') show = ai;
+    else if (type === 'opp') show = (s >= 1.0);
+    else if (type === 'risk') show = (s <= -1.0);
+    if (show) t.classList.remove('hidden');
+    else t.classList.add('hidden');
+  });
+}
+
+// ESC to close sheet
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape') window.location.hash = '';
+});
+
+// Download HTML
+function downloadHTML() {
+  const blob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '261028_매크로전략_히트맵.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+</script>
+</body>
+</html>
