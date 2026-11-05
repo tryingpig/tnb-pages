@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1100">
+<title>뉴욕증시 주도섹터 분석 · 2026.11.05</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700;900&family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --white:#ffffff;
+    --ink:#1f1d1a;
+    --ink-soft:#4a463f;
+    --gray:#8a857c;
+    --line:#e0dcd4;
+    --panel:#f8f7f5;
+    --panel2:#f0eeeb;
+    --dark:#1a1814;
+    --up:#1d8a4e;
+    --down:#d13b2e;
+    --spx:#d4840a;
+    --gold:#b8860b;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  body{
+    background:var(--white);
+    color:var(--ink);
+    font-family:'Noto Sans KR',system-ui,sans-serif;
+    font-weight:400;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  .wrap{max-width:1100px;margin:0 auto;padding:0 60px 72px;}
+  .mono{font-family:'DM Mono',monospace;}
+
+  /* ---------- ① HEADER ---------- */
+  header{padding-top:66px;border-bottom:2px solid var(--dark);padding-bottom:30px;}
+  .eyebrow{
+    font-family:'DM Mono',monospace;font-size:10.5px;letter-spacing:.26em;
+    color:var(--gray);text-transform:uppercase;
+  }
+  .dateline{
+    font-family:'Noto Serif KR',serif;font-size:14px;color:#5d5850;
+    margin-top:16px;letter-spacing:.01em;
+  }
+  h1{
+    font-family:'Noto Serif KR',serif;font-weight:900;font-size:46px;
+    letter-spacing:-.025em;line-height:1.16;margin:6px 0 16px;
+  }
+  .lede{
+    font-size:14.5px;line-height:1.8;color:var(--ink-soft);max-width:790px;
+    word-break:keep-all;
+  }
+  .badges{display:flex;flex-wrap:wrap;gap:7px;margin-top:24px;}
+  .badge{
+    font-family:'DM Mono',monospace;font-size:11.5px;letter-spacing:.01em;
+    border:1px solid #e2ddd4;background:#fbfaf8;color:#6a655c;
+    padding:7px 11px;border-radius:3px;line-height:1;
+  }
+  .badge b{font-weight:500;color:var(--ink);margin-left:7px;}
+  .badge.down{border-color:#f2cbc6;background:#fdf1ef;color:#a2422f;}
+  .badge.down b{color:var(--down);}
+  .badge.warn{border-color:#ebdcae;background:#fdf9ea;color:#8a6a15;}
+  .badge.warn b{color:var(--gold);}
+  .head-note{
+    margin-top:14px;font-family:'DM Mono',monospace;font-size:10.5px;
+    color:#a8a29a;letter-spacing:.02em;
+  }
+
+  /* ---------- SECTION HEAD ---------- */
+  .sec-head{
+    display:flex;align-items:baseline;gap:12px;
+    margin:54px 0 18px;padding-bottom:9px;border-bottom:1px solid var(--line);
+  }
+  .sec-num{font-family:'DM Mono',monospace;font-size:11px;color:#b9b3a8;letter-spacing:.1em;}
+  .sec-title{font-family:'Noto Serif KR',serif;font-size:21px;font-weight:700;letter-spacing:-.015em;}
+  .sec-note{margin-left:auto;font-family:'DM Mono',monospace;font-size:10.5px;color:var(--gray);letter-spacing:.03em;}
+
+  /* ---------- ② MACRO ---------- */
+  .macro{background:var(--dark);border-radius:4px;padding:38px 42px 32px;color:#fff;}
+  .macro .m-label{
+    font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.22em;
+    color:rgba(255,255,255,.38);text-transform:uppercase;
+  }
+  .macro h2{
+    font-family:'Noto Serif KR',serif;font-size:24px;font-weight:700;line-height:1.5;
+    margin:12px 0 16px;letter-spacing:-.015em;color:#fdfcf9;
+  }
+  .macro p{font-size:13.8px;line-height:1.95;color:rgba(255,255,255,.76);word-break:keep-all;}
+  .macro p + p{margin-top:10px;}
+  .m-stats{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+    margin-top:30px;padding-top:22px;border-top:1px solid rgba(255,255,255,.13);
+  }
+  .m-stat{padding-left:18px;border-left:1px solid rgba(255,255,255,.10);}
+  .m-stat:first-child{padding-left:0;border-left:none;}
+  .m-k{font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:.14em;color:rgba(255,255,255,.42);text-transform:uppercase;}
+  .m-v{font-family:'DM Mono',monospace;font-size:22px;margin-top:9px;letter-spacing:-.02em;}
+  .m-s{font-family:'DM Mono',monospace;font-size:10.5px;margin-top:5px;color:rgba(255,255,255,.45);}
+  .dn{color:#f08070;}
+  .upc{color:#6ed99a;}
+  .nt{color:#e8e2d6;}
+
+  /* ---------- ③ CHART ---------- */
+  .chart{
+    background:var(--panel);border:1px solid var(--line);border-radius:4px;
+    padding:26px 30px 18px;
+  }
+  .legend{
+    display:flex;justify-content:flex-end;gap:18px;margin-bottom:16px;
+    font-family:'DM Mono',monospace;font-size:10px;color:var(--gray);letter-spacing:.05em;
+  }
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:-1px;}
+  .rows{border-top:1px solid #e8e4dc;}
+  .row{
+    display:grid;grid-template-columns:186px 1fr 68px;align-items:center;
+    padding:4.5px 0;border-bottom:1px solid #edeae3;
+  }
+  .row.spx{background:#fdf4e6;border-top:1px solid #f0d9b4;border-bottom:1px solid #f0d9b4;}
+  .r-name{
+    font-size:12.2px;color:#3d3934;padding-left:10px;letter-spacing:.005em;
+  }
+  .row.spx .r-name{font-weight:700;color:#8a5510;}
+  .track{position:relative;height:20px;}
+  .track:before{
+    content:"";position:absolute;left:52%;top:-4px;bottom:-4px;width:1px;
+    background:#c9c3b8;z-index:3;
+  }
+  .tick{position:absolute;top:-4px;bottom:-4px;width:1px;background:#e6e2da;z-index:1;}
+  .bar{
+    position:absolute;right:48%;top:4px;bottom:4px;
+    background:linear-gradient(270deg,#d9503f,#d13b2e);border-radius:3px 0 0 3px;
+    z-index:2;
+  }
+  .row.spx .bar{background:linear-gradient(270deg,#e09526,#d4840a);}
+  .r-val{
+    font-family:'DM Mono',monospace;font-size:12px;text-align:right;padding-right:8px;
+    color:var(--down);letter-spacing:-.01em;
+  }
+  .r-val.spx{color:var(--spx);font-weight:500;}
+  .axis{
+    display:grid;grid-template-columns:186px 1fr 68px;margin-top:6px;
+    font-family:'DM Mono',monospace;font-size:9px;color:#b3ada2;
+  }
+  .axis .ax{position:relative;height:14px;}
+  .axis .ax span{position:absolute;transform:translateX(-50%);}
+  .chart-foot{
+    margin-top:14px;padding-top:12px;border-top:1px dashed #ddd8cf;
+    font-family:'DM Mono',monospace;font-size:10px;line-height:1.7;color:#9a948b;letter-spacing:.01em;
+  }
+
+  /* ---------- ④ SECTOR CARDS ---------- */
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .card{
+    background:#fff;border:1px solid var(--line);border-top:3px solid var(--down);
+    border-radius:3px;padding:24px 24px 22px;
+  }
+  .card.up{border-top-color:var(--up);}
+  .c-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+  .c-name{font-family:'Noto Serif KR',serif;font-size:17px;font-weight:700;letter-spacing:-.01em;line-height:1.35;}
+  .c-name em{font-style:normal;font-size:13px;font-weight:400;color:#8a857c;margin-left:6px;}
+  .c-kr{display:block;font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:.14em;color:#b3ada2;margin-top:5px;text-transform:uppercase;}
+  .c-chg{font-family:'DM Mono',monospace;font-size:16px;white-space:nowrap;letter-spacing:-.02em;}
+  .c-chg.d{color:var(--down);}
+  .c-chg.u{color:var(--up);}
+  .c-body{font-size:12.9px;line-height:1.88;color:#44403a;margin-top:13px;word-break:keep-all;}
+  .c-body strong{font-weight:700;color:#1f1d1a;border-bottom:1px solid #e8dcc0;}
+  .box{background:var(--panel);border:1px solid #e8e4dc;border-radius:3px;padding:12px 14px;margin-top:15px;}
+  .box-k{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.16em;color:#9a948b;text-transform:uppercase;}
+  .stock{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:baseline;margin-top:9px;}
+  .st-t{font-family:'DM Mono',monospace;font-size:11.5px;color:#1f1d1a;font-weight:500;}
+  .st-n{font-size:11px;color:#8a857c;margin-left:7px;}
+  .st-p{font-family:'DM Mono',monospace;font-size:12px;color:#3d3934;}
+  .st-c{font-family:'DM Mono',monospace;font-size:12px;}
+  .st-m{font-family:'DM Mono',monospace;font-size:11px;color:#8a857c;}
+  .kv{display:flex;justify-content:space-between;gap:10px;margin-top:8px;font-family:'DM Mono',monospace;font-size:11px;}
+  .kv span:first-child{color:#8a857c;letter-spacing:.02em;}
+  .kv span:last-child{color:#2d2a26;}
+  .risk{background:#fdf1ef;border-left:3px solid var(--down);padding:11px 14px;margin-top:14px;border-radius:0 2px 2px 0;}
+  .risk-k{font-family:'DM Mono',monospace;font-size:8.5px;letter-spacing:.18em;color:#b0402f;text-transform:uppercase;}
+  .risk p{font-size:12.1px;line-height:1.78;color:#5e3a34;margin-top:6px;word-break:keep-all;}
+
+  .lead-grid{display:grid;grid-template-columns:1.3fr .82fr;gap:26px;margin-top:14px;}
+  .lead-card{padding:30px 32px 28px;}
+  .lead-main .c-body{margin-top:0;}
+  .lead-main .c-body + .c-body{margin-top:12px;}
+  .lead-side .box{margin-top:0;}
+  .lead-side .risk{margin-top:14px;}
+
+  /* ---------- ⑤ GEO ---------- */
+  .geo{background:#fdf6e3;border:1px solid #e8d89a;border-radius:4px;padding:30px 34px;}
+  .geo-k{font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:.22em;color:var(--gold);text-transform:uppercase;}
+  .geo h3{font-family:'Noto Serif KR',serif;font-size:20px;font-weight:700;margin:10px 0 12px;letter-spacing:-.015em;color:#5c4a12;}
+  .geo p{font-size:13px;line-height:1.92;color:#5a4b22;word-break:keep-all;}
+  .geo p + p{margin-top:9px;}
+
+  /* ---------- ⑥ ASSETS ---------- */
+  .assets{background:var(--panel2);border-radius:4px;padding:26px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .asset{background:#fff;border:1px solid #e2ddd4;border-radius:3px;padding:18px 18px 16px;}
+  .a-k{font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:.13em;color:#9a948b;text-transform:uppercase;}
+  .a-v{font-family:'DM Mono',monospace;font-size:21px;margin-top:9px;letter-spacing:-.025em;color:#1f1d1a;}
+  .a-v.d{color:var(--down);}
+  .a-v.u{color:var(--up);}
+  .a-v.g{color:var(--gold);}
+  .a-d{font-size:11.5px;line-height:1.6;color:#8a857c;margin-top:8px;word-break:keep-all;}
+
+  /* ---------- ⑦ INSIGHT ---------- */
+  .insight{background:#fdf0ee;border-left:4px solid var(--down);border-radius:0 4px 4px 0;padding:28px 32px;}
+  .i-k{font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:.2em;color:#b0402f;text-transform:uppercase;}
+  .insight h3{font-family:'Noto Serif KR',serif;font-size:20px;font-weight:700;margin:10px 0 12px;letter-spacing:-.015em;color:#7a2b20;}
+  .insight p{font-size:13px;line-height:1.95;color:#5a3730;word-break:keep-all;}
+  .insight p + p{margin-top:9px;}
+
+  /* ---------- ⑧ FOOTER ---------- */
+  footer{margin-top:56px;border-top:2px solid var(--dark);padding-top:18px;}
+  .f-line{display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:10.5px;color:#8a857c;letter-spacing:.03em;}
+  .f-disc{margin-top:10px;font-size:10.5px;color:#b3ada2;letter-spacing:.02em;}
+
+  @media print{
+    @page{size:A4;margin:12mm 10mm;}
+    html,body{background:#fff;}
+    .wrap{max-width:none;padding:0;}
+    header{padding-top:0;}
+    .card,.asset,.macro,.geo,.insight,.chart{break-inside:avoid;}
+    .sec-head{break-after:avoid;}
+  }
+</style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ① HEADER -->
+  <header>
+    <div class="eyebrow">New York Session · Sector Review</div>
+    <div class="dateline">2026년 11월 05일 목요일 · 미국 동부시간 종가 기준</div>
+    <h1>뉴욕증시 주도섹터 분석</h1>
+    <p class="lede">
+      민주당의 중간선거 압승 이후 AI 규제 공포가 확산하면서 3대 지수가 동반 급락했다.
+      이날 주도섹터는 <strong>커뮤니케이션 서비스 1개</strong>로, 12개 섹터가 전부 하락하는 가운데 낙폭을 -0.62%로 막아냈다.
+      기술 섹터는 반도체 폭락과 함께 -7.51%까지 밀렸다.
+    </p>
+    <div class="badges">
+      <div class="badge down">S&P 500 <b>-4.36%</b></div>
+      <div class="badge down">NASDAQ 100 <b>-6.40%</b></div>
+      <div class="badge down">DOW 30 <b>-3.44%</b></div>
+      <div class="badge down">PHLX SEMI <b>-12.25%</b></div>
+      <div class="badge down">시가총액 증발 <b>-$3.0조</b></div>
+      <div class="badge warn">VIX <b>27선 · +48%</b></div>
+    </div>
+    <div class="head-note">10Y 국채금리·NFP 수치는 이번 원문 자료에 포함되지 않아 배지에서 제외했다.</div>
+  </header>
+
+  <!-- ② MACRO SUMMARY -->
+  <div class="sec-head">
+    <span class="sec-num">02</span>
+    <span class="sec-title">Macro Summary</span>
+    <span class="sec-note">2026.11.05 CLOSE</span>
+  </div>
+
+  <section class="macro">
+    <div class="m-label">Today's Core Issue</div>
+    <h2>중간선거가 만든 AI 규제 공포, 업종 구분 없는 투매로 3대 지수 동반 붕괴</h2>
+    <p>
+      미국 민주당이 중간선거에서 압승한 뒤 인공지능 산업을 본격적으로 규제할 것이라는 공포가 확산하면서,
+      AI 테마는 무차별적인 투매의 대상이 됐다. AI와 거리를 두며 전날 급등했던 전통 산업군조차 이날은 매도세에 휩쓸렸고,
+      업종과 산업을 불문하고 일단 던지고 보는 급락장이 연출됐다.
+    </p>
+    <p>
+      다우존스30산업평균지수는 1,833.06포인트(3.44%) 내린 51,523.06, S&amp;P 500지수는 334.89포인트(4.36%) 빠진 7,353.73,
+      나스닥 종합지수는 1,421.52포인트(5.52%) 주저앉은 24,315.00에 마감했다.
+      필라델피아 반도체지수는 12.25% 폭락한 9,011.14로, 지난 4월 28일 이후 처음으로 1만선 아래로 내려갔다.
+    </p>
+    <p>
+      장중 공포 지수는 한때 48% 급등하며 27선을 넘어섰고, 미국 증시에서는 하루 만에 3조 달러가 넘는 시가총액이 사라졌다.
+      매그니피센트7만 1조1천억 달러 규모의 가치를 잃었다.
+    </p>
+    <div class="m-stats">
+      <div class="m-stat">
+        <div class="m-k">S&amp;P 500</div>
+        <div class="m-v dn">-4.36%</div>
+        <div class="m-s">7,353.73</div>
+      </div>
+      <div class="m-stat">
+        <div class="m-k">NASDAQ 100</div>
+        <div class="m-v dn">-6.40%</div>
+        <div class="m-s">기술주 중심 붕괴</div>
+      </div>
+      <div class="m-stat">
+        <div class="m-k">VIX</div>
+        <div class="m-v dn">27선</div>
+        <div class="m-s">장중 +48%</div>
+      </div>
+      <div class="m-stat">
+        <div class="m-k">WTI (DEC)</div>
+        <div class="m-v upc">$90.52</div>
+        <div class="m-s">+2.72%</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ③ SECTOR CHART -->
+  <div class="sec-head">
+    <span class="sec-num">03</span>
+    <span class="sec-title">섹터별 등락률</span>
+    <span class="sec-note">Sector Performance of USA · Day's Change %</span>
+  </div>
+
+  <section class="chart">
+    <div class="legend">
+      <span><i style="background:#d13b2e"></i>하락 섹터</span>
+      <span><i style="background:#d4840a"></i>S&amp;P 500</span>
+    </div>
+
+    <div class="rows">
+      <div class="row">
+        <div class="r-name">Communication Services</div>
+        <div class="track"><span class="tick" style="left:35.3%"></span><span class="tick" style="left:18.7%"></span><div class="bar" style="width:3.80%"></div></div>
+        <div class="r-val">-0.62%</div>
+      </div>
+      <div class="row">
+        <div class="r-name">Consumer Defensive</div>
+        <div class="track"><span class="tick" style="left:35.3%"></span><span class="tick" style="left:18.7%"></span><div class="bar" style="width:4.17%"></div></div>
+        <div class="r-val">-0.68%</div>
+      </div>
+      <div class="row">
+        <div class="r-name">Utilities</div>
+        <div class="track"><span class="tick" style="left:35.3%"></span><span class="tick" style="left:18.7%"></span><div class="bar" style="width:5.21%"></div></div>
+        <div class="r-val">-0.85%</div>
+      </div>
+      <div class="row">
+        <div class="r-name">Real Estate</div>
+        <div class="track"><span class="tick" style="left:35.3%"></span><span class="tick" style="left:18.7%"></span><div class="bar" style="width:13.35%"></div></div>
+        <div class="r-val">-2.18%</div>
+      </div>
+      <div class="row">
+        <div class="r-name">Energy</div>
+        <div class="track"><span class="tick" style="left:35.3%"></span><span class="tick" style="left:18.7%"></span><div class="bar" style="width:13.97%"></div></div>
+        <div class="r-val">-2.28%</div>
+      </div>
+      <div class="row">
+        <div class="r-name">Healthcare</div>
+        <div class="track"><span class="tick" style="left:35.3%"></span><span class="tick" style="left:18.7%"></span><div class="bar" style="width:15.25%"></div></div>
+        <div class="r-val">-2.49%</div>
+      </div>
+      <div class="row">
+        <div class="r-name">Financial</div>
+        <div class="track"><span class="tick" style="left:35.3%"></span><span class="tick" style="left:18.7%"></span><div class="bar" style="width:17.03%"></div></div>
+        <div class="r-val">-2.78%</div>
+      </div>
+      <div class="row">
+        <div class="r-name">Basic Materials</div>
+        <div class="track"><span class="tick" style="left:35.3%"></span><span class="tick" style="left:18.7%"></span><div class="bar" style="width:18.93%"></div></div>
+        <div class="r-val">-3.09%</div>
+      </div>
+      <div class="row">
+        <div class="r-name">Industrials</div>
+        <div class="track"><span class="tick" style="left:35.3%"></span><span class="tick" style="left:18.7%"></span><div class="bar" style="width:25.30%"></div></div>
+        <div class="r-val">-4.13%</div>
+      </div>
+      <div class="row">
+        <div class="r-name">Consumer Cyclical</div>
+        <div class="track"><span class="tick" style="left:35.3%"></span><span class="tick" style="left:18.7%"></span><div class="bar" style="width:25.48%"></div></div>
+        <div class="r-val">-4.16%</div>
+      </div>
+      <div class="row spx">
+        <div class="r-name">S&amp;P 500</div>
+        <div class="track"><span class="tick" style="left:35.3%"></span><span class="tick" style="left:18.7%"></span><div class="bar" style="width:25.97%"></div></div>
+        <div class="r-val spx">-4.24%</div>
+      </div>
+      <div class="row">
+        <div class="r-name">Technology</div>
+        <div class="track"><span class="tick" style="left:35.3%"></span><span class="tick" style="left:18.7%"></span><div class="bar" style="width:46.00%"></div></div>
+        <div class="r-val">-7.51%</div>
+      </div>
+    </div>
+
+    <div class="axis">
+      <div></div>
+      <div class="ax">
+        <span style="left:1.3%">-7.5%</span>
+        <span style="left:18.7%">-5.0%</span>
+        <span style="left:35.3%">-2.5%</span>
+        <span style="left:52%">0.0%</span>
+        <span style="left:68.7%">+2.5%</span>
+        <span style="left:85.3%">+5.0%</span>
+      </div>
+      <div></div>
+    </div>
+
+    <div class="chart-foot">
+      Source · TNBFolio「Sector Performance of USA (Day's Change %)」 · 12개 섹터 전원 마이너스<br>
+      차트의 S&amp;P 500은 -4.24%로 표시되어 있으나, 종가 기준 지수 등락률은 -4.36%다. 차트 구간은 이미지 값을 그대로 사용했고,
+      배지·본문은 종가 기준 수치를 쓴다.
+    </div>
+  </section>
+
+  <!-- ④ SECTOR DEEP DIVE -->
+  <div class="sec-head">
+    <span class="sec-num">04</span>
+    <span class="sec-title">주도 섹터 심층 분석</span>
+    <span class="sec-note">당일 주도섹터 1개 · Communication Services</span>
+  </div>
+
+  <section class="cards-single">
+    <article class="card up lead-card">
+      <div class="c-head">
+        <div>
+          <div class="c-name">🎮 Communication Services <em>커뮤니케이션 서비스</em></div>
+          <span class="c-kr">Day's Leading Sector · 1 of 12 · Sector Proxy ESPO</span>
+        </div>
+        <div class="c-chg u">-0.62%</div>
+      </div>
+
+      <div class="lead-grid">
+        <div class="lead-main">
+          <p class="c-body">
+            이날 뉴욕증시의 주도섹터는 커뮤니케이션 서비스 <strong>단 1개</strong>였다. 12개 섹터가 전부 마이너스로 마감한 가운데
+            이 섹터만 낙폭을 1% 안쪽으로 묶었다. 지수(-4.36%) 대비 <strong>+3.74%p</strong> 선방한 셈이다.
+            규제 공포가 직접 겨냥한 곳은 반도체와 클라우드였고, 광고·게임·통신으로 구성된 이 섹터는 사거리 밖에 있었다.
+          </p>
+          <p class="c-body">
+            섹터 내부는 엇갈렸다. <strong>알파벳이 1.44% 하락</strong>에 그친 반면 <strong>메타는 6.04%</strong> 밀렸다.
+            여기에 <strong>유니티 소프트웨어가 13.5% 급등</strong>하며 게임·비디오 부문을 끌어올렸고,
+            이것이 섹터 전체를 방어주 대열의 선두로 밀어 올린 결정적 요인이었다.
+            섹터 프록시인 <strong>ESPO(VanEck Video Gaming and eSports ETF)</strong>가 이 흐름을 대표한다.
+          </p>
+          <div class="box">
+            <div class="box-k">Sector Positioning</div>
+            <div class="kv"><span>Sector Performance</span><span>-0.62%</span></div>
+            <div class="kv"><span>vs S&amp;P 500 (-4.36%)</span><span>+3.74%p</span></div>
+            <div class="kv"><span>Rank</span><span>1 / 12</span></div>
+            <div class="kv"><span>Sector Proxy</span><span>ESPO</span></div>
+          </div>
+        </div>
+
+        <aside class="lead-side">
+          <div class="box">
+            <div class="box-k">Leading Stock</div>
+            <div class="stock" style="grid-template-columns:1fr auto;row-gap:7px;">
+              <div><span class="st-t">U</span><span class="st-n">Unity Software Inc.</span></div>
+              <div class="st-c" style="color:#1d8a4e;text-align:right">+13.5%</div>
+              <div class="st-p">$48.19</div>
+              <div class="st-m" style="text-align:right">18.69B</div>
+            </div>
+          </div>
+          <div class="box" style="margin-top:14px;">
+            <div class="box-k">Sector Internals</div>
+            <div class="kv"><span>GOOGL</span><span style="color:#d13b2e">-1.44%</span></div>
+            <div class="kv"><span>META</span><span style="color:#d13b2e">-6.04%</span></div>
+            <div class="kv"><span>U</span><span style="color:#1d8a4e">+13.5%</span></div>
+          </div>
+          <div class="risk">
+            <div class="risk-k">Risk Factor</div>
+            <p>규제가 알고리즘 노출이나 광고 타기팅으로 확장되면 플랫폼 수익모델이 직접 타격을 받는다.
+            유니티의 13.5% 급등은 단일 종목 이벤트여서, 섹터 전체의 추세 전환으로 읽기는 이르다.</p>
+          </div>
+        </aside>
+      </div>
+    </article>
+  </section>
+
+  <!-- ⑤ GEOPOLITICAL -->
+  <div class="sec-head">
+    <span class="sec-num">05</span>
+    <span class="sec-title">지정학적 리스크</span>
+    <span class="sec-note">Gold Alert</span>
+  </div>
+
+  <section class="geo">
+    <div class="geo-k">Geopolitical Alert</div>
+    <h3>호르무즈 봉쇄 유지와 워싱턴 리더십 공백이 겹쳤다</h3>
+    <p>
+      이란은 7개 조건이 충족될 때까지 <strong>호르무즈 해협 봉쇄를 유지</strong>하겠다고 밝히며 협상 여지를 닫았다.
+      같은 날 해협 동쪽에서는 화재가 발생한 유조선 숫자가 늘었다는 보도가 나왔고, 브렌트유는 98달러를 넘어섰다.
+      이란은 카타르를 통해 핵 프로그램 관련 제안을 전달했고 미국이 이를 검토 중이라는 소식도 있었지만,
+      시장은 협상 기대보다 물류 차질에 무게를 뒀다.
+    </p>
+    <p>
+      여기에 중간선거 참패 이후 <strong>루비오 국무장관의 사임 가능성</strong>, 헤그세스 국방장관에 대한 탄핵 표결 가능성까지 겹치며
+      정책 불확실성이 커졌다. 영란은행은 중동 분쟁이 확대되면 영국 물가상승률이 6.2%까지 오를 수 있다고 경고했다.
+      유가·해상운임·정치 리스크가 동시에 움직이는 국면이라, 에너지와 운송 비용의 상방 압력은 당분간 유지될 전망이다.
+    </p>
+  </section>
+
+  <!-- ⑥ ASSETS -->
+  <div class="sec-head">
+    <span class="sec-num">06</span>
+    <span class="sec-title">주요 자산군 성과</span>
+    <span class="sec-note">원문 수치 그대로 인용</span>
+  </div>
+
+  <section class="assets">
+    <div class="asset">
+      <div class="a-k">WTI Crude (DEC)</div>
+      <div class="a-v u">$90.52</div>
+      <div class="a-d">+2.40달러, +2.72%. 호르무즈 봉쇄 장기화가 상방 요인.</div>
+    </div>
+    <div class="asset">
+      <div class="a-k">Brent Crude</div>
+      <div class="a-v u">$98.29</div>
+      <div class="a-d">+3.67달러, +3.88%. 100달러선을 눈앞에 둠.</div>
+    </div>
+    <div class="asset">
+      <div class="a-k">Bitcoin</div>
+      <div class="a-v d">&lt;$76,000</div>
+      <div class="a-d">장중 -5.8%, 7주 최저. 기술주 매도가 크립토로 전이.</div>
+    </div>
+    <div class="asset">
+      <div class="a-k">VIX</div>
+      <div class="a-v d">27선</div>
+      <div class="a-d">장중 +48%. 2025년 4월 4일 이후 최대 상승폭.</div>
+    </div>
+    <div class="asset">
+      <div class="a-k">12월 인상 확률</div>
+      <div class="a-v g">67%</div>
+      <div class="a-d">중간선거 직전 80%대에서 하락.</div>
+    </div>
+    <div class="asset">
+      <div class="a-k">4-Week T-Bill</div>
+      <div class="a-v n">3.89%</div>
+      <div class="a-d">직전 3.910%에서 소폭 하락.</div>
+    </div>
+  </section>
+
+  <!-- ⑦ INSIGHT -->
+  <div class="sec-head">
+    <span class="sec-num">07</span>
+    <span class="sec-title">인사이트</span>
+    <span class="sec-note">Rotation or De-risking</span>
+  </div>
+
+  <section class="insight">
+    <div class="i-k">Key Insight</div>
+    <h3>커뮤니케이션 서비스 한 곳만 버틴 하루, 그것은 로테이션이 아니라 디레버리징이었다</h3>
+    <p>
+      이날 시장의 답은 명확했다. AI 밸류에이션에 의문이 제기되자 자금은 반도체에서 빠져나와
+      필수소비재·유틸리티·커뮤니케이션으로 이동했다. 문제는 그 방어주조차 마이너스로 마감했다는 점이다.
+      상위 3개 섹터가 모두 하락한 것은 자금이 업종 간에 순환한 것이 아니라, 위험자산 전체에서 빠져나갔다는 신호다.
+    </p>
+    <p>
+      다음 확인 지점은 두 가지다. AI 규제 법안의 초안이 어느 정도 강도로 나오는지, 그리고 12월 금리 인상 확률 67%가
+      추가로 후퇴하는지다. 규제가 광고·클라우드·반도체 중 어디까지 적용되는지에 따라 기술 섹터의 낙폭 회복 속도가 갈린다.
+      그 전까지는 방어주 비중을 유지하되, 유가발 인플레이션 재점화 가능성을 함께 감시해야 한다.
+    </p>
+  </section>
+
+  <!-- ⑧ FOOTER -->
+  <footer>
+    <div class="f-line">
+      <span>NYSE Sector Analysis · 2026.11.05 · by TNBFolio</span>
+      <span>COMMUNICATION SERVICES · LEADING SECTOR</span>
+    </div>
+    <div class="f-disc">본 자료는 투자 참고 목적이며, 투자 권유가 아니다.</div>
+  </footer>
+
+</div>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
