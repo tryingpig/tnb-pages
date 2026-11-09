@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>11.09 매크로 &amp; 전략 Brief — 발언자 히트맵</title>
+<style>
+:root{
+  --ink:#10202b; --ink2:#28414f; --ink3:#5c7383;
+  --page:#e9edef; --card:#ffffff; --line:#dbe3e7;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--page);color:var(--ink);
+  font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.wrap{max-width:1720px;margin:0 auto;padding:20px 24px 80px}
+
+/* ---------- page header ---------- */
+.hd{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;row-gap:8px;
+    padding:4px 2px 14px;border-bottom:3px solid var(--ink);margin-bottom:18px}
+.hd .k{font-size:11px;font-weight:800;letter-spacing:.22em;color:var(--ink3)}
+.hd h1{margin:6px 0 4px;font-size:34px;line-height:1.1;font-weight:900;letter-spacing:-.03em}
+.hd .sub{font-size:13.5px;color:var(--ink3);font-weight:600}
+.lg{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end;row-gap:6px;max-width:860px}
+.lg .it{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--ink2);letter-spacing:.02em}
+.lg .sw{width:14px;height:14px;border-radius:2px;border:2px solid #fff;box-shadow:inset 0 0 0 1px rgba(16,32,43,.10)}
+.lg .hint{font-size:11.5px;color:var(--ink3);font-weight:600;border-left:1px solid #cbd6dc;padding-left:10px}
+
+/* ---------- category ---------- */
+.cat{margin:0 0 26px}
+.cath{display:flex;align-items:baseline;gap:10px;padding:0 2px 8px;flex-wrap:wrap}
+.cath .cn{font-size:11px;font-weight:900;letter-spacing:.1em;color:#fff;background:var(--ink);padding:3px 6px;border-radius:2px}
+.cath h2{margin:0;font-size:17px;font-weight:900;letter-spacing:-.02em}
+.cath .ce{font-size:10.5px;font-weight:800;letter-spacing:.14em;color:var(--ink3)}
+.cath .cc{margin-left:auto;font-size:11.5px;font-weight:700;color:var(--ink3)}
+
+/* ---------- rows + tiles ---------- */
+.srow{display:flex;gap:10px;margin-bottom:10px}
+.tile{
+  position:relative;flex:1 1 0;min-width:0;display:block;text-decoration:none;
+  border:2px solid #fff;border-radius:4px;padding:12px 16px 15px;
+  box-shadow:inset 0 0 0 1px rgba(16,32,43,.055), 0 1px 2px rgba(16,32,43,.05);
+  container-type:inline-size;
+  transition:transform .14s ease, box-shadow .14s ease;
+}
+.tile:hover{transform:translateY(-2px);box-shadow:inset 0 0 0 1px rgba(16,32,43,.10), 0 8px 18px rgba(16,32,43,.16)}
+.tile:focus-visible{outline:3px solid #1c6b45;outline-offset:2px}
+
+.k-r3{background:#f3b4bc}
+.k-r2{background:#f8ced4}
+.k-r1{background:#fbe3e6}
+.k-c{background:#e8efea}
+.k-o1{background:#d9ecdf}
+.k-o2{background:#c4e6d1}
+
+.bdg{float:right;margin:0 0 4px 8px;padding:2px 7px 3px;border-radius:3px;
+     font-size:11.5px;font-weight:900;letter-spacing:.01em;white-space:nowrap;
+     background:rgba(255,255,255,.82);box-shadow:0 1px 0 rgba(16,32,43,.07)}
+.bdg.b-r{color:#94152b}
+.bdg.b-c{color:#3a5a49}
+.bdg.b-o{color:#1a6544}
+
+.tn{display:block;font-size:18.5px;line-height:1.2;font-weight:800;letter-spacing:-.025em;color:#0d1f2a;word-break:keep-all;overflow-wrap:break-word}
+.tn em{font-style:normal;font-weight:600;font-size:.78em;letter-spacing:-.01em;color:#36505f}
+
+.tsum{margin:8px 0 0;padding:0;list-style:none}
+.tsum li{position:relative;padding-left:12px;font-size:16px;line-height:1.34;font-weight:500;
+         color:#16303e;word-break:keep-all;white-space:normal;overflow-wrap:break-word}
+.tsum li+li{margin-top:3px}
+.tsum li::before{content:"";position:absolute;left:1px;top:.52em;width:4px;height:4px;border-radius:50%;background:#5c7787}
+
+@container (min-width:400px){
+  .tn{font-size:22px}
+  .tn em{font-size:.7em}
+  .tsum li{font-size:20px}
+  .bdg{font-size:12px}
+}
+@container (min-width:640px){
+  .tn{font-size:25px}
+  .tn em{font-size:.66em}
+  .tsum li{font-size:23px}
+  .bdg{font-size:12.5px}
+}
+
+/* ---------- sheet ---------- */
+.sheet{
+  position:fixed;top:0;right:0;bottom:0;width:min(580px,100%);background:#fff;z-index:60;
+  transform:translateX(103%);transition:transform .3s cubic-bezier(.22,.7,.3,1);
+  overflow-y:auto;overscroll-behavior:contain;padding:0 22px 44px;
+  box-shadow:-16px 0 44px rgba(16,32,43,.22);border-left:2px solid #fff;
+}
+.sheet:target{transform:none}
+.snav{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:6px;
+      background:#fff;padding:10px 0 10px;border-bottom:1px solid #e6ebee}
+.nv,.cl{display:inline-flex;align-items:center;height:25px;font-size:11.5px;font-weight:800;text-decoration:none;color:#2b4655;
+        border:1px solid #d9e2e7;border-radius:3px;padding:0 8px;background:#f7f9fa;line-height:1}
+.nv:hover,.cl:hover{background:#eef2f4}
+.cl{margin-left:0}
+.cnt{margin-left:auto;margin-right:auto;font-size:11px;font-weight:800;letter-spacing:.08em;color:#7d919e}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 0}
+.chip{display:inline-flex;align-items:center;height:24px;font-size:11px;font-weight:800;letter-spacing:.02em;padding:0 8px;border-radius:3px;line-height:1;
+      background:#eef2f4;color:#33505f;border:1px solid #e2e9ed}
+.chip.b-r{background:#fbe3e6;color:#94152b;border-color:#f4ccd2}
+.chip.b-c{background:#e8efea;color:#3a5a49;border-color:#d8e5dc}
+.chip.b-o{background:#d9ecdf;color:#1a6544;border-color:#c6e3d1}
+.chip.cat{background:#10202b;color:#fff;border-color:#10202b}
+.chip.ai{background:#eef1fb;color:#33427e;border-color:#dde3f6}
+.chip.ai.dim{background:#f4f6f7;color:#7d919e;border-color:#e8edf0}
+
+.phd{margin:0}
+.kick{font-size:10.5px;font-weight:900;letter-spacing:.19em;color:#7d919e;margin:20px 0 8px}
+.sheet h2{margin:0;font-size:26px;line-height:1.26;font-weight:900;letter-spacing:-.03em;color:#0d1f2a}
+.subl{margin:9px 0 0;font-size:14.5px;line-height:1.68;color:#3a5463;font-weight:500;word-break:keep-all}
+.cd-r{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0 0}
+.cd{background:#f6f8f9;border:1px solid #e4eaee;border-radius:4px;padding:9px 10px}
+.cd .k{display:block;font-size:10px;font-weight:800;letter-spacing:.06em;color:#7d919e}
+.cd .v{display:block;margin-top:4px;font-size:13.5px;font-weight:800;color:#10202b;word-break:keep-all}
+.p-b{margin:20px 0 0;border-top:2px solid #10202b;padding-top:10px}
+.p-lbl{font-size:10.5px;font-weight:900;letter-spacing:.12em;color:#7d919e;margin-bottom:10px}
+.grp ul{margin:0;padding:0;list-style:none}
+.grp li{position:relative;padding-left:15px;font-size:14.5px;line-height:1.7;font-weight:500;
+        color:#17303e;word-break:keep-all;overflow-wrap:break-word}
+.grp li+li{margin-top:5px}
+.grp li::before{content:"-";position:absolute;left:0;top:0;color:#7d95a4;font-weight:900}
+.grp+.grp{margin-top:13px;padding-top:13px;border-top:1px dashed #c9d4db}
+.src{margin-top:24px;padding-top:12px;border-top:1px solid #e6ebee;font-size:11.5px;line-height:1.7;color:#7d919e;font-weight:600}
+.src .sl{color:#2b4655;font-weight:800;text-decoration:none;border-bottom:1px solid #cbd6dc}
+
+.scrim{position:fixed;inset:0;background:rgba(16,32,43,.44);z-index:55;
+       opacity:0;pointer-events:none;transition:opacity .26s ease}
+body:has(.sheet:target) .scrim{opacity:1;pointer-events:auto}
+body:has(.sheet:target){overflow:hidden}
+
+/* ---------- footer ---------- */
+.foot{margin-top:8px;padding:16px 2px 0;border-top:1px solid #cbd6dc;display:flex;gap:14px;
+      flex-wrap:wrap;align-items:baseline;font-size:11.5px;color:#7d919e;font-weight:600}
+.foot a{color:#2b4655;font-weight:800;text-decoration:none;border-bottom:1px solid #cbd6dc}
+
+@media (max-width:1180px){
+  .srow{flex-wrap:wrap}
+  .tile{flex:1 1 calc(50% - 5px)}
+}
+@media (max-width:760px){
+  .wrap{padding:14px 12px 60px}
+  .hd h1{font-size:26px}
+  .tile{flex:1 1 100%}
+  .cd-r{grid-template-columns:1fr}
+  .sheet{padding:0 16px 40px}
+  .sheet h2{font-size:22px}
+}
+</style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hd">
+  <div>
+    <div class="k">DAILY MACRO &amp; STRATEGY BRIEF</div>
+    <h1>11.09 매크로 &amp; 전략 Brief</h1>
+    <div class="sub">발언자 히트맵 · 33명 · 78개 주제 그룹 · 217개 발언</div>
+  </div>
+  <div class="lg">
+    <span class="it"><span class="sw" style="background:#f3b4bc"></span>리스크 강</span>
+    <span class="it"><span class="sw" style="background:#f8ced4"></span>리스크</span>
+    <span class="it"><span class="sw" style="background:#fbe3e6"></span>리스크 약</span>
+    <span class="it"><span class="sw" style="background:#e8efea"></span>체크</span>
+    <span class="it"><span class="sw" style="background:#c4e6d1"></span>기회</span>
+    <span class="hint">타일 클릭 → 원문 전체</span>
+  </div>
+</header>
+
+
+<section class="cat">
+  <div class="cath"><span class="cn">01</span><h2>정치, 국제 외교, 매크로</h2><span class="ce">POLITICS · GEOPOLITICS · MACRO</span><span class="cc">9명</span></div>
+  <div class="srow"><a class="tile k-r3" href="#n1"><span class="bdg b-r">리스크 −2.1</span><span class="tn"><span class="nm">Donald Trump</span> <em>(미국 대통령)</em></span><ul class="tsum"><li>투표 시스템 논란 — 사전조사 신뢰 훼손</li><li>중간선거 직후 미 증시 3조 달러 증발</li><li>이란: 외교·군사 병행, 교량 38개 타격 목표</li><li>우크라이나: 아부다비 회담 후 종전 국면</li><li>AI: 미국 우위 유지·가드레일 수용</li></ul></a><a class="tile k-r3" href="#n2"><span class="bdg b-r">리스크 −1.4</span><span class="tn"><span class="nm">Marco Rubio</span> <em>(미국 국무장관)</em></span><ul class="tsum"><li>AI: 규제 확대보다 업계 주도 파트너십</li><li>이스라엘 MOU 협상 — 원조 수준 재설정</li><li>이란 요구 비현실적, 협상 성과 미진</li><li>미군 위협 시 자위권 단호 대응</li></ul></a><a class="tile k-c" href="#n3"><span class="bdg b-c">체크 −0.4</span><span class="tn"><span class="nm">Hakeem Jeffries</span> <em>(미국 민주당 하원 원내대표)</em></span><ul class="tsum"><li>엔비디아 안보 우려 — 의회 정보 확보 시급</li><li>기존 브리핑은 이란 중심, 정밀 조사 필요</li><li>상원 NDAA 대중 반도체 규제 지지</li></ul></a></div><div class="srow"><a class="tile k-c" href="#n4"><span class="bdg b-c">체크 −0.3</span><span class="tn"><span class="nm">Matthew Miller</span> <em>(미국 국무부 대변인)</em></span><ul class="tsum"><li>디트로이트 레바논 영사 기피인물 지정</li><li>테러 옹호 인사 위한 공간 없음</li><li>주미 외교관 정밀 검토 지속</li></ul></a><a class="tile k-r2" href="#n5"><span class="bdg b-r">리스크 −0.8</span><span class="tn"><span class="nm">Jean-Noël Barrot</span> <em>(프랑스 외무장관)</em></span><ul class="tsum"><li>냉장고 사이버 공격 배후 = 이란 IRGC</li><li>주불 대사 초치, 명확한 대가 예고</li><li>EU 차원 대이란 제재 추진</li></ul></a><a class="tile k-c" href="#n6"><span class="bdg b-c">체크 +0.1</span><span class="tn"><span class="nm">Gadi Eisenkot</span> <em>(이스라엘 총리 지명자)</em></span><ul class="tsum"><li>비상국면 타개 — 강력·신선한 리더십</li><li>거국 비상정부 구성 주도</li><li>4대 원칙 동의 세력과 연대</li><li>실패 시 중대 위협 — 분기점 대응</li></ul></a></div><div class="srow"><a class="tile k-c" href="#n7"><span class="bdg b-c">체크 +0.3</span><span class="tn"><span class="nm">Isaac Herzog</span> <em>(이스라엘 대통령)</em></span><ul class="tsum"><li>안정 정부 구축 시급 — 국가 단결</li><li>가자 평화·레바논 협상·테러 대응 지속</li><li>안보·경제 위기, 신속한 국정 수습</li></ul></a><a class="tile k-c" href="#n8"><span class="bdg b-c">체크 −0.2</span><span class="tn"><span class="nm">Mao Ning</span> <em>(중국 외교부 대변인)</em></span><ul class="tsum"><li>엔비디아 스파이설 = 근거 없는 낭설</li><li>슬로바키아 외무장관 방중, 협력 지속</li><li>미·중·러 정상회담 당사국 소통</li></ul></a><a class="tile k-r2" href="#n9"><span class="bdg b-r">리스크 −1.1</span><span class="tn"><span class="nm">Esmail Baghaei</span> <em>(이란 외무부 대변인)</em></span><ul class="tsum"><li>농축 핵물질 국외 반출 절대 불가</li><li>아이언 게이트 = 정치적 술책</li><li>IAEA 사찰단 부셰르 원전 방문</li><li>한국, 중동 분쟁 개입 자제 촉구</li></ul></a></div>
+</section>
+
+<section class="cat">
+  <div class="cath"><span class="cn">02</span><h2>중앙은행</h2><span class="ce">CENTRAL BANK</span><span class="cc">5명</span></div>
+  <div class="srow"><a class="tile k-c" href="#n10"><span class="bdg b-c">체크 −0.6</span><span class="tn"><span class="nm">Thomas Barkin</span> <em>(리치먼드 연준 총재)</em></span><ul class="tsum"><li>수요 견조·인플레 압력, 신중한 운용</li><li>비용 전가 활발 — 물가 상방 리스크</li><li>정책금리 중립~소폭 완화적</li><li>12월 FOMC 미정, 데이터 대기</li></ul></a><a class="tile k-c" href="#n11"><span class="bdg b-c">체크 −0.5</span><span class="tn"><span class="nm">Austan Goolsbee</span> <em>(시카고 연준 총재)</em></span><ul class="tsum"><li>고용·성장 안정, 인플레 억제는 미진</li><li>서비스 물가 재상승 조짐 관찰</li><li>AI 데이터센터 = 전통적 수요 과열</li><li>과열엔 통상적 공격 대응 필요</li></ul></a><a class="tile k-c" href="#n12"><span class="bdg b-c">체크 −0.4</span><span class="tn"><span class="nm">Andrew Bailey</span> <em>(영국중앙은행 총재)</em></span><ul class="tsum"><li>AI, 사이버 위험 확대 — 엄격 테스트 필수</li><li>대중 신뢰는 인간 개입·통제장치</li><li>영국 경제 견고 — AI 투자 효과</li><li>자산 버블 = 명백한 금융안정 리스크</li></ul></a></div><div class="srow w2"><a class="tile k-o1" href="#n13"><span class="bdg b-o">기회 +0.4</span><span class="tn"><span class="nm">Klaas Knot</span> <em>(전 네덜란드 중앙은행 총재·차기 ECB 총재 후보)</em></span><ul class="tsum"><li>부채위기 시 새 정책도구로 적극 개입</li><li>OMT·TPI 가동, 재정적자 대체는 불가</li><li>고금리 선호론자 평가는 사실과 다름</li><li>유가 현 수준 유지 시 추가 인상 필요 낮음</li></ul></a><a class="tile k-c" href="#n14"><span class="bdg b-c">체크 −0.3</span><span class="tn"><span class="nm">Sarah Hunter</span> <em>(호주중앙은행 보좌총재)</em></span><ul class="tsum"><li>AI 수익률 미달 시 자산가격 급격 조정 위험</li><li>단기엔 AI 수요 자극이 인플레 압력</li><li>장기엔 설비 확충으로 중립 수렴</li><li>생산성·고용 변화 증거는 아직 제한적</li></ul></a></div>
+</section>
+
+<section class="cat">
+  <div class="cath"><span class="cn">03</span><h2>기업</h2><span class="ce">CORPORATES</span><span class="cc">5명</span></div>
+  <div class="srow"><a class="tile k-o1" href="#n15"><span class="bdg b-o">기회 +0.6</span><span class="tn"><span class="nm">Scott Nuttall</span> <em>(KKR 공동최고경영자)</em></span><ul class="tsum"><li>AI 투자 = 전체 자산 1~2%로 통제</li><li>데이터센터, 정부·우량기업 장기 임대</li><li>디지털 인프라 450억·전력 400억 달러</li><li>AI 취약 기업 선제 매각, 400억 달러 분배</li></ul></a><a class="tile k-o1" href="#n16"><span class="bdg b-o">기회 +0.5</span><span class="tn"><span class="nm">Eric Schmidt</span> <em>(전 구글 최고경영자·캘텍 이사회 의장)</em></span><ul class="tsum"><li>AI 혜택 설득 실패 — 위험 쟁점 과몰입</li><li>데이터센터는 외곽·자체 발전으로</li><li>항공·자동차式 제도적 규제 틀 필요</li><li>미국 개발사는 이미 엄격 규제 대상</li><li>연구 체계, 이번 분기부터 재편</li></ul></a><a class="tile k-r3" href="#n17"><span class="bdg b-r">리스크 −1.6</span><span class="tn"><span class="nm">Jensen Huang</span> <em>(엔비디아 최고경영자)</em></span><ul class="tsum"><li>개인 과오 사과, 변명 여지 없음</li><li>신뢰 회복에 경영 전념</li><li>중국은 적 아님 — 수출통제는 정책 실수</li></ul></a></div><div class="srow w2"><a class="tile k-c" href="#n18"><span class="bdg b-c">체크 +0.3</span><span class="tn"><span class="nm">엔비디아 이사회</span> <em>(Nvidia Board of Directors)</em></span><ul class="tsum"><li>사외이사·외부자문 주도 내부 조사</li><li>영업비밀 유출·안보 침해 정황 없음</li><li>CEO 전폭 협조, 경영진 신뢰 유지</li><li>사업 차질 없음 — CEO 직무 수행</li></ul></a><a class="tile k-c" href="#n19"><span class="bdg b-c">체크 −0.2</span><span class="tn"><span class="nm">Elon Musk</span> <em>(테슬라 최고경영자)</em></span><ul class="tsum"><li>사이버트럭 초과 주문분 환불</li><li>텍사스 설비 → 사이버캡 전환</li><li>사이버트럭 라인 8개월 내 종료</li></ul></a></div>
+</section>
+
+<section class="cat">
+  <div class="cath"><span class="cn">04</span><h2>금융 분석, 전략 및 전망</h2><span class="ce">RESEARCH · STRATEGY · OUTLOOK</span><span class="cc">14명</span></div>
+  <div class="srow"><a class="tile k-o1" href="#n20"><span class="bdg b-o">기회 +0.8</span><span class="tn"><span class="nm">David Solomon</span> <em>(골드만삭스 최고경영자)</em></span><ul class="tsum"><li>엔비디아, 기술 생태계 핵심 유지</li><li>미국 데이터센터 투자 견조</li><li>자본시장 열려 — 거래 흐름 주시</li></ul></a><a class="tile k-o2" href="#n21"><span class="bdg b-o">기회 +1.2</span><span class="tn"><span class="nm">Mike Wilson</span> <em>(모건스탠리 수석 전략가)</em></span><ul class="tsum"><li>밸류에이션 조정 7,100~7,300 최종 국면</li><li>연말 목표 8,000 유지, 반등 여건 구축</li><li>퀄리티 경기순환주 비중 확대</li><li>데이터센터 캐펙스 2028년까지 견조</li></ul></a><a class="tile k-r2" href="#n22"><span class="bdg b-r">리스크 −0.7</span><span class="tn"><span class="nm">Beichen Lin</span> <em>(러셀 인베스트먼트 전략가)</em></span><ul class="tsum"><li>화요일 CPI 상회 시 12월 인상 유력</li><li>고용 견조·회복력 → 강력 긴축 대응</li></ul></a></div><div class="srow"><a class="tile k-r1" href="#n23"><span class="bdg b-r">리스크 −0.6</span><span class="tn"><span class="nm">피치 레이팅스</span> <em>(Fitch Ratings)</em></span><ul class="tsum"><li>금리 상승 → 유럽 레버리지드 신용 압박</li><li>호르무즈 2027년 1분기 정상화 전망</li><li>2027년 하반기 재점화 리스크</li><li>비트코인, 해킹 충격에도 회복 탄력</li></ul></a><a class="tile k-o1" href="#n24"><span class="bdg b-o">기회 +0.4</span><span class="tn"><span class="nm">Mark Zandi</span> <em>(무디스 애널리틱스 수석 이코노미스트)</em></span><ul class="tsum"><li>민주당 장악에도 거부권 → 정책 급변 어려움</li><li>새 의회, 이란 개입 중단 압박</li><li>종전 시 가구당 2,200달러 부담 경감</li><li>부채한도 협상 주도권 변수</li></ul></a><a class="tile k-c" href="#n25"><span class="bdg b-c">체크 −0.3</span><span class="tn"><span class="nm">Stephanie Aliaga</span> <em>(JP모건 자산운용 글로벌 시장 전략가)</em></span><ul class="tsum"><li>데이터센터 인허가 모라토리엄 400건 돌파</li><li>지역 반발 → 공기 지연·자본비용 상승</li><li>AI 인프라 밸류체인 전반 구조적 이슈</li><li>다만 주 단위 입법 통과율은 낮아</li></ul></a></div><div class="srow"><a class="tile k-o2" href="#n26"><span class="bdg b-o">기회 +1.4</span><span class="tn"><span class="nm">골드만삭스</span> <em>(Goldman Sachs)</em></span><ul class="tsum"><li>코스피 고점 대비 44.5% 급락 — 위기급 저평가</li><li>12개월 선행 EPS 3.4% 상향</li><li>레버리지·투기 포지션 청산</li><li>반도체 PBR 0.7배, 최대 2배 상승 여력</li></ul></a><a class="tile k-o1" href="#n27"><span class="bdg b-o">기회 +0.5</span><span class="tn"><span class="nm">William Marshall</span> <em>(골드만삭스 전략가)</em></span><ul class="tsum"><li>채권 변동성 완화 — 금리 박스권 안착</li><li>미 10년물 4.75~5.0% 밴드</li><li>유럽 5년물 상대 강세</li><li>영국 길트, 유가 안정 시 지지</li></ul></a><a class="tile k-c" href="#n28"><span class="bdg b-c">체크 −0.4</span><span class="tn"><span class="nm">모건스탠리</span> <em>(Morgan Stanley)</em></span><ul class="tsum"><li>데이터센터 건설대출 직접 익스포저 축소</li><li>섹터 집중 신용위험 선제 차단</li><li>대출채권 분할 매각, CET1 방어</li><li>주선 수수료 중심 구조 강화</li></ul></a></div><div class="srow"><a class="tile k-o2" href="#n29"><span class="bdg b-o">기회 +1.1</span><span class="tn"><span class="nm">뱅크오브아메리카</span> <em>(Bank of America)</em></span><ul class="tsum"><li>필라델피아 반도체 -37%, 평균 조정 폭 상회</li><li>업종 PER 13.7배 — 시장 대비 22% 할인</li><li>추가 하방 최대 12%, 2027 1Q 저점 통과</li><li>선호: 엔비디아·AMD·브로드컴·마이크론·램리서치</li></ul></a><a class="tile k-r1" href="#n30"><span class="bdg b-r">리스크 −0.5</span><span class="tn"><span class="nm">레이먼드 제임스</span> <em>(Raymond James)</em></span><ul class="tsum"><li>엔비디아 스파이 보도 → 매치법 가속</li><li>초당적 지지, 신속 법제화 가능성</li></ul></a><a class="tile k-o1" href="#n31"><span class="bdg b-o">기회 +0.7</span><span class="tn"><span class="nm">Keith Parker</span> <em>(UBS 전략가)</em></span><ul class="tsum"><li>기술주 매도 = 포지셔닝 조정, 펀더멘털 아님</li><li>6~12개월 추가 상승 전개</li><li>단기 수급·밸류에이션 부담이 조정 유발</li></ul></a></div><div class="srow w2"><a class="tile k-c" href="#n32"><span class="bdg b-c">체크 −0.3</span><span class="tn"><span class="nm">Beata Manthey</span> <em>(씨티 글로벌 전략가)</em></span><ul class="tsum"><li>글로벌 기술주 '중립' 하향 — 수급 위험</li><li>재매수는 순매도 극단·규제 불확실성 해소 후</li><li>방어주 15% 아웃퍼폼, 바벨 전략</li><li>유럽 비중확대·S&amp;P 목표 8,100 유지</li></ul></a><a class="tile k-c" href="#n33"><span class="bdg b-c">체크 +0.2</span><span class="tn"><span class="nm">Sergio Ermotti</span> <em>(UBS 최고경영자)</em></span><ul class="tsum"><li>관심사는 인플레·금리로 회귀</li><li>AI 주가 조정, 과도한 우려 불필요</li><li>사모신용, 구조적 안정화 단계</li></ul></a></div>
+</section>
+
+<footer class="foot">
+  <span>11.09 매크로 &amp; 전략 Brief · 발언자 히트맵</span>
+  <span>Source: <a href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">naver.me/5NeS1WEz</a></span>
+  <span>표지 = 5줄 이내 압축 요약 · 패널 = 원문 100% 반영</span>
+</footer>
+</div>
+<div class="scrim"></div>
+
+
+<section class="sheet" id="n1" aria-label="Donald Trump">
+  <div class="snav">
+    <a class="nv" href="#n33">← 이전</a>
+    <a class="nv" href="#n2">다음 →</a>
+    <span class="cnt">01 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">정치, 국제 외교, 매크로</span>
+    <span class="chip b-r">리스크 −2.1</span>
+    <span class="chip ai">AI 규제·가드레일</span>
+  </div>
+  <div class="phd">
+    <div class="kick">POLITICS · US WHITE HOUSE</div>
+    <h2>이란 군사옵션 병행·우크라 종전 임박 — 3조 달러 증시 충격</h2>
+    <p class="subl">중간선거 직후 하루 만에 3조 달러가 사라진 가운데, 이란에는 외교와 군사 타격을 동시에 준비하고 우크라이나는 아부다비 회담을 분수령으로 종전 국면에 진입한다는 구상이다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">증시 충격</span><span class="v">3조 달러(1일)</span></div><div class="cd"><span class="k">이란 타격 목표</span><span class="v">교량 38개 포함</span></div><div class="cd"><span class="k">이란 잔존 전력</span><span class="v">미사일 10%·드론 15%</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 5개 그룹 / 17개 불릿</div><div class="grp"><ul><li>우편 및 조기 투표 문제로 사전 여론조사의 정확성에 의문이 든 상태다.</li><li>현재 투표 시스템 환경이 유권자보다 더 결정적인 영향을 미치고 있다.</li><li>미국 주식시장은 중간선거 직후 단 하루 만에 3조 달러 감소를 기록했다.</li></ul></div><div class="grp"><ul><li>카타르 및 사우디아라비아와 회담하며 이란 갈등의 외교적 종식을 추진하고 있으나 필요시 군사 타격 준비를 완벽히 갖춘 상태다.</li><li>군사 작전 재개에 대비해 이란 내 38개 교량을 포함한 핵심 인프라 목표물들을 이미 지정 완료했다.</li><li>현재 이란의 방공망은 파괴되었으며 미사일 10%와 드론 15% 전력만 남아 진정으로 합의를 원하는 상태다.</li><li>아이언 게이트 태스크포스와 해상 봉쇄를 통해 이란을 통제하며 하마스 무장 해제 및 종전을 위한 외교 채널을 지속 가동할 방침이다.</li></ul></div><div class="grp"><ul><li>내각 개편 의향이 일부 존재하나 피트 헤그세스 국방장관에 대한 탄핵 시도로부터 신뢰를 표명하며 적극 방어할 계획이다.</li><li>국무장관직은 마르코 루비오가 계속 유지할 것으로 본다.</li><li>과거 추방 정책의 강도 변화 가능성을 주시하고 있으며 일부 대변인 기용설은 사실이 아니다.</li><li>가족 소유 가상자산 기업에 대한 UAE 투자 연계성은 인지하지 못한 상태다.</li></ul></div><div class="grp"><ul><li>이번 주 아부다비 회담을 기점으로 우크라이나 전쟁이 조만간 종식 국면에 접어들 전망이다.</li><li>종전 이후 우크라이나는 과거와 다른 영토 및 체제 형태를 띨 것으로 보인다.</li><li>시진핑 중국 국가주석 및 블라디미르 푸틴 러시아 대통령과의 정상회담을 추진할 예정이다.</li></ul></div><div class="grp"><ul><li>미국의 AI 기술 우위는 선두를 유지 중이며 관련 시스템 위험은 충분히 관리 가능한 수준이다.</li><li>중국의 무규제 기조와 달리 기술 기업 모니터링을 면밀히 진행하며 적절한 가드레일 설치를 수용할 방침이다.</li><li>엔비디아 최고경영자와 제기된 의혹에 대해 직접 논의한 바 없으며 향후 순방 동행 여부는 미정 상태다.</li></ul></div></div>
+  <div class="src">Source: Donald Trump (미국 대통령) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n2" aria-label="Marco Rubio">
+  <div class="snav">
+    <a class="nv" href="#n1">← 이전</a>
+    <a class="nv" href="#n3">다음 →</a>
+    <span class="cnt">02 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">정치, 국제 외교, 매크로</span>
+    <span class="chip b-r">리스크 −1.4</span>
+    <span class="chip ai">AI 산업정책</span>
+  </div>
+  <div class="phd">
+    <div class="kick">DIPLOMACY · US STATE DEPT</div>
+    <h2>이란 협상 교착 — 자위권 행사·이스라엘 MOU 재조정</h2>
+    <p class="subl">이란의 요구가 비현실적이어서 협상 성과가 미진한 가운데, 미군 위협 시 자위권 차원의 단호한 대응과 함께 이스라엘 군사지원 MOU를 새로 짜고 있다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">이란 협상</span><span class="v">교착·진척 미진</span></div><div class="cd"><span class="k">이스라엘</span><span class="v">MOU 협상 중</span></div><div class="cd"><span class="k">AI 정책</span><span class="v">업계 주도 파트너십</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 3개 그룹 / 8개 불릿</div><div class="grp"><ul><li>인공지능 분야는 불필요한 관료주의와 규제 확대보다 업계 주도의 파트너십 구축이 필요하다.</li><li>AI 도입이 경제 전반에 미칠 충격과 파급효과에 대해 정책적 논의를 집중해야 한다.</li></ul></div><div class="grp"><ul><li>이스라엘에 대한 군사 지원 양해각서(MOU) 협상을 진행 중이다.</li><li>이스라엘의 방위 역량은 기존 미국의 군사적 원조 수준을 분명히 넘어선 상태다.</li></ul></div><div class="grp"><ul><li>이란 측의 요구 사항은 극히 비현실적이어서 현재 협상 성과가 매우 미진한 상황이다.</li><li>미국은 외교적 해법을 모색하되 국익을 위해 인기와 무관하게 필요한 결정을 단호히 내릴 것이다.</li><li>역내 미군에 대한 위협 발생 시 자위권 차원의 단호한 대응 권리를 행사할 방침이다.</li><li>정권 교체와 권력 분점은 국가 시스템의 자연스러운 특징이며 돌파구 마련 전까지 방어적 기조를 유지할 것이다.</li></ul></div></div>
+  <div class="src">Source: Marco Rubio (미국 국무장관) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n3" aria-label="Hakeem Jeffries">
+  <div class="snav">
+    <a class="nv" href="#n2">← 이전</a>
+    <a class="nv" href="#n4">다음 →</a>
+    <span class="cnt">03 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">정치, 국제 외교, 매크로</span>
+    <span class="chip b-c">체크 −0.4</span>
+    <span class="chip ai">반도체 수출통제</span>
+  </div>
+  <div class="phd">
+    <div class="kick">POLITICS · US CONGRESS</div>
+    <h2>엔비디아 안보 브리핑 요구 — NDAA 반도체 규제 지지</h2>
+    <p class="subl">엔비디아 사안의 실질적 안보 우려를 확인하려면 의회 차원의 정보 접근이 필요하다며, 상원 NDAA의 대중국 반도체 규제 조항 입법화를 지지한다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">쟁점</span><span class="v">엔비디아 안보</span></div><div class="cd"><span class="k">입법</span><span class="v">NDAA 반도체 조항</span></div><div class="cd"><span class="k">기존 브리핑</span><span class="v">이란 중심</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 1개 그룹 / 3개 불릿</div><div class="grp"><ul><li>엔비디아 사태와 관련한 실질적 안보 우려를 해소하기 위해 의회 차원의 정보 확보가 시급하다.</li><li>최근 브리핑은 주로 이란 관련 사안이었으므로 추가 정밀 조사가 필요하다.</li><li>상원 국방수권법(NDAA)에 포함된 대중국 반도체 규제 조항의 입법화를 강력히 지지할 것이다.</li></ul></div></div>
+  <div class="src">Source: Hakeem Jeffries (미국 민주당 하원 원내대표) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n4" aria-label="Matthew Miller">
+  <div class="snav">
+    <a class="nv" href="#n3">← 이전</a>
+    <a class="nv" href="#n5">다음 →</a>
+    <span class="cnt">04 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">정치, 국제 외교, 매크로</span>
+    <span class="chip b-c">체크 −0.3</span>
+    <span class="chip ai dim">AI 접점 낮음</span>
+  </div>
+  <div class="phd">
+    <div class="kick">DIPLOMACY · US STATE DEPT</div>
+    <h2>레바논 영사 기피인물 지정 — 외교관 검토 확대</h2>
+    <p class="subl">테러를 축하·정당화하는 인사를 미국 영토에서 배제하겠다며 레바논 영사를 기피인물로 지정하고 주미 외국 공관원 검토를 이어간다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">조치</span><span class="v">기피인물 지정</span></div><div class="cd"><span class="k">대상</span><span class="v">레바논 영사</span></div><div class="cd"><span class="k">범위</span><span class="v">주미 공관원 전반</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 1개 그룹 / 3개 불릿</div><div class="grp"><ul><li>디트로이트 주재 레바논 영사를 외교적 기피인물로 공식 지정했다.</li><li>테러를 축하하거나 정당화하는 인사를 위한 공간은 미국 영토 내에 없다.</li><li>국가 안보 위협 요인을 차단하기 위해 주미 외국 공관원들에 대한 정밀 검토를 지속 중이다.</li></ul></div></div>
+  <div class="src">Source: Matthew Miller (미국 국무부 대변인) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n5" aria-label="Jean-Noël Barrot">
+  <div class="snav">
+    <a class="nv" href="#n4">← 이전</a>
+    <a class="nv" href="#n6">다음 →</a>
+    <span class="cnt">05 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">정치, 국제 외교, 매크로</span>
+    <span class="chip b-r">리스크 −0.8</span>
+    <span class="chip ai">사이버 안보</span>
+  </div>
+  <div class="phd">
+    <div class="kick">DIPLOMACY · FRANCE</div>
+    <h2>이란 IRGC 사이버 공격 확인 — EU 제재 추진</h2>
+    <p class="subl">국내 냉장고 대상 사이버 공격의 배후를 이란 혁명수비대로 확인하고 대사를 초치했으며, EU 차원의 강력한 대이란 제재를 추진한다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">공격 배후</span><span class="v">이란 IRGC</span></div><div class="cd"><span class="k">외교 조치</span><span class="v">주불 대사 초치</span></div><div class="cd"><span class="k">대응</span><span class="v">EU 제재</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 1개 그룹 / 3개 불릿</div><div class="grp"><ul><li>국내 냉장고 대상 사이버 공격의 배후가 이란 혁명수비대임을 확인하고 주불 대사를 초치했다.</li><li>이번 사이버 공격 행위로 인해 이란은 명확한 대가를 치르게 될 것이다.</li><li>해당 도발에 대응해 유럽연합 차원의 강력한 대이란 제재를 추진할 예정이다.</li></ul></div></div>
+  <div class="src">Source: Jean-Noël Barrot (프랑스 외무장관) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n6" aria-label="Gadi Eisenkot">
+  <div class="snav">
+    <a class="nv" href="#n5">← 이전</a>
+    <a class="nv" href="#n7">다음 →</a>
+    <span class="cnt">06 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">정치, 국제 외교, 매크로</span>
+    <span class="chip b-c">체크 +0.1</span>
+    <span class="chip ai dim">AI 접점 낮음</span>
+  </div>
+  <div class="phd">
+    <div class="kick">POLITICS · ISRAEL</div>
+    <h2>거국 비상정부 구상 — 4대 원칙 연대 모색</h2>
+    <p class="subl">국가 비상사태를 타개하기 위해 강력하고 신선한 리더십으로 거국 비상정부를 구성하고, 4대 원칙에 동의하는 세력과 연대한다는 구상이다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">구상</span><span class="v">거국 비상정부</span></div><div class="cd"><span class="k">연대 조건</span><span class="v">비상정부 4대 원칙</span></div><div class="cd"><span class="k">국면</span><span class="v">정치적 분기점</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 1개 그룹 / 4개 불릿</div><div class="grp"><ul><li>국가 비상사태의 위기를 타개하기 위해 강력하고 신선한 리더십 구축에 착수할 예정이다.</li><li>부여받은 권한을 바탕으로 거국 비상정부 구성을 주도하며 당면한 안보 과제를 해결할 것이다.</li><li>국민의 뜻을 받들어 비상정부의 4대 원칙에 동의하는 세력과 연대를 이룰 방침이다.</li><li>실패 시 미래에 중대한 위협이 닥칠 수 있는 만큼 중대한 정치적 분기점에 신중히 대응해야 한다.</li></ul></div></div>
+  <div class="src">Source: Gadi Eisenkot (이스라엘 총리 지명자) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n7" aria-label="Isaac Herzog">
+  <div class="snav">
+    <a class="nv" href="#n6">← 이전</a>
+    <a class="nv" href="#n8">다음 →</a>
+    <span class="cnt">07 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">정치, 국제 외교, 매크로</span>
+    <span class="chip b-c">체크 +0.3</span>
+    <span class="chip ai dim">AI 접점 낮음</span>
+  </div>
+  <div class="phd">
+    <div class="kick">POLITICS · ISRAEL</div>
+    <h2>안정 정부 우선 — 가자·레바논 정책 연속성</h2>
+    <p class="subl">국가 단결을 지키는 안정적 정부가 시급하다며, 가자 평화 계획과 레바논 협상, 테러 대응은 새 정부에서도 흔들림 없이 추진돼야 한다고 본다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">최우선</span><span class="v">안정 정부 구축</span></div><div class="cd"><span class="k">정책 연속</span><span class="v">가자·레바논</span></div><div class="cd"><span class="k">과제</span><span class="v">안보·경제 수습</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 1개 그룹 / 3개 불릿</div><div class="grp"><ul><li>국가의 단결을 지키는 안정적인 정부 구축이 시급한 시점이다.</li><li>가자 평화 계획, 레바논 협상, 테러 대응 정책은 새 정부에서도 흔들림 없이 추진되어야 한다.</li><li>안보 및 경제적 위기 상황을 극복하기 위해 신속한 국정 수습이 필수적이다.</li></ul></div></div>
+  <div class="src">Source: Isaac Herzog (이스라엘 대통령) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n8" aria-label="Mao Ning">
+  <div class="snav">
+    <a class="nv" href="#n7">← 이전</a>
+    <a class="nv" href="#n9">다음 →</a>
+    <span class="cnt">08 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">정치, 국제 외교, 매크로</span>
+    <span class="chip b-c">체크 −0.2</span>
+    <span class="chip ai">엔비디아 의혹</span>
+  </div>
+  <div class="phd">
+    <div class="kick">DIPLOMACY · CHINA</div>
+    <h2>엔비디아 스파이설 일축 — 미·중·러 정상회담 소통</h2>
+    <p class="subl">엔비디아 관련 스파이 공작설을 악의적 비방으로 규정하고, 슬로바키아 외무장관 방중과 미·중·러 정상회담 관련 소통을 이어간다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">엔비디아 의혹</span><span class="v">근거 없는 낭설</span></div><div class="cd"><span class="k">외교</span><span class="v">슬로바키아 방중</span></div><div class="cd"><span class="k">정상회담</span><span class="v">당사국 소통 중</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 2개 그룹 / 3개 불릿</div><div class="grp"><ul><li>엔비디아 관련 스파이 공작설은 근거 없는 낭설이자 악의적인 비방이다.</li></ul></div><div class="grp"><ul><li>슬로바키아 외무장관의 방중을 계기로 양국 협력 관계의 지속적인 진전을 추구하고 있다.</li><li>선전에서 거론된 미·중·러 정상회담 성사 여부와 관련해 당사국들과 소통을 이어가는 중이다.</li></ul></div></div>
+  <div class="src">Source: Mao Ning (중국 외교부 대변인) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n9" aria-label="Esmail Baghaei">
+  <div class="snav">
+    <a class="nv" href="#n8">← 이전</a>
+    <a class="nv" href="#n10">다음 →</a>
+    <span class="cnt">09 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">정치, 국제 외교, 매크로</span>
+    <span class="chip b-r">리스크 −1.1</span>
+    <span class="chip ai dim">AI 접점 낮음</span>
+  </div>
+  <div class="phd">
+    <div class="kick">DIPLOMACY · IRAN</div>
+    <h2>핵물질 반출 거부 — 아이언 게이트는 정치적 술책</h2>
+    <p class="subl">농축 핵물질의 국외 반출은 불가하고 자체 중재안이 가장 합리적이라며, 미국의 아이언 게이트 작전을 정치적 술책으로 규정했다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">핵물질</span><span class="v">국외 반출 불가</span></div><div class="cd"><span class="k">IAEA</span><span class="v">부셰르 원전 방문</span></div><div class="cd"><span class="k">한국</span><span class="v">분쟁 개입 자제 요구</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 1개 그룹 / 3개 불릿</div><div class="grp"><ul><li>농축 핵물질의 국외 반출은 절대 불가하며 자체 중재안이 가장 합리적인 제안이다.</li><li>미국의 아이언 게이트 작전은 정치적 술책에 불과하며 이라크와의 양자 관계는 굳건히 유지될 것이다.</li><li>국제원자력기구 사찰단이 부셰르 원전을 방문했으며 한국은 중동 분쟁 개입을 자제해야 한다.</li></ul></div></div>
+  <div class="src">Source: Esmail Baghaei (이란 외무부 대변인) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n10" aria-label="Thomas Barkin">
+  <div class="snav">
+    <a class="nv" href="#n9">← 이전</a>
+    <a class="nv" href="#n11">다음 →</a>
+    <span class="cnt">10 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">중앙은행</span>
+    <span class="chip b-c">체크 −0.6</span>
+    <span class="chip ai">AI 수요·고용 양방향</span>
+  </div>
+  <div class="phd">
+    <div class="kick">CENTRAL BANK · US FED</div>
+    <h2>비용 전가 광범위 — 12월 FOMC는 데이터 대기</h2>
+    <p class="subl">수요는 견조하고 기업들의 가격 전가가 활발해 물가 상방 리스크가 남아 있으며, 현재 금리는 중립~소폭 완화적 수준으로 12월 결정은 데이터 확인 후로 미룬다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">정책금리</span><span class="v">중립~소폭 완화적</span></div><div class="cd"><span class="k">12월 FOMC</span><span class="v">시나리오 미정</span></div><div class="cd"><span class="k">물가</span><span class="v">상방 리스크 지속</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 4개 그룹 / 14개 불릿</div><div class="grp"><ul><li>견조한 수요와 지속적인 인플레이션 압력 속에서 통화정책의 방향성은 명확하나 신중한 운용이 필요하다.</li><li>기업들이 높은 비용을 가격에 적극 전가하려 시도하면서 물가 상방 리스크가 지속되고 있다.</li><li>고용 시장은 양호하지만 현재의 정책금리는 중립 수준이거나 소폭 낮은 상태다.</li><li>12월 FOMC 기본 시나리오는 정해진 바 없으며 완전한 데이터 확인 후 결정해야 한다.</li></ul></div><div class="grp"><ul><li>인공지능이 기대에 미치지 못할 경우 설비투자 위축과 자산 효과 감소로 소비가 둔화될 수 있다.</li><li>반대로 AI 혁신이 예상을 뛰어넘어 고용 대체를 가속화할 경우 지출 위축 위험이 발생할 수 있다.</li><li>두 가지 시나리오 모두 향후 시장의 관심을 연준의 완전고용 책무로 이동시킬 전망이다.</li></ul></div><div class="grp"><ul><li>기업 실적 호조와 낮은 실업률에 힘입어 소비자 지출은 견조한 흐름을 지속하고 있다.</li><li>은행권의 대출 건전성이 양호하며 데이터센터 관련 인프라 투자는 차질 없이 부지를 확보할 것이다.</li><li>역사적 수준에 도달한 위험 요인은 소비자 부채가 아니라 정부 부채다.</li><li>연말 쇼핑 시즌 호조가 예상되나 소비 회복력의 장기 지속성에는 점검이 필요하다.</li></ul></div><div class="grp"><ul><li>기업들이 유류비, 컴퓨터 칩, 건강보험 등 광범위한 비용 상승을 가격에 전가해야 하는 압박에 직면해 있다.</li><li>다수 기업과 마진 압박 해소 방안을 논의 중이며 관련 전가 시도는 매우 활발한 상태다.</li><li>광범위한 유휴 부지를 고려할 때 데이터센터 인프라 확충은 지역 자치단체를 통해 지속될 것이다.</li></ul></div></div>
+  <div class="src">Source: Thomas Barkin (리치먼드 연준 총재) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n11" aria-label="Austan Goolsbee">
+  <div class="snav">
+    <a class="nv" href="#n10">← 이전</a>
+    <a class="nv" href="#n12">다음 →</a>
+    <span class="cnt">11 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">중앙은행</span>
+    <span class="chip b-c">체크 −0.5</span>
+    <span class="chip ai">AI 데이터센터 과열</span>
+  </div>
+  <div class="phd">
+    <div class="kick">CENTRAL BANK · US FED</div>
+    <h2>서비스 물가 재상승 — AI 데이터센터는 수요 과열</h2>
+    <p class="subl">고용과 성장은 안정적이지만 서비스 부문에서 물가 재상승 조짐이 나타나고 있으며, AI 데이터센터 구축 붐은 전형적인 수요 과열로 규정했다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">고용·성장</span><span class="v">안정적</span></div><div class="cd"><span class="k">인플레</span><span class="v">둔화 지연</span></div><div class="cd"><span class="k">AI 캐펙스</span><span class="v">수요 과열</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 3개 그룹 / 8개 불릿</div><div class="grp"><ul><li>고용과 성장은 상당히 안정적이나 인플레이션 억제 측면의 미진함을 인정해야 한다.</li><li>유가 및 관세와 무관한 서비스 부문 전반에서 물가 재상승 조짐이 관찰되고 있다.</li><li>인플레이션 둔화 속도가 지연되는 구조적 원인에 대해 집중적인 점검이 필요하다.</li></ul></div><div class="grp"><ul><li>AI 데이터센터 구축 붐은 전형적인 전통적 수요 과열 양상을 띠고 있다.</li><li>중앙은행은 인프라 투자 발 과열 현상에 대해 통상 공격적인 방식으로 대응해야 마땅하다.</li></ul></div><div class="grp"><ul><li>견조한 소비 지출이 경제 성장을 견인하며 노동 시장 안정성을 뒷받침했다.</li><li>현재 통화정책의 모든 주요 과제는 서비스 부문을 중심으로 한 인플레이션 제어에 집중되어 있다.</li><li>물가 안정 책무 달성 과정에서의 문제점을 직시하고 정책적 대응을 강화해야 한다.</li></ul></div></div>
+  <div class="src">Source: Austan Goolsbee (시카고 연준 총재) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n12" aria-label="Andrew Bailey">
+  <div class="snav">
+    <a class="nv" href="#n11">← 이전</a>
+    <a class="nv" href="#n13">다음 →</a>
+    <span class="cnt">12 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">중앙은행</span>
+    <span class="chip b-c">체크 −0.4</span>
+    <span class="chip ai">AI 사이버 리스크</span>
+  </div>
+  <div class="phd">
+    <div class="kick">CENTRAL BANK · BANK OF ENGLAND</div>
+    <h2>AI 사이버 리스크 경고 — 자산 버블은 금융안정 위협</h2>
+    <p class="subl">첨단 AI가 사이버 공격 위험을 키우는 만큼 엄격한 테스트와 인간 통제가 필요하다며, 자산 가격 버블을 명백한 금융안정 리스크로 지목했다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">최대 리스크</span><span class="v">AI 사이버 공격</span></div><div class="cd"><span class="k">영국 경기</span><span class="v">견고한 회복력</span></div><div class="cd"><span class="k">금융안정</span><span class="v">자산 버블 경계</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 3개 그룹 / 9개 불릿</div><div class="grp"><ul><li>첨단 AI 기술의 발전은 사이버 공격 위험을 가중시키므로 출시 전후 엄격한 테스트가 필수적이다.</li><li>기술에 대한 대중의 신뢰는 철저한 인간의 개입과 통제 장치 확보에 달려 있다.</li><li>생산성 제고를 통해 다수 국가의 잠재 성장률을 끌어올릴 잠재력에 대해 긍정적인 평가를 유지한다.</li></ul></div><div class="grp"><ul><li>영국 경제는 서비스업 중심의 AI 투자 효과 등에 힘입어 견고한 회복력을 보이고 있다.</li><li>디지털 기술 및 로봇 공학 확산이 지속 가능한 경제 성장을 견인할 잠재력을 지니고 있다.</li><li>관련 설비투자 확대에 따른 긍정적인 공급 충격 신호가 점진적으로 늘어나는 중이다.</li></ul></div><div class="grp"><ul><li>공급 충격이 자연 소멸할 것으로 낙관하기 어려우며 자산 가격 버블은 명백한 금융 안정성 리스크다.</li><li>AI 수익 실현 시점이 시장의 과도한 기대보다 지연될 가능성에 유의해야 한다.</li><li>고도화된 사이버 공격에 대비해 금융권 전반의 안전성 검증을 강화할 방침이다.</li></ul></div></div>
+  <div class="src">Source: Andrew Bailey (영국중앙은행 총재) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n13" aria-label="Klaas Knot">
+  <div class="snav">
+    <a class="nv" href="#n12">← 이전</a>
+    <a class="nv" href="#n14">다음 →</a>
+    <span class="cnt">13 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">중앙은행</span>
+    <span class="chip b-o">기회 +0.4</span>
+    <span class="chip ai dim">AI 접점 낮음</span>
+  </div>
+  <div class="phd">
+    <div class="kick">CENTRAL BANK · ECB</div>
+    <h2>유가 안정 시 추가 인상 불필요 — 부채위기 도구 준비</h2>
+    <p class="subl">유가가 현 수준을 유지하면 추가 금리 인상 필요성은 낮다고 보면서도, 차기 유럽 부채 위기에는 OMT·TPI와 맞춤형 수단으로 개입할 준비가 돼 있다고 밝혔다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">추가 인상</span><span class="v">필요성 낮음</span></div><div class="cd"><span class="k">위기 도구</span><span class="v">OMT·TPI + 맞춤 설계</span></div><div class="cd"><span class="k">ECB 경로</span><span class="v">중동·유가 연동</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 5개 그룹 / 16개 불릿</div><div class="grp"><ul><li>차기 유럽 부채 위기 발생 시 채권 매입을 비롯한 새로운 정책 도구를 고안해 적극 개입할 용의가 있다.</li><li>현행 위기 대응 체계를 활용할 준비가 되어 있으며 상황에 부합하는 맞춤형 설계를 배제하지 않는다.</li><li>위기 성격이 과거와 다르다면 이에 대응하기 위한 정책 수단의 다변화가 필요하다.</li></ul></div><div class="grp"><ul><li>무질서한 국채 스프레드 확대에 대응해 기존 OMT와 TPI 등 안정화 장치를 단호히 가동해야 한다.</li><li>다만 중앙은행이 회원국의 지속 불가능한 재정 적자까지 대신 해결할 수는 없다.</li><li>단순 차입 비용 상승만으로 시장 개입을 정당화할 수 없으며 시스템 전염성 여부를 엄격히 판단해야 한다.</li><li>펀더멘털 개선 요구와 일시적 방어막을 결합한 시장 안정화 정책을 지속 지지할 방침이다.</li></ul></div><div class="grp"><ul><li>통화정책 스탠스는 개인의 성향이 아니라 직면한 경제 환경에 맞춰 결정된다.</li><li>팬데믹 시기에는 비둘기파적 완화가 필수적이었으나 고물가 국면에서는 매파적 긴축이 불가피했다.</li><li>현재 자신에게 부여된 고금리 선호론자라는 평가는 사실과 다르다.</li></ul></div><div class="grp"><ul><li>향후 수개월간 ECB의 정책 경로는 중동 정세와 에너지 가격 추이에 연동될 전망이다.</li><li>유가가 현 수준을 유지한다면 추가 금리 인상의 필요성은 낮다.</li><li>미세한 추가 조정 가능성은 열려 있으나 향후 모든 결정은 극히 신중하고 절제된 형태로 진행될 것이다.</li></ul></div><div class="grp"><ul><li>과거 남유럽 부채 위기 당시 발언은 무질서한 디폴트와 탈퇴 위험을 경고하기 위한 목적이었다.</li><li>2019년 양적완화 재개 반대는 정책 부작용 누적과 비례성 원칙 훼손을 우려한 조치였다.</li><li>시장 신뢰를 지키기 위해 사안에 대한 견해는 익명 유출 대신 공식 성명을 통해 투명하게 표명해 왔다.</li></ul></div></div>
+  <div class="src">Source: Klaas Knot (전 네덜란드 중앙은행 총재·차기 ECB 총재 후보) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n14" aria-label="Sarah Hunter">
+  <div class="snav">
+    <a class="nv" href="#n13">← 이전</a>
+    <a class="nv" href="#n15">다음 →</a>
+    <span class="cnt">14 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">중앙은행</span>
+    <span class="chip b-c">체크 −0.3</span>
+    <span class="chip ai">AI 자산 조정 리스크</span>
+  </div>
+  <div class="phd">
+    <div class="kick">CENTRAL BANK · RBA</div>
+    <h2>AI 조정 리스크 경고 — 단기 인플레·장기 중립</h2>
+    <p class="subl">AI 투자 기대수익률이 미달하면 관련 자산가격의 급격한 조정 위험이 있고, 단기적으로는 AI 수요 자극이 인플레이션을 밀어올리지만 장기 효과는 중립에 수렴한다고 본다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">단기 효과</span><span class="v">인플레 자극</span></div><div class="cd"><span class="k">장기 효과</span><span class="v">중립 수렴</span></div><div class="cd"><span class="k">생산성 증거</span><span class="v">아직 제한적</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 3개 그룹 / 5개 불릿</div><div class="grp"><ul><li>AI 투자 기대 수익률이 미치지 못할 경우 관련 자산 가격의 급격하고 무질서한 조정 위험이 존재한다.</li><li>첨단 기술 확산 과정이 금융 시스템 전반의 잠재적 취약성을 가중시킬 가능성을 배제할 수 없다.</li></ul></div><div class="grp"><ul><li>공급 능력이 제한된 단기 국면에서는 AI 중심의 총수요 자극 효과가 인플레이션을 자극할 것이다.</li><li>장기적으로 설비 확충이 수요를 흡수함에 따라 물가에 미치는 영향은 대체로 중립적인 수준에 수렴할 전망이다.</li></ul></div><div class="grp"><ul><li>AI 도입이 선진국 경제의 총생산성 및 고용 전반을 실질적으로 변화시켰다는 증거는 아직 제한적이다.</li></ul></div></div>
+  <div class="src">Source: Sarah Hunter (호주중앙은행 보좌총재) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n15" aria-label="Scott Nuttall">
+  <div class="snav">
+    <a class="nv" href="#n14">← 이전</a>
+    <a class="nv" href="#n16">다음 →</a>
+    <span class="cnt">15 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">기업</span>
+    <span class="chip b-o">기회 +0.6</span>
+    <span class="chip ai">AI 인프라·전력</span>
+  </div>
+  <div class="phd">
+    <div class="kick">CORPORATES · PRIVATE EQUITY</div>
+    <h2>AI 익스포저 1~2% 통제 — 취약 자산 선제 매각</h2>
+    <p class="subl">AI 관련 투자를 전체 자산의 1~2%로 제한하고 데이터센터를 정부·투자등급 기업에 장기 임대하는 한편, AI 타격 취약 기업은 선제 매각으로 리스크를 관리한다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">AI 익스포저</span><span class="v">자산의 1~2%</span></div><div class="cd"><span class="k">디지털 인프라</span><span class="v">450억 달러</span></div><div class="cd"><span class="k">올해 분배</span><span class="v">400억 달러+</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 2개 그룹 / 7개 불릿</div><div class="grp"><ul><li>인공지능 관련 투자는 회사 전체 자산의 1~2% 수준으로 철저히 통제되고 있다.</li><li>데이터센터 용량은 정부 기관 및 투자등급 우량 기업에 장기 임대되어 안정적인 기반을 구축한 상태다.</li><li>디지털 인프라에 450억 달러, 전력 거래에 400억 달러를 성공적으로 투자 완료했다.</li></ul></div><div class="grp"><ul><li>대규모 AI 설비투자의 최종 수익률은 불확실하며 전례 없는 속도로 진행되는 만큼 신중한 자세가 요구된다.</li><li>AI 도구로 인해 타격을 입을 수 있는 취약 기업들을 선제적으로 매각하며 리스크를 관리해 왔다.</li><li>조기 매각 전략과 기회주의적 인수 기회를 병행하며 포트폴리오 건전성을 방어 중이다.</li><li>올해 고객들에게 사상 최대 규모인 400억 달러 이상의 자금을 차질 없이 분배할 계획이다.</li></ul></div></div>
+  <div class="src">Source: Scott Nuttall (KKR 공동최고경영자) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n16" aria-label="Eric Schmidt">
+  <div class="snav">
+    <a class="nv" href="#n15">← 이전</a>
+    <a class="nv" href="#n17">다음 →</a>
+    <span class="cnt">16 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">기업</span>
+    <span class="chip b-o">기회 +0.5</span>
+    <span class="chip ai">AI 규제·연구 패러다임</span>
+  </div>
+  <div class="phd">
+    <div class="kick">CORPORATES · AI / TECH</div>
+    <h2>AI 혜택 설득 실패 — 규제 틀·인프라 입지 재정의</h2>
+    <p class="subl">업계가 AI의 사회적 혜택을 제대로 설득하지 못한 채 위험 논쟁에 매몰돼 있다며, 외곽 자체 발전 데이터센터와 항공·자동차식 규제 틀을 제시했다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">규제</span><span class="v">항공·자동차式 틀</span></div><div class="cd"><span class="k">인프라</span><span class="v">외곽·자체 발전</span></div><div class="cd"><span class="k">연구 패러다임</span><span class="v">이번 분기부터</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 8개 그룹 / 15개 불릿</div><div class="grp"><ul><li>기술 업계는 인공지능이 창출할 막대한 사회적 혜택을 유권자들에게 효과적으로 설득하지 못하고 있다.</li><li>산업계와 대중 모두 부정적인 위험 쟁점에 과도하게 매몰되어 있는 실정이다.</li></ul></div><div class="grp"><ul><li>대형 데이터센터는 인구 밀집 지역을 벗어나 외곽 유휴 부지에 자체 발전 설비를 갖추어 건설해야 마땅하다.</li><li>강력한 인프라 확충에 필요한 토지는 미국 전역에 충분히 확보되어 있다.</li></ul></div><div class="grp"><ul><li>인공지능은 막강한 파급력을 지닌 기술이므로 항공이나 자동차 산업처럼 제도적 규제 틀을 마련해야 한다.</li></ul></div><div class="grp"><ul><li>미국 내 주요 개발사들은 정부의 강력한 감시와 막대한 법적 책임을 지고 있는 엄격한 규제 대상이다.</li><li>철저한 사법 체계 하에서 통제받고 있으므로 대중의 맹목적인 불신은 불필요하다.</li></ul></div><div class="grp"><ul><li>오픈소스 모델의 오정렬 사례 등은 실제 물질적 피해를 초래하지 않은 초기 학습 과정의 일환이다.</li><li>신기술 도입 초기에는 과도기적 불안이 수반되나 기술 성숙을 통해 필수 인프라로 안착할 것이다.</li></ul></div><div class="grp"><ul><li>오픈AI의 수학적 성과는 연구자의 역량을 비약적으로 강화하는 도구로서 인간 감독 하에 달성되었다.</li><li>현대 과학자들은 과거 수작업 코딩 시대를 지나 고도화된 연구 자산을 활용하는 환경에 진입했다.</li></ul></div><div class="grp"><ul><li>미국의 연구 체계는 교수, 연구진, AI 에이전트가 긴밀히 협력하는 다자간 협업 구조로 전면 재편될 전망이다.</li><li>이러한 연구 패러다임의 전환은 먼 미래가 아닌 이번 분기부터 가시화되고 있다.</li></ul></div><div class="grp"><ul><li>고도화된 연구 역량을 갖춘 첨단 인재에 대한 글로벌 산업계의 수요는 여전히 견고하다.</li><li>AI를 변혁적으로 다루는 고급 인재들은 초급 인력 고용 한파와 무관하게 최고 수준의 대우를 보장받을 것이다.</li></ul></div></div>
+  <div class="src">Source: Eric Schmidt (전 구글 최고경영자·캘텍 이사회 의장) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n17" aria-label="Jensen Huang">
+  <div class="snav">
+    <a class="nv" href="#n16">← 이전</a>
+    <a class="nv" href="#n18">다음 →</a>
+    <span class="cnt">17 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">기업</span>
+    <span class="chip b-r">리스크 −1.6</span>
+    <span class="chip ai">대중 수출통제</span>
+  </div>
+  <div class="phd">
+    <div class="kick">CORPORATES · NVIDIA</div>
+    <h2>사과·경영 전념 — 수출통제는 '정책 실수'</h2>
+    <p class="subl">개인적 과오에 변명의 여지가 없다며 가족과 조직에 사과하고 경영에 전념하겠다고 밝힌 가운데, 대중 반도체 수출통제를 명백한 정책 실수로 규정했다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">리스크</span><span class="v">CEO 의혹</span></div><div class="cd"><span class="k">대중 규제</span><span class="v">정책 실수 규정</span></div><div class="cd"><span class="k">경영</span><span class="v">전념 표명</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 2개 그룹 / 3개 불릿</div><div class="grp"><ul><li>개인적 과오에 대해 어떠한 변명의 여지도 없으며 가족에게 깊은 사과와 책임을 표명한다.</li><li>회사와 조직 구성원의 신뢰를 회복하기 위해 경영 활동에 전적으로 헌신할 방침이다.</li></ul></div><div class="grp"><ul><li>중국은 미국의 적이 아니며 현행 반도체 수출 통제 조치는 명백한 정책적 실수다.</li></ul></div></div>
+  <div class="src">Source: Jensen Huang (엔비디아 최고경영자) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n18" aria-label="엔비디아 이사회">
+  <div class="snav">
+    <a class="nv" href="#n17">← 이전</a>
+    <a class="nv" href="#n19">다음 →</a>
+    <span class="cnt">18 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">기업</span>
+    <span class="chip b-c">체크 +0.3</span>
+    <span class="chip ai">AI 밸류체인 신뢰</span>
+  </div>
+  <div class="phd">
+    <div class="kick">CORPORATES · NVIDIA</div>
+    <h2>내부 조사 착수 — 유출·안보 침해 정황 없음</h2>
+    <p class="subl">독립 사외이사와 외부 자문이 주도하는 내부 조사에 착수했으며, 영업비밀 유출이나 국가안보 침해 정황은 발견되지 않아 CEO 직무 수행에 차질이 없다고 밝혔다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">조사 주체</span><span class="v">사외이사·외부자문</span></div><div class="cd"><span class="k">유출 정황</span><span class="v">없음</span></div><div class="cd"><span class="k">경영 연속성</span><span class="v">유지</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 1개 그룹 / 4개 불릿</div><div class="grp"><ul><li>최고경영자를 겨냥한 의혹 보도에 대응해 독립 사외이사와 외부 자문단 주도의 내부 조사에 착수했다.</li><li>핵심 영업비밀 유출이나 국가 안보 침해 정황은 전혀 발견되지 않은 상태다.</li><li>CEO의 전폭적인 협조 하에 조사가 진행 중이며 경영진에 대한 확고한 신뢰를 유지하고 있다.</li><li>이번 내부 점검으로 인한 사업 차질은 없으며 젠슨 황은 CEO 직무를 차질 없이 수행할 것이다.</li></ul></div></div>
+  <div class="src">Source: 엔비디아 이사회 (Nvidia Board of Directors) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n19" aria-label="Elon Musk">
+  <div class="snav">
+    <a class="nv" href="#n18">← 이전</a>
+    <a class="nv" href="#n20">다음 →</a>
+    <span class="cnt">19 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">기업</span>
+    <span class="chip b-c">체크 −0.2</span>
+    <span class="chip ai">로보택시 전환</span>
+  </div>
+  <div class="phd">
+    <div class="kick">CORPORATES · TESLA</div>
+    <h2>사이버트럭 라인 8개월 내 종료 — 사이버캡 전환</h2>
+    <p class="subl">사이버트럭 신규 주문이 생산능력을 크게 넘어서면서 초과 예약분을 환불하고, 텍사스 생산설비를 로보택시 사이버캡으로 전환해 8개월 내 라인을 단계 종료한다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">사이버트럭</span><span class="v">8개월 내 종료</span></div><div class="cd"><span class="k">전환</span><span class="v">사이버캡</span></div><div class="cd"><span class="k">주문</span><span class="v">초과분 환불</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 1개 그룹 / 3개 불릿</div><div class="grp"><ul><li>사이버트럭 신규 주문량이 가용 생산 능력을 대폭 초과함에 따라 초과 예약분에 대해 환불을 진행할 예정이다.</li><li>텍사스 기가팩토리의 생산 설비를 자율주행 로보택시인 사이버캡으로 신속히 전환할 계획이다.</li><li>사이버트럭 생산 라인은 향후 8개월 이내에 단계적으로 종료될 예정이다.</li></ul></div></div>
+  <div class="src">Source: Elon Musk (테슬라 최고경영자) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n20" aria-label="David Solomon">
+  <div class="snav">
+    <a class="nv" href="#n19">← 이전</a>
+    <a class="nv" href="#n21">다음 →</a>
+    <span class="cnt">20 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">금융 분석, 전략 및 전망</span>
+    <span class="chip b-o">기회 +0.8</span>
+    <span class="chip ai">데이터센터 캐펙스</span>
+  </div>
+  <div class="phd">
+    <div class="kick">RESEARCH · GOLDMAN SACHS</div>
+    <h2>엔비디아 핵심 지위 유지 — 데이터센터 투자 지속</h2>
+    <p class="subl">내부 조사 결과와 무관하게 엔비디아는 기술 생태계의 핵심으로 남고, 미국 데이터센터·컴퓨팅 인프라 투자도 견조하게 이어질 것으로 본다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">엔비디아</span><span class="v">핵심 지위 유지</span></div><div class="cd"><span class="k">데이터센터</span><span class="v">투자 견조</span></div><div class="cd"><span class="k">자본시장</span><span class="v">개방적</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 1개 그룹 / 3개 불릿</div><div class="grp"><ul><li>내부 조사 결과와 무관하게 엔비디아는 글로벌 기술 생태계의 핵심 기업으로 유지될 것이다.</li><li>미국 내 데이터센터 및 컴퓨팅 인프라에 대한 대규모 투자는 견조하게 이어질 전망이다.</li><li>자본 시장은 열려 있으며 개별 기업에 대한 언급 없이 전반적인 거래 흐름을 주시할 방침이다.</li></ul></div></div>
+  <div class="src">Source: David Solomon (골드만삭스 최고경영자) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n21" aria-label="Mike Wilson">
+  <div class="snav">
+    <a class="nv" href="#n20">← 이전</a>
+    <a class="nv" href="#n22">다음 →</a>
+    <span class="cnt">21 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">금융 분석, 전략 및 전망</span>
+    <span class="chip b-o">기회 +1.2</span>
+    <span class="chip ai">데이터센터 캐펙스</span>
+  </div>
+  <div class="phd">
+    <div class="kick">RESEARCH · MORGAN STANLEY</div>
+    <h2>조정 최종 국면 — 연말 8,000 목표 유지</h2>
+    <p class="subl">지수가 하방 목표 7,100~7,300에 진입해 조정이 마무리 단계라며 연말 목표 8,000을 유지하고, 이익 상향이 확인되는 퀄리티 경기순환주로 비중을 넓히라고 권고했다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">하방 목표</span><span class="v">7,100~7,300</span></div><div class="cd"><span class="k">연말 목표</span><span class="v">8,000</span></div><div class="cd"><span class="k">선호</span><span class="v">퀄리티 경기순환</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 5개 그룹 / 16개 불릿</div><div class="grp"><ul><li>주식 시장의 밸류에이션 조정이 하방 목표 범위인 7,100~7,300선에 진입하며 최종 국면에 도달했다.</li><li>연준의 매파적 스탠스와 기업 이익 증가율 정점 통과가 반영되었으며 기존 연말 목표치 8,000선을 유지한다.</li><li>바닥을 무리하게 예단하기보다 이익 상향이 확인되는 퀄리티 경기순환주 비중을 점진적으로 확대해야 한다.</li><li>광범위한 종목군에 걸쳐 선반영된 가격 조정이 마무리 단계에 접어들며 연말 반등 랠리의 여건을 구축 중이다.</li></ul></div><div class="grp"><ul><li>의회 권력 재편에도 불구하고 데이터센터 자본지출은 2028년까지 견조한 성장세를 지속할 전망이다.</li><li>중간선거 직전의 전형적인 변동성 장세가 해소되었으며 역사적으로 선거 이후 6~12개월 수익률은 양호했다.</li><li>인프라 증설 지연이라는 보수적 시나리오를 적용하더라도 지수 이익에 미치는 타격은 제한적일 것이다.</li><li>선거 결과에 대한 과도한 비관론을 경계하고 구조적 반등 패턴을 염두에 둘 필요가 있다.</li></ul></div><div class="grp"><ul><li>지난주 일부 섹터 및 선물 시장의 반등세는 국제유가의 급격한 하락세에 기인했다.</li><li>에너지 비용 안정화가 주식 시장의 하방을 지지하는 주요 요인으로 작용하고 있다.</li></ul></div><div class="grp"><ul><li>선거 이후 군사적 충돌 위협이 완화되면서 국제유가가 안정세를 보이고 있다.</li><li>행정부의 강경 기조가 실제 무력 충돌로 확산되지 않는 점은 자산 시장에 명백한 호재다.</li><li>지정학적 긴장 완화는 2027년 시장 환경을 개선하는 강력한 촉매로 작용할 잠재력이 있다.</li></ul></div><div class="grp"><ul><li>에너지 안보 취약국들의 자체 시추 및 대체 인프라 확충으로 원유 공급망 대응력이 강화되고 있다.</li><li>수요 위축과 공급망 재편이 맞물려 국제유가는 구조적인 추가 하락 압력을 받을 전망이다.</li><li>친환경 정책의 우선순위 조정과 유가 안정화는 기업 마진을 개선하며 주식 시장에 강력한 호재가 될 것이다.</li></ul></div></div>
+  <div class="src">Source: Mike Wilson (모건스탠리 수석 전략가) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n22" aria-label="Beichen Lin">
+  <div class="snav">
+    <a class="nv" href="#n21">← 이전</a>
+    <a class="nv" href="#n23">다음 →</a>
+    <span class="cnt">22 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">금융 분석, 전략 및 전망</span>
+    <span class="chip b-r">리스크 −0.7</span>
+    <span class="chip ai dim">AI 접점 낮음</span>
+  </div>
+  <div class="phd">
+    <div class="kick">RESEARCH · RUSSELL</div>
+    <h2>CPI 상회 시 12월 인상 유력 — 강력 긴축 경계</h2>
+    <p class="subl">화요일 발표되는 CPI가 예상치를 넘으면 12월 추가 인상이 유력하며, 견고한 고용과 회복력을 감안할 때 연준은 물가 불안에 강한 긴축으로 대응할 것이다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">트리거</span><span class="v">CPI 상회</span></div><div class="cd"><span class="k">12월</span><span class="v">인상 유력</span></div><div class="cd"><span class="k">연준</span><span class="v">강력 긴축</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 1개 그룹 / 2개 불릿</div><div class="grp"><ul><li>화요일 발표되는 미국 소비자물가지수가 예상치를 상회할 경우 12월 추가 금리 인상이 유력해진다.</li><li>견고한 고용과 경제 회복력이 유지되는 상황에서 연준은 물가 불안에 대해 강력한 긴축으로 대응할 것이다.</li></ul></div></div>
+  <div class="src">Source: Beichen Lin (러셀 인베스트먼트 전략가) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n23" aria-label="피치 레이팅스">
+  <div class="snav">
+    <a class="nv" href="#n22">← 이전</a>
+    <a class="nv" href="#n24">다음 →</a>
+    <span class="cnt">23 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">금융 분석, 전략 및 전망</span>
+    <span class="chip b-r">리스크 −0.6</span>
+    <span class="chip ai dim">AI 접점 낮음</span>
+  </div>
+  <div class="phd">
+    <div class="kick">RESEARCH · FITCH RATINGS</div>
+    <h2>유럽 레버리지드 신용 압박 — 호르무즈 2027년 정상화</h2>
+    <p class="subl">주요국 금리 상승으로 유럽 레버리지드 금융의 신용 압박이 커지는 가운데, 호르무즈 해협은 2027년 1분기 정상 개방 후 하반기 재점화 리스크가 남는다고 전망했다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">유럽 신용</span><span class="v">압박 가중</span></div><div class="cd"><span class="k">호르무즈</span><span class="v">2027 1Q 정상화</span></div><div class="cd"><span class="k">재점화</span><span class="v">2027 하반기</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 3개 그룹 / 5개 불릿</div><div class="grp"><ul><li>주요국 금리 상승세가 지속됨에 따라 유럽 레버리지드 금융 전반의 신용 압박이 가중되고 있다.</li></ul></div><div class="grp"><ul><li>당사국 간 협정을 통해 2027년 1분기 호르무즈 해협의 정상 개방이 가능할 것으로 전망한다.</li><li>다만 2027년 하반기 이후 분쟁 재점화 가능성은 여전히 잠재적 리스크로 남아 있다.</li></ul></div><div class="grp"><ul><li>비트코인 시장은 거래 구조 다변화에 힘입어 거래소 해킹 충격에도 강한 회복 탄력성을 입증했다.</li><li>시장 심도 확대로 유동성 고갈 위험이 완화되었으며 구조화 자산의 건전성 방어가 효과적으로 유지되고 있다.</li></ul></div></div>
+  <div class="src">Source: 피치 레이팅스 (Fitch Ratings) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n24" aria-label="Mark Zandi">
+  <div class="snav">
+    <a class="nv" href="#n23">← 이전</a>
+    <a class="nv" href="#n25">다음 →</a>
+    <span class="cnt">24 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">금융 분석, 전략 및 전망</span>
+    <span class="chip b-o">기회 +0.4</span>
+    <span class="chip ai dim">AI 접점 낮음</span>
+  </div>
+  <div class="phd">
+    <div class="kick">RESEARCH · MOODY'S ANALYTICS</div>
+    <h2>정책 교착 — 종전 시 가구당 2,200달러 부담 경감</h2>
+    <p class="subl">민주당이 의회를 장악해도 거부권 때문에 정책 급변은 어렵고, 새 의회는 이란 분쟁 중단을 압박할 것이며 종전 시 유류·난방비 하락으로 가구당 2,200달러 부담이 줄어든다고 본다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">정책 방향</span><span class="v">관망·교착</span></div><div class="cd"><span class="k">가계 부담</span><span class="v">2,200달러 경감</span></div><div class="cd"><span class="k">변수</span><span class="v">부채한도 협상</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 3개 그룹 / 9개 불릿</div><div class="grp"><ul><li>민주당의 의회 장악에도 불구하고 행정부 서명 거부권으로 인해 당장 경제정책의 급격한 변화는 어렵다.</li><li>가계의 재정 부담 완화를 위한 법안 처리는 여야 대치 국면 속에서 난항을 겪을 것으로 보인다.</li><li>단기적으로 거시 경제정책의 방향성은 관망세를 유지할 전망이다.</li></ul></div><div class="grp"><ul><li>새 의회는 청문회와 예산 감독 권한을 동원해 행정부의 이란 분쟁 개입 중단을 강력히 압박할 것이다.</li><li>분쟁 종식 시 유류비 및 난방비가 하락해 가구당 2,200달러에 달하는 생활비 부담이 대폭 경감될 수 있다.</li><li>전쟁 종식에 따른 인플레이션 완화가 가계 소비 여력을 지탱하는 열쇠가 될 것이다.</li></ul></div><div class="grp"><ul><li>공화당의 독자 예산안 처리가 무산될 경우 행정부는 부채한도 협상에서 민주당의 협조를 구해야 한다.</li><li>민주당은 협상력을 동원해 건강보험 보조금 복원과 복지 예산 삭감 철회를 추진할 가능성이 높다.</li><li>의회 내 예산 협상 주도권의 변화는 내년도 재정정책의 핵심 변수로 작용할 전망이다.</li></ul></div></div>
+  <div class="src">Source: Mark Zandi (무디스 애널리틱스 수석 이코노미스트) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n25" aria-label="Stephanie Aliaga">
+  <div class="snav">
+    <a class="nv" href="#n24">← 이전</a>
+    <a class="nv" href="#n26">다음 →</a>
+    <span class="cnt">25 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">금융 분석, 전략 및 전망</span>
+    <span class="chip b-c">체크 −0.3</span>
+    <span class="chip ai">AI 인프라 병목</span>
+  </div>
+  <div class="phd">
+    <div class="kick">RESEARCH · J.P. MORGAN AM</div>
+    <h2>데이터센터 인허가 모라토리엄 400건 — 구조적 병목</h2>
+    <p class="subl">전기요금과 전력망 과부하 우려로 지방정부의 데이터센터 인허가 모라토리엄이 400건을 넘어섰지만, 주 전역 규제 입법 통과율이 낮아 투자 붐 자체를 꺾지는 못할 것으로 본다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">모라토리엄</span><span class="v">400건 돌파</span></div><div class="cd"><span class="k">2026 상반기</span><span class="v">건설 용량 +50%</span></div><div class="cd"><span class="k">영향</span><span class="v">공기 지연·비용</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 2개 그룹 / 6개 불릿</div><div class="grp"><ul><li>전기요금 상승과 전력망 과부하 우려로 인해 지방정부의 데이터센터 인허가 모라토리엄이 400건을 돌파했다.</li><li>인프라 증설을 둘러싼 지역사회의 반발은 개발업체들의 공기 지연과 자본비용 증가를 초래하고 있다.</li><li>이는 단순 부품 업체를 넘어 AI 인프라 밸류체인 전반에 영향을 미치는 구조적 문제로 부상했다.</li></ul></div><div class="grp"><ul><li>다만 주 전역 차원의 규제 입법 통과율은 극히 낮아 설비투자 붐 전체를 훼손할 정도는 아니다.</li><li>2026년 상반기 건설 중인 데이터센터 용량이 50% 급증하는 등 투자 모멘텀은 견고한 상태다.</li><li>정치적 엄포와 일시적 규제 조치가 시장의 구조적 성장 경로를 꺾지는 못할 것으로 보인다.</li></ul></div></div>
+  <div class="src">Source: Stephanie Aliaga (JP모건 자산운용 글로벌 시장 전략가) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n26" aria-label="골드만삭스">
+  <div class="snav">
+    <a class="nv" href="#n25">← 이전</a>
+    <a class="nv" href="#n27">다음 →</a>
+    <span class="cnt">26 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">금융 분석, 전략 및 전망</span>
+    <span class="chip b-o">기회 +1.4</span>
+    <span class="chip ai">반도체 밸류체인</span>
+  </div>
+  <div class="phd">
+    <div class="kick">RESEARCH · GOLDMAN SACHS</div>
+    <h2>코스피 -44.5% 극단 저평가 — 매수 관점 유효</h2>
+    <p class="subl">코스피가 고점 대비 44.5% 급락해 금융위기급 저평가에 근접한 가운데 선행 EPS가 3.4% 상향되고 수급 부담이 해소돼, 낙폭 확대보다 매수 관점이 유리하다고 평가했다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">코스피</span><span class="v">고점 대비 -44.5%</span></div><div class="cd"><span class="k">선행 EPS</span><span class="v">+3.4%</span></div><div class="cd"><span class="k">반도체 PBR</span><span class="v">0.7배</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 2개 그룹 / 7개 불릿</div><div class="grp"><ul><li>코스피는 고점 대비 44.5% 급락하며 과거 금융위기 수준의 극단적인 저평가 영역에 근접했다.</li><li>상장사 12개월 선행 EPS 전망치가 3.4% 상향되면서 펀더멘털 대비 밸류에이션 매력이 대폭 강화되었다.</li><li>레버리지 상품 잔고와 투기적 신용 포지션이 청산되어 수급 부담이 상당 부분 해소된 상태다.</li><li>기업 이익 체력이 유지되고 있어 지수 낙폭 확대 우려보다 매수 관점의 접근이 유리하다.</li></ul></div><div class="grp"><ul><li>반도체 업종 PBR은 역사적 바닥 수준인 0.7배까지 하락해 2027년 이익 70% 삭감 시나리오를 선반영했다.</li><li>시장 실적 신뢰도가 회복될 경우 순자산 증가와 밸류에이션 정상화가 동시에 진행될 전망이다.</li><li>비관론 완화 시 반도체 주가는 현 주가 수준 대비 최대 2배까지 상승 여력을 확보하고 있다.</li></ul></div></div>
+  <div class="src">Source: 골드만삭스 (Goldman Sachs) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n27" aria-label="William Marshall">
+  <div class="snav">
+    <a class="nv" href="#n26">← 이전</a>
+    <a class="nv" href="#n28">다음 →</a>
+    <span class="cnt">27 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">금융 분석, 전략 및 전망</span>
+    <span class="chip b-o">기회 +0.5</span>
+    <span class="chip ai dim">AI 접점 낮음</span>
+  </div>
+  <div class="phd">
+    <div class="kick">RESEARCH · GOLDMAN SACHS</div>
+    <h2>미 10년물 4.75~5.0% 박스권 — 채권 변동성 완화</h2>
+    <p class="subl">증시 조정과 유가 하락으로 주요국 금리가 박스권에 안착하는 가운데 미 10년물은 4.75~5.0% 밴드를 형성하고, 유럽 5년물은 위험프리미엄 축소로 상대 강세가 기대된다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">미 10년물</span><span class="v">4.75~5.0%</span></div><div class="cd"><span class="k">유럽</span><span class="v">5년물 강세</span></div><div class="cd"><span class="k">영국</span><span class="v">길트 지지</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 3개 그룹 / 6개 불릿</div><div class="grp"><ul><li>증시 조정과 유가 하락에 힘입어 주요국 국채 금리가 박스권에 안착하며 채권 변동성이 완화되고 있다.</li><li>미국 10년물 국채 금리는 4.75~5.0% 밴드를 형성할 것이며 위험자산 안정화에 따라 변동 폭이 축소될 전망이다.</li></ul></div><div class="grp"><ul><li>유럽 채권시장은 위험 프리미엄 축소로 인해 5년물 국채의 상대적 강세가 기대된다.</li><li>다만 겨울철 에너지 수급 가시성이 확보되기 전까지 단기물 금리의 추가 하락은 제한적일 것이다.</li></ul></div><div class="grp"><ul><li>영국 길트채는 유가 안정세가 지속될 경우 인플레이션 프리미엄 축소를 통해 지지력을 확보할 수 있다.</li><li>캐나다 국채 시장의 경우 미국의 매파적 평가에 따른 조정 발생 시 단기물 매수 기회로 활용해야 한다.</li></ul></div></div>
+  <div class="src">Source: William Marshall (골드만삭스 전략가) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n28" aria-label="모건스탠리">
+  <div class="snav">
+    <a class="nv" href="#n27">← 이전</a>
+    <a class="nv" href="#n29">다음 →</a>
+    <span class="cnt">28 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">금융 분석, 전략 및 전망</span>
+    <span class="chip b-c">체크 −0.4</span>
+    <span class="chip ai">데이터센터 대출 축소</span>
+  </div>
+  <div class="phd">
+    <div class="kick">RESEARCH · MORGAN STANLEY</div>
+    <h2>데이터센터 대출 익스포저 축소 — CET1 방어</h2>
+    <p class="subl">장기 공기와 대규모 자금 소요를 감안해 데이터센터 건설 대출의 직접 익스포저를 줄이고, 대출채권을 사모신용 펀드에 분할 매각해 CET1을 방어하고 있다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">익스포저</span><span class="v">축소 중</span></div><div class="cd"><span class="k">자본</span><span class="v">CET1 방어</span></div><div class="cd"><span class="k">수익구조</span><span class="v">주선 수수료 중심</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 1개 그룹 / 4개 불릿</div><div class="grp"><ul><li>장기 건설 기간과 대규모 자금 소요를 고려해 데이터센터 건설 대출에 대한 직접 익스포저를 축소하고 있다.</li><li>특정 섹터에 여신이 과도하게 집중되는 포트폴리오 신용 위험을 선제적으로 차단할 필요가 있다.</li><li>대출 채권을 사모신용 펀드와 운용사에 분할 매각하여 자기자본(CET1) 건전성을 방어 중이다.</li><li>대출 보유 대신 주선 수수료 중심의 사업 구조를 강화해 장기적 이익 안정성을 확보할 방침이다.</li></ul></div></div>
+  <div class="src">Source: 모건스탠리 (Morgan Stanley) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n29" aria-label="뱅크오브아메리카">
+  <div class="snav">
+    <a class="nv" href="#n28">← 이전</a>
+    <a class="nv" href="#n30">다음 →</a>
+    <span class="cnt">29 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">금융 분석, 전략 및 전망</span>
+    <span class="chip b-o">기회 +1.1</span>
+    <span class="chip ai">반도체 사이클</span>
+  </div>
+  <div class="phd">
+    <div class="kick">RESEARCH · BofA GLOBAL RESEARCH</div>
+    <h2>반도체 -37% 과매도 — 2027년 1분기 저점 통과</h2>
+    <p class="subl">필라델피아 반도체지수가 고점 대비 37% 하락해 과거 평균 조정 폭을 넘어섰고, PER 13.7배로 시장 대비 22% 할인돼 추가 하방은 최대 12%에 그친다고 본다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">반도체지수</span><span class="v">고점 대비 -37%</span></div><div class="cd"><span class="k">업종 PER</span><span class="v">13.7배(-22%)</span></div><div class="cd"><span class="k">추가 하방</span><span class="v">최대 -12%</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 3개 그룹 / 10개 불릿</div><div class="grp"><ul><li>필라델피아 반도체지수가 고점 대비 37% 급락하며 과거 평균 조정 폭을 이미 넘어선 상태다.</li><li>현재 업종 PER은 13.7배로 시장 대비 22% 할인 거래되고 있어 추가 하방 위험은 최대 12% 수준에 불과하다.</li><li>정책 불확실성 완화와 자사주 매입에 힘입어 반도체 섹터는 2027년 1분기 저점을 통과할 전망이다.</li><li>엔비디아, AMD, 브로드컴, 마이크론, 램리서치를 주요 반등 선호 종목으로 제시한다.</li></ul></div><div class="grp"><ul><li>반도체 사이클의 최대 핵심 변수는 빅테크의 AI 설비투자 축소 여부다.</li><li>2027년 예상치 대비 투자가 20% 위축될 경우 관련 기업 매출은 20%, EPS는 최대 40% 감소 압력을 받게 된다.</li><li>다만 지출 조정은 부지 및 전력망에 집중될 것이므로 고효율 차세대 칩 수요는 견조하게 유지될 것이다.</li></ul></div><div class="grp"><ul><li>보수적 국면에서는 EDA 소프트웨어 및 방어적 아날로그 반도체 기업의 비중 확대가 유리하다.</li><li>반면 투자 조기 회복 시에는 메모리, 광통신, CPU 밸류체인의 주가 반등 탄력이 두드러질 것이다.</li><li>통상 실적 저점 통과 전 주가가 바닥을 형성해 온 만큼 가시성 확보 국면에서 강한 리레이팅이 예상된다.</li></ul></div></div>
+  <div class="src">Source: 뱅크오브아메리카 (Bank of America) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n30" aria-label="레이먼드 제임스">
+  <div class="snav">
+    <a class="nv" href="#n29">← 이전</a>
+    <a class="nv" href="#n31">다음 →</a>
+    <span class="cnt">30 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">금융 분석, 전략 및 전망</span>
+    <span class="chip b-r">리스크 −0.5</span>
+    <span class="chip ai">수출통제 입법</span>
+  </div>
+  <div class="phd">
+    <div class="kick">RESEARCH · RAYMOND JAMES</div>
+    <h2>매치법 가속 — 대중 수출통제 입법 리스크</h2>
+    <p class="subl">엔비디아 스파이 의혹 보도가 대중국 수출통제를 강화하는 매치 법안 처리를 앞당길 것으로 보이며, 초당적 지지 덕에 신속히 법제화될 가능성이 높다고 본다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">법안</span><span class="v">매치 법안(MATCH)</span></div><div class="cd"><span class="k">지지</span><span class="v">초당적</span></div><div class="cd"><span class="k">리스크</span><span class="v">수출통제 강화</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 1개 그룹 / 2개 불릿</div><div class="grp"><ul><li>엔비디아 관련 스파이 의혹 보도는 대중국 수출 통제를 강화하는 매치 법안 처리를 가속화할 전망이다.</li><li>해당 법안은 초당적 지지를 확보하고 있어 민주당 지도부 하에서 신속히 법제화될 가능성이 높다.</li></ul></div></div>
+  <div class="src">Source: 레이먼드 제임스 (Raymond James) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n31" aria-label="Keith Parker">
+  <div class="snav">
+    <a class="nv" href="#n30">← 이전</a>
+    <a class="nv" href="#n32">다음 →</a>
+    <span class="cnt">31 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">금융 분석, 전략 및 전망</span>
+    <span class="chip b-o">기회 +0.7</span>
+    <span class="chip ai">AI 인프라 펀더멘털</span>
+  </div>
+  <div class="phd">
+    <div class="kick">RESEARCH · UBS</div>
+    <h2>기술주 매도는 포지셔닝 조정 — 6~12개월 상승</h2>
+    <p class="subl">최근 기술주 매도세는 인프라 펀더멘털 침체가 아닌 포지셔닝 조정이며, 견고한 경제활동과 실적 성장에 힘입어 향후 6~12개월 추가 상승세를 전망했다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">성격</span><span class="v">포지셔닝 조정</span></div><div class="cd"><span class="k">전망</span><span class="v">6~12개월 상승</span></div><div class="cd"><span class="k">조정 원인</span><span class="v">수급·밸류에이션</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 1개 그룹 / 3개 불릿</div><div class="grp"><ul><li>최근의 기술주 매도세는 인프라 펀더멘털의 침체가 아닌 투자자들의 포지셔닝 조정에 따른 결과다.</li><li>견고한 경제 활동과 양호한 기업 실적 성장에 힘입어 향후 6~12개월간 추가 상승세를 전개할 것이다.</li><li>단기 집중된 수급과 높아진 밸류에이션 부담이 일시적 가격 조정을 유발한 상태다.</li></ul></div></div>
+  <div class="src">Source: Keith Parker (UBS 전략가) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n32" aria-label="Beata Manthey">
+  <div class="snav">
+    <a class="nv" href="#n31">← 이전</a>
+    <a class="nv" href="#n33">다음 →</a>
+    <span class="cnt">32 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">금융 분석, 전략 및 전망</span>
+    <span class="chip b-c">체크 −0.3</span>
+    <span class="chip ai">기술주 수급</span>
+  </div>
+  <div class="phd">
+    <div class="kick">RESEARCH · CITI</div>
+    <h2>기술주 '중립' 하향 — 유럽 비중확대·바벨 전략</h2>
+    <p class="subl">나스닥 수급 위험을 반영해 글로벌 기술주를 중립으로 낮추고, 유럽 증시는 비중확대하며 헬스케어·식음료를 더한 바벨 전략을 권고했다. S&amp;P 목표는 8,100 유지.</p>
+    <div class="cd-r"><div class="cd"><span class="k">기술주</span><span class="v">'중립' 하향</span></div><div class="cd"><span class="k">유럽</span><span class="v">비중확대</span></div><div class="cd"><span class="k">S&amp;P 목표</span><span class="v">8,100</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 3개 그룹 / 10개 불릿</div><div class="grp"><ul><li>나스닥 등 핵심 지수의 수급 위험을 반영해 글로벌 기술주 투자의견을 '중립'으로 하향 조정한다.</li><li>기술주 재매수 전략을 집행하기 위해서는 시장 포지셔닝이 완전한 순매도 영역에 진입해야 한다.</li><li>중간선거 이후 불거진 워싱턴의 규제 강화 불확실성이 해소되는 과정이 선행되어야 한다.</li></ul></div><div class="grp"><ul><li>지난 한 달간 방어주가 경기순환주 대비 15% 초과 상승하는 격렬한 섹터 로테이션이 전개되었다.</li><li>2027년 기업 이익 전망치가 견고하고 유가 하락이 뒷받침되고 있어 시장의 급락 리스크는 제한적이다.</li><li>EPS 성장이 둔화되는 국면에서는 탄탄한 재무구조를 갖춘 퀄리티 주식 중심의 방어 전략이 적합하다.</li></ul></div><div class="grp"><ul><li>에너지 가격 하락 수혜가 예상되는 영국 제외 유럽 증시 투자의견을 '비중확대'로 상향한다.</li><li>헬스케어 및 유럽 식음료 섹터를 상향하며 순환주와 방어주를 고르게 담는 바벨 전략을 구축해야 한다.</li><li>지정학적 긴장 완화에 힘입어 일본 토픽스 5,000포인트 및 신흥국 지수 2,050포인트를 목표로 제시한다.</li><li>2026년 말 S&amp;P 500 지수 목표치는 기존 8,100포인트를 그대로 유지한다.</li></ul></div></div>
+  <div class="src">Source: Beata Manthey (씨티 글로벌 전략가) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<section class="sheet" id="n33" aria-label="Sergio Ermotti">
+  <div class="snav">
+    <a class="nv" href="#n32">← 이전</a>
+    <a class="nv" href="#n1">다음 →</a>
+    <span class="cnt">33 / 33</span>
+    <a class="cl" href="#close" onclick="closeSheet();return false;">닫기 ✕</a>
+  </div>
+  <div class="chips">
+    <span class="chip cat">금융 분석, 전략 및 전망</span>
+    <span class="chip b-c">체크 +0.2</span>
+    <span class="chip ai">AI 주가 조정</span>
+  </div>
+  <div class="phd">
+    <div class="kick">RESEARCH · UBS</div>
+    <h2>관심은 인플레·금리로 회귀 — AI 조정은 과도한 우려</h2>
+    <p class="subl">시장의 핵심 관심이 인플레이션과 기준금리로 돌아갈 것이며, 최근 AI 관련 주가 조정은 과도하게 우려할 필요가 없고 사모신용 시장은 구조적 안정화 단계에 있다고 평가했다.</p>
+    <div class="cd-r"><div class="cd"><span class="k">관심</span><span class="v">인플레·금리</span></div><div class="cd"><span class="k">AI 조정</span><span class="v">과도한 우려</span></div><div class="cd"><span class="k">사모신용</span><span class="v">안정화 단계</span></div></div>
+  </div>
+  <div class="p-b"><div class="p-lbl">원문 발언 · 1개 그룹 / 3개 불릿</div><div class="grp"><ul><li>금융시장의 핵심 관심사는 다시 인플레이션 수치와 중앙은행의 기준금리 정책으로 회귀할 것이다.</li><li>최근 발생한 인공지능 관련 주식의 가격 조정에 대해 과도한 우려를 둘 필요는 없다.</li><li>사모신용 시장의 수급과 건전성은 점차 구조적인 안정화 단계에 안착하고 있다.</li></ul></div></div>
+  <div class="src">Source: Sergio Ermotti (UBS 최고경영자) · 2026.11.09<br><a class="sl" href="https://naver.me/5NeS1WEz" target="_blank" rel="noopener">원문 링크 — naver.me/5NeS1WEz</a></div>
+</section>
+
+<script>
+function closeSheet(){
+  if(history.replaceState){history.replaceState(null,'',location.href.split('#')[0]);}
+  else{location.hash='';}
+}
+(function(){
+  var ids=[].map.call(document.querySelectorAll('.sheet'),function(s){return s.id;});
+  function go(d){
+    var cur=(location.hash||'').slice(1), i=ids.indexOf(cur);
+    if(i<0) return;
+    location.hash='#'+ids[(i+d+ids.length)%ids.length];
+  }
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'){ if(location.hash && location.hash!=='#') closeSheet(); }
+    else if(e.key==='ArrowRight'){ go(1); }
+    else if(e.key==='ArrowLeft'){ go(-1); }
+  });
+  var sc=document.querySelector('.scrim');
+  if(sc) sc.addEventListener('click',closeSheet);
+  window.addEventListener('hashchange',function(){
+    var t=document.querySelector(location.hash||'.none');
+    if(t && t.classList.contains('sheet')) t.scrollTop=0;
+  });
+})();
+</script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
