@@ -1,0 +1,1828 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+    <script>
+      (function() {
+        // Capture host references before any artifact code runs: Window.parent
+        // is [Replaceable] (a top-level `var parent` in artifact code would
+        // replace the accessor with a data property), and a top-level
+        // `const crypto` would shadow the global — either would otherwise
+        // silently break the bridge for artifacts that worked before.
+        const realParent = window.parent;
+        const cryptoObj = window.crypto;
+        const RealURL = URL;
+        const realDecodeURIComponent = decodeURIComponent;
+        const RealTextEncoder = TextEncoder;
+        const realAtob = atob;
+        // html-to-image is only used by takeScreenshot: fetched on first use, not as a
+        // parser-blocking tag. Native fetch, captured before the proxy override below.
+        const realFetch = typeof window.fetch === 'function' ? window.fetch.bind(window) : null;
+        const HTML_TO_IMAGE_SRC = "https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.13/html-to-image.min.js";
+        const HTML_TO_IMAGE_INTEGRITY = "sha512-iZ2ORl595Wx6miw+GuadDet4WQbdSWS3JLMoNfY8cRGoEFy6oT3G9IbcrBeL6AfkgpA51ETt/faX6yLV+/gFJg==";
+        let htmlToImageLoad = null;
+        const loadHtmlToImage = () => {
+          if (!htmlToImageLoad) {
+            htmlToImageLoad = (realFetch
+              ? realFetch(HTML_TO_IMAGE_SRC, { integrity: HTML_TO_IMAGE_INTEGRITY, credentials: 'omit', referrerPolicy: 'no-referrer' })
+              : Promise.reject(new Error('fetch unavailable'))
+            )
+              .then((res) => {
+                if (!res.ok) throw new Error('html-to-image failed to load (' + res.status + ')');
+                return res.text();
+              })
+              .then((source) => {
+                // UMD bundle: hide the artifact's AMD/CommonJS globals so it takes the
+                // window-global branch; inline script text runs synchronously on insert.
+                const hidden = ['define', 'module', 'exports'].map((k) => {
+                  const entry = { k, own: Object.prototype.hasOwnProperty.call(window, k), v: window[k] };
+                  try { window[k] = undefined; } catch (e) {}
+                  return entry;
+                });
+                try {
+                  const el = document.createElement('script');
+                  el.text = source;
+                  (document.head || document.documentElement).appendChild(el);
+                } finally {
+                  hidden.forEach(({ k, own, v }) => {
+                    try { if (own) { window[k] = v; } else { delete window[k]; } } catch (e) {}
+                  });
+                }
+                if (!window.htmlToImage) throw new Error('html-to-image unavailable after load');
+                return window.htmlToImage;
+              });
+            // A failed load may be transient; let the next screenshot retry.
+            htmlToImageLoad.catch(() => { htmlToImageLoad = null; });
+          }
+          return htmlToImageLoad;
+        };
+        // crypto.randomUUID exists only in Secure Contexts; fall back to a
+        // unique non-crypto id elsewhere (http://LAN-IP dev flows) —
+        // uniqueness is what the bridge needs, unpredictability is
+        // defense-in-depth on top of the source guards.
+        const newRequestId =
+          cryptoObj && typeof cryptoObj.randomUUID === "function"
+            ? function () { return cryptoObj.randomUUID(); }
+            : function () { return Date.now() + "-" + Math.random(); };
+
+        // Bridge request ids are crypto-random (not sequential) so they
+        // cannot be predicted by other frames in the tab.
+        let callbacksMap = new Map();
+        let streamControllers = new Map();
+        
+        window.claude = {
+          complete: (prompt) => {
+            return new Promise((resolve, reject) => {
+              const id = newRequestId();
+              callbacksMap.set(id, { resolve, reject });
+              realParent.postMessage({ type: 'claudeComplete', id, prompt }, '*');
+            });
+          }
+        };
+
+        // storage.get and .list calls not yet answered, read by the parent at this frame's 'load' (an answer may restyle the page); counted
+        // here, not there, because WebKit can run this frame's 'load' in the parent before a message posted while parsing has arrived.
+        let storageReadsOut = 0;
+        try { Object.defineProperty(window, '__storageReadsOut', { configurable: true, get: () => storageReadsOut }); } catch (e) {}
+        window.storage = {
+          get: (key, shared = false) => {
+            return new Promise((resolve, reject) => {
+              const id = newRequestId();
+              callbacksMap.set(id, { resolve, reject });
+              realParent.postMessage({ type: 'storageGet', id, key, shared }, '*');
+              storageReadsOut += 1;
+            });
+          },
+          set: (key, value, shared = false) => {
+            return new Promise((resolve, reject) => {
+              const id = newRequestId();
+              callbacksMap.set(id, { resolve, reject });
+              realParent.postMessage({ type: 'storageSet', id, key, value, shared }, '*');
+            });
+          },
+          delete: (key, shared = false) => {
+            return new Promise((resolve, reject) => {
+              const id = newRequestId();
+              callbacksMap.set(id, { resolve, reject });
+              realParent.postMessage({ type: 'storageDelete', id, key, shared }, '*');
+            });
+          },
+          list: (prefix, shared = false) => {
+            return new Promise((resolve, reject) => {
+              const id = newRequestId();
+              callbacksMap.set(id, { resolve, reject });
+              realParent.postMessage({ type: 'storageList', id, prefix, shared }, '*');
+              storageReadsOut += 1;
+            });
+          }
+        };
+
+        let pendingBlobs = new Map();
+        URL.createObjectURL = (blob) => {
+          // Store the blob and create an ID and URL for it
+          const blobId = `blob-${Date.now()}-${Math.random()}`;
+          pendingBlobs.set(blobId, blob);
+          return `blob-request://${blobId}`;
+        };
+
+        URL.revokeObjectURL = (url) => {
+          // Remove the blob from our store
+          const blobId = url.replace("blob-request://", "");
+          pendingBlobs.delete(blobId);
+        };
+
+        const getBlobFromURL = (url) => {
+          const blobId = url.replace("blob-request://", "");
+          return pendingBlobs.get(blobId);
+        };
+
+        // Override global fetch with streaming support
+        window.fetch = (url, init = {}) => {
+          return new Promise((resolve, reject) => {
+            const id = newRequestId();
+            const channelId = `fetch-${id}-${Date.now()}`;
+            
+            callbacksMap.set(id, { 
+              resolve: (response) => {
+                // Null-body statuses: Response(stream, {status: 204}) throws
+                // per the Fetch spec, which would escape this resolver and
+                // hang the artifact's await forever.
+                if (response.status === 204 || response.status === 205 || response.status === 304) {
+                  try {
+                    resolve(new Response(null, {
+                      status: response.status,
+                      statusText: response.statusText,
+                      headers: response.headers
+                    }));
+                  } catch (err) {
+                    // Invalid statusText/header bytes can throw here too.
+                    reject(new TypeError(
+                      'Bridge fetch: unconstructable response (status ' + response.status + ')'
+                    ));
+                  }
+                  return;
+                }
+                // Create a ReadableStream for the response body
+                const stream = new ReadableStream({
+                  start(controller) {
+                    streamControllers.set(channelId, controller);
+                  },
+                  cancel() {
+                    streamControllers.delete(channelId);
+                  }
+                });
+                
+                // Create and return the Response with the stream. Response()
+                // requires status in [200, 599]; an opaque/no-cors fetch
+                // forwards status 0, which would throw here and escape the
+                // resolver, hanging the artifact's await. Surface it as a
+                // network-error-shaped rejection instead.
+                try {
+                  resolve(new Response(stream, {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: response.headers
+                  }));
+                } catch (err) {
+                  streamControllers.delete(channelId);
+                  reject(new TypeError(
+                    'Bridge fetch: unconstructable response (status ' + response.status + ')'
+                  ));
+                }
+              },
+              reject,
+              channelId
+            });
+            
+            realParent.postMessage({
+              type: 'proxyFetch',
+              id,
+              url,
+              init,
+              channelId
+            }, '*');
+          });
+        };
+
+        window.addEventListener('message', async (event) => {
+          // Only the embedding parent may drive the bridge — sibling and
+          // nested frames can also postMessage into this window.
+          if (event.source !== realParent) return;
+          if (event.data.type === 'takeScreenshot') {
+            // Echo the request's nonce so the requester can correlate the
+            // reply to ITS request — a reply without the expected nonce
+            // (e.g. from a stale pre-remount artifact) is ignored upstream.
+            const screenshotNonce = event.data.nonce;
+            const rootElement = document.getElementById('artifacts-component-root-html');
+            if (!rootElement) {
+              realParent.postMessage({
+                type: 'screenshotError',
+                nonce: screenshotNonce,
+                error: new Error('Root element not found'),
+              }, '*');
+              return;
+            }
+            // Catch CDN load failures and toPng errors so the parent always
+            // gets a response instead of hanging forever.
+            try {
+              const htmlToImage = await loadHtmlToImage();
+              // Draws only the top, 630/1200 of the width tall, as the link preview is 1200x630. `height` also shortens html-to-image's copy of the root and
+              // what its % min- and max-height resolve against, which moves centred content; `style` undoes that. Keep in step with app/page.tsx.
+              const previewHeight = Math.ceil((rootElement.offsetWidth * 630) / 1200);
+              const screenshot = await htmlToImage.toPng(rootElement, {
+                ...(rootElement.offsetHeight > previewHeight && {
+                  height: previewHeight,
+                  style: { height: window.getComputedStyle(rootElement).height, minHeight: '0', maxHeight: 'none' },
+                }),
+                imagePlaceholder:
+                  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdjePDgwX8ACOQDoNsk0PMAAAAASUVORK5CYII=",
+              });
+              realParent.postMessage({
+                type: 'screenshotData',
+                nonce: screenshotNonce,
+                data: screenshot,
+              }, '*');
+            } catch (err) {
+              realParent.postMessage({
+                type: 'screenshotError',
+                nonce: screenshotNonce,
+                error: err instanceof Error ? err : new Error(String(err)),
+              }, '*');
+            }
+          } else if (event.data.type === 'claudeComplete') {
+            const callback = callbacksMap.get(event.data.id);
+            if (!callback) return;
+            if (event.data.error) {
+              callback.reject(new Error(event.data.error));
+            } else {
+              callback.resolve(event.data.completion);
+            }
+            callbacksMap.delete(event.data.id);
+          } else if (event.data.type === 'proxyFetchResponse') {
+            const callback = callbacksMap.get(event.data.id);
+            if (!callback) return;
+            if (event.data.error) {
+              callback.reject(new Error(event.data.error));
+              callbacksMap.delete(event.data.id);
+            } else {
+              // Initial response with headers, status, etc.
+              callback.resolve({
+                status: event.data.status,
+                statusText: event.data.statusText,
+                headers: event.data.headers
+              });
+              // Don't delete the callback yet if streaming
+              if (!event.data.body) {
+                callbacksMap.delete(event.data.id);
+              }
+            }
+          } else if (event.data.type === 'proxyFetchStream') {
+            // Handle streaming data chunks
+            const controller = streamControllers.get(event.data.channelId);
+            if (controller) {
+              if (event.data.error) {
+                controller.error(new Error(event.data.error));
+                streamControllers.delete(event.data.channelId);
+              } else if (event.data.done) {
+                controller.close();
+                streamControllers.delete(event.data.channelId);
+                // Clean up the callback
+                const callback = Array.from(callbacksMap.entries()).find(
+                  ([_, value]) => value.channelId === event.data.channelId
+                );
+                if (callback) {
+                  callbacksMap.delete(callback[0]);
+                }
+              } else if (event.data.chunk) {
+                controller.enqueue(new Uint8Array(event.data.chunk));
+              }
+            }
+          } else if (event.data.type === 'storageGet') {
+            const callback = callbacksMap.get(event.data.id);
+            if (!callback) return;
+            storageReadsOut -= 1;
+            if (event.data.error) {
+              callback.reject(new Error(event.data.error));
+            } else {
+              callback.resolve(event.data.result);
+            }
+            callbacksMap.delete(event.data.id);
+          } else if (event.data.type === 'storageSet') {
+            const callback = callbacksMap.get(event.data.id);
+            if (!callback) return;
+            if (event.data.error) {
+              callback.reject(new Error(event.data.error));
+            } else {
+              callback.resolve(event.data.result);
+            }
+            callbacksMap.delete(event.data.id);
+          } else if (event.data.type === 'storageDelete') {
+            const callback = callbacksMap.get(event.data.id);
+            if (!callback) return;
+            if (event.data.error) {
+              callback.reject(new Error(event.data.error));
+            } else {
+              callback.resolve(event.data.result);
+            }
+            callbacksMap.delete(event.data.id);
+          } else if (event.data.type === 'storageList') {
+            const callback = callbacksMap.get(event.data.id);
+            if (!callback) return;
+            storageReadsOut -= 1;
+            if (event.data.error) {
+              callback.reject(new Error(event.data.error));
+            } else {
+              callback.resolve(event.data.result);
+            }
+            callbacksMap.delete(event.data.id);
+          }
+        });
+
+        // An SVG <a> exposes href as an SVGAnimatedString; its baseVal is the attribute
+        // as written, so resolve it against the base URL as the browser does for an HTML <a>.
+        const resolvedHref = (linkEl) => {
+          if (typeof linkEl.href === "string") return linkEl.href;
+          const written = linkEl.href?.baseVal;
+          // A same-document SVG link, such as one that begins an animation, stays with the browser.
+          if (!written || written.trim().startsWith("#")) return "";
+          try {
+            return new RealURL(written, linkEl.baseURI).href;
+          } catch (error) {
+            return written;
+          }
+        };
+
+        // This frame's URL is about:srcdoc, so the browser resolves "#id" against the renderer
+        // page and would load that page in the frame instead of scrolling.
+        const sameDocumentFragment = (linkEl) => {
+          const written = linkEl.getAttribute("href")?.trim();
+          if (!written?.startsWith("#") || document.querySelector("base[href]")) return null;
+          return written.slice(1);
+        };
+
+        const scrollToFragment = (fragment) => {
+          let decoded = fragment;
+          try {
+            decoded = realDecodeURIComponent(fragment);
+          } catch (error) {}
+          let target = document.getElementById(fragment) ?? document.getElementById(decoded);
+          for (const named of target ? [] : document.getElementsByName(decoded)) {
+            if (named.localName === "a") {
+              target = named;
+              break;
+            }
+          }
+          if (target) {
+            target.scrollIntoView();
+          } else if (decoded.toLowerCase() === "top") {
+            window.scrollTo(0, 0);
+          } else {
+            return false;
+          }
+          return true;
+        };
+
+        // Same decoder as dataUrlFile in app/page.tsx; change both together.
+        const hexPair = /^[0-9a-f]{2}$/i;
+        const dataUrlFile = (href) => {
+          const hash = href.indexOf("#");
+          const url = hash === -1 ? href : href.slice(0, hash);
+          const comma = url.indexOf(",");
+          if (comma === -1) return null;
+          const header = url.slice(0, comma);
+          const payload = url.slice(comma + 1);
+          const mimeMatch = header.match(/data:([^;]+)/);
+          const mimeType = mimeMatch ? mimeMatch[1] : "application/octet-stream";
+          const declaredBase64 = header
+            .split(";")
+            .slice(1)
+            .some((param) => param.trim().toLowerCase() === "base64");
+          const type = mimeMatch ? mimeMatch[1].trim().toLowerCase() : "";
+          const binaryType = type !== "" && !type.startsWith("text/");
+          if (declaredBase64 || (binaryType && !payload.includes("%"))) {
+            let binary = null;
+            try {
+              binary = realAtob(
+                payload.replace(/%([0-9a-f]{2})/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16))),
+              );
+            } catch (error) {
+              if (declaredBase64) return null;
+            }
+            if (binary !== null) {
+              const bytes = new Uint8Array(binary.length);
+              for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+              }
+              return { mimeType, data: bytes.buffer };
+            }
+          }
+          const input = new RealTextEncoder().encode(payload);
+          const bytes = new Uint8Array(input.length);
+          let length = 0;
+          for (let i = 0; i < input.length; i++) {
+            if (input[i] === 0x25 && i + 2 < input.length) {
+              const pair = String.fromCharCode(input[i + 1], input[i + 2]);
+              if (hexPair.test(pair)) {
+                bytes[length++] = parseInt(pair, 16);
+                i += 2;
+                continue;
+              }
+            }
+            bytes[length++] = input[i];
+          }
+          return { mimeType, data: bytes.slice(0, length).buffer };
+        };
+
+        const onLinkClick = (event) => {
+          // Not instanceof Element: an artifact's own top-level class Element shadows the global.
+          if (typeof event.target?.closest !== "function") return;
+    
+          const linkEl = event.target.closest("a");
+          const href = linkEl && resolvedHref(linkEl);
+          if (!href) return;
+
+          const fragment = sameDocumentFragment(linkEl);
+          if (fragment !== null) {
+            const handledByArtifact = event.defaultPrevented;
+            event.preventDefault();
+            if (handledByArtifact || fragment === "" || scrollToFragment(fragment)) return;
+            // A fragment that names nothing in the artifact may name something in the host,
+            // such as a project thread. The artifact's own listeners still see the click.
+            realParent.postMessage({ type: 'openExternal', href }, '*');
+            return;
+          }
+          const filename = linkEl.getAttribute("download") ?? "";
+    
+          event.preventDefault();
+          event.stopImmediatePropagation();
+    
+          if (href.startsWith("blob-request:")) {
+            const blob = getBlobFromURL(href);
+            if (!blob) return;
+            void blob.arrayBuffer().then((data) => {
+              realParent.postMessage({
+                type: "downloadFile",
+                filename,
+                data,
+                mimeType: blob.type || "application/octet-stream",
+              });
+            });
+          } else if (href.startsWith("data:")) {
+            const file = dataUrlFile(href);
+            if (!file) return;
+            realParent.postMessage({
+              type: "downloadFile",
+              filename,
+              data: file.data,
+              mimeType: file.mimeType,
+            });
+          } else {
+            let linkUrl;
+            try {
+              linkUrl = new URL(href);
+            } catch (error) {
+              return;
+            }
+    
+            if (linkUrl.hostname === window.location.hostname) return;
+      
+            realParent.postMessage({
+              type: 'openExternal',
+              href,
+            }, '*');
+          }
+        };
+        window.addEventListener('click', onLinkClick);
+
+        // HACK: a click on an <a download> that is not in the document, or a dispatched click that does not bubble, never reaches the window
+        // listener, so the link gets a listener of its own while its click() or dispatchEvent() runs, after the artifact's. Change with app/page.tsx.
+        const RealAnchor = window.HTMLAnchorElement;
+        const RealMouseEvent = window.MouseEvent;
+        const anchorProto = RealAnchor?.prototype;
+        const superProto = anchorProto && Object.getPrototypeOf(anchorProto);
+        if (typeof RealAnchor === 'function' && typeof RealMouseEvent === 'function' && typeof superProto?.click === 'function' && typeof superProto?.dispatchEvent === 'function') {
+          const onMissedClick = (event) => {
+            if (!event.defaultPrevented) onLinkClick(event);
+          };
+          // Links whose click() or dispatchEvent() is running, so a call made during it leaves the outer call's listener in place.
+          const listening = new WeakSet();
+          const callHearingMissed = (anchor, bubbles, call) => {
+            if (!(anchor instanceof RealAnchor) || !anchor.hasAttribute('download') || (anchor.isConnected && bubbles) || listening.has(anchor)) {
+              return call();
+            }
+            listening.add(anchor);
+            anchor.addEventListener('click', onMissedClick);
+            try {
+              return call();
+            } finally {
+              listening.delete(anchor);
+              anchor.removeEventListener('click', onMissedClick);
+            }
+          };
+          anchorProto.click = function () {
+            return callHearingMissed(this, true, () => superProto.click.call(this));
+          };
+          anchorProto.dispatchEvent = function (event) {
+            const call = () => superProto.dispatchEvent.call(this, event);
+            return event instanceof RealMouseEvent && event.type === 'click' ? callHearingMissed(this, event.bubbles, call) : call();
+          };
+        }
+
+        const originalOpen = window.open;
+        window.open = function (url) {
+          realParent.postMessage({
+            type: "openExternal",
+            href: url,
+          }, "*");
+        };
+
+        window.addEventListener('error', (event) => {
+          realParent.postMessage({ type: 'console', message: 'Uncaught Error: ' + event.message }, '*');
+        });
+
+        // Last, so that if this throws, everything above is already set up. In its own function, so that its names stay local.
+        (() => {
+          function forwardConsole(e,r){const c=String,f=Reflect.apply;let i=0;const p=n=>i>3&&(typeof n=="function"||typeof n=="object"&&n!==null)?"[object Object]":n,s=n=>{try{return c(n??"")}catch{return"[object Object]"}},u=[["log",""],["error","Error: "],["warn","Warning: "]];for(const[n,y]of u){const h=e[n];e[n]=(...o)=>{let l=y;i+=1;try{for(let t=0;t<o.length;t+=1)o[t]=p(o[t]);f(h,e,o);for(let t=0;t<o.length;t+=1)l+=(t===0?"":" ")+s(o[t])}finally{i-=1}r(l)}}}
+          forwardConsole(window.console, (line) => realParent.postMessage({ type: 'console', message: line }, '*'));
+        })();
+      })();
+    </script>
+  <style id="claude-scrollbar">@layer claude-scrollbar{*{scrollbar-width:thin}html{scrollbar-color:rgb(128 128 128 / 50%) transparent}}</style><script>
+(function () {
+  "use strict";
+  if (window.__coworkHtmlReviewGuest) return;
+  window.__coworkHtmlReviewGuest = true;
+
+  var READY_TYPE = "__cowork_html_review_ready__";
+  var SEL_CLASS = "__cwhr-sel";
+  var CONTEXT_LEN = 32;
+  var EXACT_CAP = 1000;
+  var port = null;
+  var mode = false;
+  var pins = [];
+  var quotes = [];
+  // Resolved Range per quote id; invalidated on DOM mutation and on a
+  // fresh quotes set. Scroll/resize re-reports just re-read
+  // getClientRects() from the cached Range. Null prototype - ids are
+  // collaborator-writable and must not collide with Object.prototype.
+  var quoteRanges = Object.create(null);
+  var hoverEl = null;
+  var selected = null;
+  var hasTextSel = false;
+  var rafPending = false;
+  // Capture before page body scripts can shadow them; start() defers
+  // to DOMContentLoaded which page code can race.
+  var _MessageChannel = window.MessageChannel;
+  var _topPost = window.top.postMessage.bind(window.top);
+
+  function visibleText(el) {
+    // innerText drops display:none/visibility:hidden subtrees; keep an
+    // empty innerText (icon-only el) rather than falling through to
+    // textContent which would re-include hidden text.
+    var t = typeof el.innerText === "string" ? el.innerText : (el.textContent || "");
+    return t.replace(/\s+/g, " ").trim();
+  }
+
+  // Comment-mode cursor: see HTML_PREVIEW_COMMENT_CURSOR above.
+  var BUBBLE_CURSOR = "url(\"data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'24'%20height%3D'24'%20viewBox%3D'0%200%2024%2024'%3E%3Cpath%20d%3D'M12%20.5h0A11.5%2011.5%200%200%201%2023.5%2012v0A11.5%2011.5%200%200%201%2012%2023.5H2.5a2%202%200%200%201-2-2V12A11.5%2011.5%200%200%201%2012%20.5Z'%20fill%3D'%23fff'%20stroke%3D'rgba(0%2C0%2C0%2C0.22)'%20stroke-width%3D'1'%2F%3E%3C%2Fsvg%3E\") 1 23, url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAACjklEQVR4AbRWS2gaURR9TGpiFTUEWpKQkA+EruqizWcRSBRT/G8KKpXiyo0ra1fVNiDFLmypFUo3iht/iO4Uay1FGwtFECl1p6KWLly4CGqrSMTY+wRFQ7WhGYd7Zu697845b+7M8B6BJh+UxcXFG3a7XeTxeHQAC+C12+1+ZLPZhHgMbp8FjLWxAkaj8U48Hg8lEomfIpEoLBaLLTKZTAd4LJFI3kD8HsZ+xGKxoMFgYI9T+JvAtUAg8FylUn3hcDj8ra0t6vLyMmKxWIhCofSAfZyDMRqXy+Wr1eqvPp/vKYjMAEZsRMDpdN6MRCKf+Xz+8cbGBm2kckIAtXShUGgKh8Mnfr9/Ybh0IKDT6a4vLS19EggE+wwGY7jmUj6TyUTQyv35+fmP0MbBexkISKVS+97e3u1LsU0oAo67Go3G1i/pCZjN5t3Nzc0H/zPzPlH/ip8EWvbQYrHs4hwWmN3e3n62traGfZy7MtbX12fYbPYTIKIQOzs7C6urq/cgINVWVlaO4EtjEXq9nken06mksgMZtJthtVp5xNzcHBsEIEWu0Wg0RKVS2USz2WTigFx6hPCkMTfRarXgB6WQzd/j63Q6bdK+nB7j0KnRaCCCIMpTE4D2oEql8m1qAvV6/VSr1U5PIJvN+qFjv6fyBIVC4ZfD4XgJAmekC9RqNZROp1+FQqESCCDSBWCVO1EoFC8wOQZpAnjm0Wj0O/xX94H4HNAzotvtNnreFU6lUgllMplAMpnclcvlp8NURC6Xi8BLGc5N9NvtNqpWq6hcLqN8Pn8OLUkAMe/g4EAOG4WzizcTJpPpA6zFIpfL9Ra2I45/IRgM2lKp1LtisXjs9XpvHR4eHimVythF4n78BwAA//8r8OPFAAAABklEQVQDAPCY8Oae0TJxAAAAAElFTkSuQmCC\") 1 23, default";
+
+  function injectStyle() {
+    var style = document.createElement("style");
+    // Hover box is painted by the host (from streamed rects); the guest
+    // marks the selected element and, in comment mode, swaps the native
+    // cursor for the comment bubble (forced, so page cursor styles don't
+    // fight the picker). While a composer or thread card is open the arrow
+    // returns, so the bubble cursor and the pin just placed never show at
+    // once. Keyed on <html> data attributes, which page scripts that
+    // rewrite body.className leave alone; ":not(#_)" lifts the rules to
+    // id-level specificity so a page's own !important cursor rules lose.
+    var ANY = ":not(#__cwhr_)";
+    var MODE = "html[data-cwhr-mode]";
+    var COMPOSING = MODE + "[data-cwhr-composing]";
+    style.textContent =
+      "." + SEL_CLASS + "{outline:1px solid hsl(40 70% 40%) !important;outline-offset:0;}" +
+      MODE + ANY + "," + MODE + " " + ANY + "{cursor:" + BUBBLE_CURSOR + " !important;}" +
+      COMPOSING + ANY + "," + COMPOSING + " " + ANY + "{cursor:default !important;}";
+    (document.head || document.documentElement).appendChild(style);
+  }
+
+  function isUnique(sel) {
+    try {
+      return document.querySelectorAll(sel).length === 1;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Mirrors the host's stripInvisibles ranges. The host strips these
+  // from stored selectors, so a selector built on a value containing
+  // them would validate here but never match again - skip those rungs
+  // and fall through to the structural ladder instead.
+  function hasInvisibles(s) {
+    for (var i = 0; i < s.length; i++) {
+      var c = s.codePointAt(i);
+      if (c > 0xffff) i++;
+      if (
+        c <= 0x1f ||
+        c === 0x061c ||
+        c === 0x070f ||
+        c === 0xad ||
+        (c >= 0x7f && c <= 0x9f) ||
+        c === 0x115f ||
+        c === 0x1160 ||
+        c === 0x180e ||
+        (c >= 0x200b && c <= 0x200f) ||
+        (c >= 0x202a && c <= 0x202e) ||
+        (c >= 0x2060 && c <= 0x2064) ||
+        (c >= 0x2066 && c <= 0x2069) ||
+        c === 0x3164 ||
+        c === 0xfeff ||
+        (c >= 0xfff9 && c <= 0xfffb) ||
+        c === 0xffa0 ||
+        (c >= 0xe0000 && c <= 0xe007f)
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function escapeAttr(v) {
+    return String(v).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  }
+
+  // Selector ladder: unique #id -> unique [data-*] -> structural
+  // tag:nth-of-type path rooted at the nearest unique-id ancestor.
+  function selectorFor(el) {
+    if (el.id && !hasInvisibles(el.id) && isUnique("#" + CSS.escape(el.id))) {
+      return "#" + CSS.escape(el.id);
+    }
+    for (var i = 0; i < el.attributes.length; i++) {
+      var attr = el.attributes[i];
+      if (
+        attr.name.indexOf("data-") === 0 &&
+        attr.value &&
+        !hasInvisibles(attr.value)
+      ) {
+        var dataSel = "[" + attr.name + '="' + escapeAttr(attr.value) + '"]';
+        if (isUnique(dataSel)) return dataSel;
+      }
+    }
+    var parts = [];
+    var cur = el;
+    while (cur && cur !== document.body && cur.nodeType === 1 && parts.length < 10) {
+      var sel = cur.tagName.toLowerCase();
+      var parent = cur.parentElement;
+      if (parent) {
+        var sameTag = [];
+        for (var c = 0; c < parent.children.length; c++) {
+          if (parent.children[c].tagName === cur.tagName) sameTag.push(parent.children[c]);
+        }
+        if (sameTag.length > 1) {
+          sel += ":nth-of-type(" + (sameTag.indexOf(cur) + 1) + ")";
+        }
+      }
+      parts.unshift(sel);
+      if (
+        parent &&
+        parent.id &&
+        !hasInvisibles(parent.id) &&
+        isUnique("#" + CSS.escape(parent.id))
+      ) {
+        parts.unshift("#" + CSS.escape(parent.id));
+        return parts.join(" > ");
+      }
+      cur = parent;
+    }
+    if (cur === document.body) {
+      parts.unshift("body");
+      return parts.join(" > ");
+    }
+    // Depth cap hit without a root - an unrooted chain would match the
+    // first structural pattern anywhere in the document. Mark the pin
+    // detached instead of attaching it to the wrong element.
+    return ":not(*)";
+  }
+
+  function descriptorFor(el) {
+    var tag = "<" + el.tagName.toLowerCase() + ">";
+    var idPart = el.id ? " #" + el.id : "";
+    var text = visibleText(el).slice(0, 60);
+    var textPart = text ? ' "' + text + '"' : "";
+    // Nearest id'd ancestor, skipping the UCR-injected
+    // #artifacts-component-root-* wrapper which is implementation noise.
+    var section = el.parentElement;
+    while (
+      section &&
+      (!section.id || section.id.indexOf("artifacts-component-root") === 0)
+    ) {
+      section = section.parentElement;
+    }
+    var sectionPart = section && section.id ? " in #" + section.id : "";
+    return (tag + idPart + textPart + sectionPart).slice(0, 400);
+  }
+
+  // textContent offset of (node, offset) within body - the coordinate
+  // system text-quote anchors are stored in. -1 when the boundary
+  // isn't under body (shadow root, detached).
+  function textOffset(node, offset) {
+    var body = document.body;
+    if (!body) return -1;
+    try {
+      var pre = document.createRange();
+      pre.selectNodeContents(body);
+      pre.setEnd(node, offset);
+      return pre.toString().length;
+    } catch (e) {
+      return -1;
+    }
+  }
+
+  // Inverse: build a Range covering [start, end) in body.textContent.
+  function rangeForOffsets(start, end) {
+    var body = document.body;
+    if (!body) return null;
+    var walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT);
+    var acc = 0;
+    var range = document.createRange();
+    var haveStart = false;
+    var t;
+    while ((t = walker.nextNode())) {
+      var next = acc + t.length;
+      if (!haveStart && start < next) {
+        range.setStart(t, start - acc);
+        haveStart = true;
+      }
+      if (haveStart && end <= next) {
+        range.setEnd(t, end - acc);
+        return range;
+      }
+      acc = next;
+    }
+    return null;
+  }
+
+  // Context-scored search (W3C text-quote resolution): slice-check the
+  // hint, else pick the occurrence whose surrounding chars best match
+  // prefix/suffix. MIRRORS locateTextQuote() above line-for-line - the
+  // tested export is the contract; this copy is what the sandbox runs.
+  function locateQuote(text, q) {
+    var ex = q.exact;
+    if (!ex) return null;
+    var hint = q.startOffset >= 0 ? q.startOffset : 0;
+    if (text.slice(hint, hint + ex.length) === ex) {
+      return { start: hint, end: hint + ex.length };
+    }
+    var best = -1;
+    var bestScore = -1;
+    var bestDist = Infinity;
+    var scanned = 0;
+    for (var idx = text.indexOf(ex); idx !== -1 && ++scanned <= 1000; idx = text.indexOf(ex, idx + 1)) {
+      var before = text.slice(Math.max(0, idx - CONTEXT_LEN), idx);
+      var after = text.slice(idx + ex.length, idx + ex.length + CONTEXT_LEN);
+      var sc = 0;
+      for (var i = 1; i <= q.prefix.length && i <= before.length; i++) {
+        if (q.prefix[q.prefix.length - i] !== before[before.length - i]) break;
+        sc++;
+      }
+      for (var j = 0; j < q.suffix.length && j < after.length; j++) {
+        if (q.suffix[j] !== after[j]) break;
+        sc++;
+      }
+      var dist = Math.abs(idx - hint);
+      if (sc > bestScore || (sc === bestScore && dist < bestDist)) {
+        best = idx;
+        bestScore = sc;
+        bestDist = dist;
+      }
+    }
+    return best === -1 ? null : { start: best, end: best + ex.length };
+  }
+
+  function collectLineRects(range, cap) {
+    var out = [];
+    var rects = range.getClientRects();
+    for (var i = 0; i < rects.length && out.length < cap; i++) {
+      var r = rects[i];
+      if (r.width > 0 && r.height > 0) {
+        out.push({ x: r.left, y: r.top, w: r.width, h: r.height });
+      }
+    }
+    return out;
+  }
+
+  function reportTextSel(full) {
+    if (!port) return;
+    var sel = window.getSelection();
+    var r = sel && !sel.isCollapsed && sel.rangeCount > 0 ? sel.getRangeAt(0) : null;
+    if (!r || !document.body || !document.body.contains(r.commonAncestorContainer)) {
+      if (hasTextSel) {
+        hasTextSel = false;
+        port.postMessage({ type: "textClear" });
+      }
+      return;
+    }
+    hasTextSel = true;
+    var br = r.getBoundingClientRect();
+    var msg = {
+      type: "textCapture",
+      rect: { x: br.left, y: br.top, w: br.width, h: br.height },
+      lineRects: collectLineRects(r, 80),
+    };
+    if (full) {
+      var live = document.body.textContent || "";
+      var so = textOffset(r.startContainer, r.startOffset);
+      var eo = textOffset(r.endContainer, r.endOffset);
+      if (so < 0 || eo < 0 || eo <= so) {
+        // Unanchorable selection (shadow root, foreign node). A
+        // rect-only post here would make the host pair the new rect
+        // with a stale prior anchor - clear instead.
+        hasTextSel = false;
+        port.postMessage({ type: "textClear" });
+        return;
+      }
+      // Denomination invariant: exact/prefix/suffix are byte-identical
+      // slices of body.textContent. Truncation adjusts endOffset so
+      // the host's (endOffset - startOffset === exact.length) shape
+      // check holds. Cut points back off surrogate halves - a lone
+      // surrogate would never relocate and fails UTF-8 persist.
+      var capped = Math.min(eo, so + EXACT_CAP);
+      if (capped < eo) {
+        var hc = live.charCodeAt(capped - 1);
+        if (hc >= 0xd800 && hc <= 0xdbff) capped--;
+      }
+      if (capped <= so) {
+        port.postMessage(msg);
+        return;
+      }
+      var pStart = Math.max(0, so - CONTEXT_LEN);
+      var pc = live.charCodeAt(pStart);
+      if (pc >= 0xdc00 && pc <= 0xdfff) pStart++;
+      var sEnd = Math.min(live.length, capped + CONTEXT_LEN);
+      if (sEnd < live.length) {
+        var sc = live.charCodeAt(sEnd - 1);
+        if (sc >= 0xd800 && sc <= 0xdbff) sEnd--;
+      }
+      msg.exact = live.slice(so, capped);
+      msg.prefix = live.slice(pStart, so);
+      msg.suffix = live.slice(capped, sEnd);
+      msg.startOffset = so;
+      msg.endOffset = capped;
+    }
+    port.postMessage(msg);
+  }
+
+  function clearSelection() {
+    if (selected) {
+      selected.classList.remove(SEL_CLASS);
+      selected = null;
+    }
+  }
+
+  // rAF-throttled cursor + hover-rect stream so the host can paint the
+  // inspector hover box (and knows the pointer is present) in comment mode.
+  var cursorPending = false;
+  var cursorX = -1;
+  var cursorY = -1;
+  function flushCursor() {
+    cursorPending = false;
+    if (!port) return;
+    var hover = null;
+    if (
+      hoverEl &&
+      hoverEl.nodeType === 1 &&
+      hoverEl !== document.body &&
+      hoverEl !== document.documentElement
+    ) {
+      var r = hoverEl.getBoundingClientRect();
+      if (r.width > 0 || r.height > 0) {
+        hover = { x: r.left, y: r.top, w: r.width, h: r.height };
+      }
+    }
+    port.postMessage({ type: "cursor", x: cursorX, y: cursorY, hover: hover });
+  }
+  function scheduleCursor() {
+    if (!cursorPending) {
+      cursorPending = true;
+      requestAnimationFrame(flushCursor);
+    }
+  }
+  function onMouseMove(ev) {
+    if (!mode || !port) return;
+    // Over the scrollbar gutter (clientX/Y past the content box) - hide
+    // the hover box like a leave.
+    var de = document.documentElement;
+    if (ev.clientX >= de.clientWidth || ev.clientY >= de.clientHeight) {
+      cursorX = -1;
+      cursorY = -1;
+      hoverEl = null;
+      scheduleCursor();
+      return;
+    }
+    cursorX = ev.clientX;
+    cursorY = ev.clientY;
+    hoverEl = ev.target;
+    scheduleCursor();
+  }
+  function onMouseLeave() {
+    if (!mode || !port) return;
+    cursorX = -1;
+    cursorY = -1;
+    hoverEl = null;
+    scheduleCursor();
+  }
+
+  function onClick(ev) {
+    if (!port) return;
+    if (!mode) {
+      // Mode off: don't intercept the page, just let the host close any
+      // open popover (thread card click-away). A non-collapsed selection
+      // means the click ended a drag-select - not a click-away.
+      var s = window.getSelection();
+      if (!s || s.isCollapsed) port.postMessage({ type: "clickAway" });
+      return;
+    }
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+    var el = ev.target;
+    if (!el || el.nodeType !== 1 || el === document.documentElement) return;
+    if (el === document.body && el.firstElementChild) {
+      // Pin on body is rarely intentional; keep it anyway but as body.
+    }
+    clearSelection();
+    selected = el;
+    el.classList.add(SEL_CLASS);
+    var rect = el.getBoundingClientRect();
+    var pinX = rect.width > 0 ? (ev.clientX - rect.left) / rect.width : 0.5;
+    var pinY = rect.height > 0 ? (ev.clientY - rect.top) / rect.height : 0.5;
+    port.postMessage({
+      type: "capture",
+      selector: selectorFor(el).slice(0, 1000),
+      textHint: visibleText(el).slice(0, 300),
+      descriptor: descriptorFor(el),
+      pinX: Math.min(1, Math.max(0, pinX)),
+      pinY: Math.min(1, Math.max(0, pinY)),
+      clientX: ev.clientX,
+      clientY: ev.clientY,
+      rectLeft: rect.left,
+      rectTop: rect.top,
+    });
+  }
+
+  function reportRects() {
+    rafPending = false;
+    if (!port) return;
+    // Selected element's live bounds - keeps the host's draft pin /
+    // inspector tag / composer glued through scroll and reflow.
+    if (selected) {
+      var sr = selected.getBoundingClientRect();
+      port.postMessage({
+        type: "selRect",
+        left: sr.left,
+        top: sr.top,
+        w: sr.width,
+        h: sr.height,
+        found:
+          (sr.width > 0 || sr.height > 0) &&
+          document.documentElement.contains(selected),
+      });
+    }
+    var rects = [];
+    for (var i = 0; i < pins.length; i++) {
+      var p = pins[i];
+      var el = null;
+      try {
+        el = document.querySelector(p.selector);
+      } catch (e) {
+        el = null;
+      }
+      if (!el) {
+        rects.push({ id: p.id, x: 0, y: 0, found: false });
+        continue;
+      }
+      var r = el.getBoundingClientRect();
+      if (r.width === 0 && r.height === 0) {
+        rects.push({ id: p.id, x: 0, y: 0, found: false });
+        continue;
+      }
+      rects.push({
+        id: p.id,
+        x: r.left + p.pinX * r.width,
+        y: r.top + p.pinY * r.height,
+        found: true,
+      });
+    }
+    var quoteRects = [];
+    if (quotes.length > 0) {
+      var live = null;
+      for (var qi = 0; qi < quotes.length; qi++) {
+        var q = quotes[qi];
+        var qr = quoteRanges[q.id];
+        if (qr === undefined) {
+          if (live === null) {
+            live = (document.body && document.body.textContent) || "";
+          }
+          var loc = locateQuote(live, q);
+          qr = (loc && rangeForOffsets(loc.start, loc.end)) || null;
+          quoteRanges[q.id] = qr;
+        }
+        // Zero paintable rects (display:none subtree) reports as
+        // not-found so the host docks it as detached instead of
+        // rendering nothing clickable.
+        var qlr = qr ? collectLineRects(qr, 80) : [];
+        quoteRects.push(
+          qlr.length > 0
+            ? { id: q.id, found: true, lineRects: qlr }
+            : { id: q.id, found: false, lineRects: [] }
+        );
+      }
+    }
+    port.postMessage({
+      type: "rects",
+      rects: rects,
+      quoteRects: quoteRects,
+      scrollY: window.scrollY || 0,
+    });
+  }
+
+  function scheduleRects() {
+    if (rafPending) return;
+    rafPending = true;
+    var done = false;
+    function run() {
+      if (done) return;
+      done = true;
+      reportRects();
+    }
+    // rAF for paint alignment, with a timeout fallback - rAF is
+    // suspended entirely in hidden tabs and pins must still settle
+    // when the tab becomes visible after background loading.
+    requestAnimationFrame(run);
+    setTimeout(run, 150);
+  }
+
+  function setMode(on) {
+    mode = !!on;
+    document.documentElement.toggleAttribute("data-cwhr-mode", mode);
+    if (!mode) {
+      hoverEl = null;
+      clearSelection();
+    }
+  }
+
+  function setComposing(open) {
+    document.documentElement.toggleAttribute("data-cwhr-composing", !!open);
+  }
+
+  function onPortMessage(ev) {
+    var data = ev.data;
+    if (!data) return;
+    if (data.type === "mode") setMode(data.on);
+    else if (data.type === "composing") setComposing(data.open);
+    else if (data.type === "pins") {
+      pins = Array.isArray(data.pins) ? data.pins : [];
+      scheduleRects();
+    } else if (data.type === "quotes") {
+      quotes = Array.isArray(data.quotes) ? data.quotes : [];
+      quoteRanges = Object.create(null);
+      scheduleRects();
+    } else if (data.type === "clearSelection") {
+      clearSelection();
+    } else if (data.type === "clearTextSel") {
+      var ts = window.getSelection();
+      if (ts) ts.removeAllRanges();
+      hasTextSel = false;
+    } else if (data.type === "restoreScroll") {
+      var ry = Number(data.y);
+      if (isFinite(ry) && ry > 0) {
+        // Apply now and again at load - late images/fonts can grow the
+        // document after the first attempt clamps short.
+        window.scrollTo(0, ry);
+        window.addEventListener("load", function () {
+          window.scrollTo(0, ry);
+        });
+      }
+    }
+  }
+
+  function start() {
+    injectStyle();
+    var channel = new _MessageChannel();
+    port = channel.port1;
+    port.onmessage = onPortMessage;
+    // Sandboxed srcdoc origins can be opaque; "*" is required. The
+    // payload carries only the mount token (multiple sandboxes can be
+    // mounted at once - the token routes the port to the right overlay)
+    // and the channel port itself is pairwise-secure.
+    _topPost(
+      { type: READY_TYPE, token: "279fa850-13ee-46d9-a954-96e5b1d50d97" },
+      "*",
+      [channel.port2]
+    );
+    document.addEventListener("mousemove", onMouseMove, true);
+    // documentElement (not document, capture) so this fires only when the
+    // pointer leaves the viewport - capture-phase on document would fire for
+    // every intra-document element-boundary crossing.
+    document.documentElement.addEventListener("mouseleave", onMouseLeave);
+    document.addEventListener("click", onClick, true);
+    // Text-selection capture: commit on mouseup/keyup (Shift+Arrow),
+    // clear on collapse. Not mode-gated; highlight-to-comment is
+    // always on.
+    function onSelCommit() { reportTextSel(true); }
+    document.addEventListener("mouseup", onSelCommit, true);
+    document.addEventListener("keyup", onSelCommit, true);
+    document.addEventListener("selectionchange", function () {
+      var s = window.getSelection();
+      if (hasTextSel && (!s || s.isCollapsed)) reportTextSel(false);
+    });
+    document.addEventListener("keydown", function (ev) {
+      if (ev.key === "Escape" && port) port.postMessage({ type: "dismiss" });
+    }, true);
+    // Scroll/resize move the hovered element under a stationary pointer -
+    // re-report its rect so the host's inspector box tracks it. Mutations
+    // stay rects-only (animating pages would chatter the cursor stream).
+    var textSelPending = false;
+    function scheduleTextSel() {
+      if (textSelPending) return;
+      textSelPending = true;
+      requestAnimationFrame(function () {
+        textSelPending = false;
+        reportTextSel(false);
+      });
+    }
+    function onLayoutChange() {
+      scheduleRects();
+      if (mode && hoverEl) scheduleCursor();
+      if (hasTextSel) scheduleTextSel();
+    }
+    window.addEventListener("scroll", onLayoutChange, true);
+    window.addEventListener("resize", onLayoutChange);
+    // Full-cache invalidate per childList mutation is acceptable: CSS
+    // animation doesn't fire the observer; JS writers at frame rate
+    // would re-relocate every frame but are rare. characterData isn't
+    // observed, so .data= edits leave highlights stale until the next
+    // childList mutation.
+    var observer = new MutationObserver(function () {
+      quoteRanges = Object.create(null);
+      scheduleRects();
+      if (hasTextSel) scheduleTextSel();
+    });
+    function observe() {
+      if (document.body) observer.observe(document.body, { childList: true, subtree: true });
+    }
+    if (document.body) observe();
+    else document.addEventListener("DOMContentLoaded", observe);
+    // Settle pins after late layout (fonts, images).
+    setInterval(scheduleRects, 2000);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", start);
+  } else {
+    start();
+  }
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TNBfolio · CPI 2026년 10월 심층 분석</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&amp;family=JetBrains+Mono:wght@400;500;700&amp;family=Noto+Serif+KR:wght@400;500;700;900&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --ink:#1A1714; --paper:#F8F7F5; --white:#FFFFFF; --line:#E5E2DC;
+  --red:#EF4444; --red-t:#B91C1C; --red-bg:#FEF2F2;
+  --green:#10B981; --green-t:#047857; --green-bg:#ECFDF5;
+  --gray:#6B7280; --gray-bg:#F3F4F6;
+  --serif-en:'DM Serif Display', 'Noto Serif KR', serif;
+  --serif-kr:'Noto Serif KR', serif;
+  --mono:'JetBrains Mono', monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#FFFFFF;color:var(--ink)}
+body{font-family:var(--serif-kr);line-height:1.75;font-size:15px}
+.mono{font-family:var(--mono)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px 64px}
+section{margin-top:52px}
+.sec-head{display:flex;align-items:baseline;gap:12px;border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:22px}
+.sec-num{font-family:var(--mono);font-size:12px;color:var(--white);background:var(--ink);padding:3px 9px;border-radius:2px}
+.sec-title{font-family:var(--serif-en);font-size:26px;font-weight:400}
+.sec-sub{font-family:var(--serif-kr);font-size:14px;color:var(--gray);margin-left:auto}
+.foot{font-size:12px;color:var(--gray);margin-top:12px;line-height:1.7}
+.foot b{color:var(--ink)}
+
+/* ① HEADER */
+header.cover{background:var(--paper);border-bottom:3px solid var(--ink)}
+.cover-inner{max-width:1180px;margin:0 auto;padding:36px 24px 32px;display:flex;gap:32px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.brand{font-family:var(--mono);font-size:12px;letter-spacing:.18em;color:var(--gray)}
+.brand b{color:var(--ink);letter-spacing:.06em}
+.cover h1{font-family:var(--serif-en);font-size:64px;line-height:1.05;font-weight:400;margin-top:12px}
+.cover h1 small{display:block;font-size:22px;color:var(--gray);margin-top:6px}
+.cover .kr-sub{font-family:var(--serif-kr);font-weight:900;font-size:22px;margin-top:10px}
+.meta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;align-items:center}
+.meta{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:var(--white);padding:5px 10px;border-radius:2px}
+.badge{font-family:var(--serif-kr);font-size:12px;font-weight:700;color:var(--red-t);border:1.5px solid var(--red-t);padding:4px 10px;border-radius:2px;background:var(--white)}
+.dl-cluster{display:flex;flex-direction:column;align-items:flex-end;gap:12px;min-width:240px}
+.dl-btn{font-family:var(--serif-kr);font-weight:700;font-size:14px;background:var(--ink);color:#FFFFFF;border:none;padding:12px 18px;border-radius:3px;cursor:pointer;transition:.15s}
+.dl-btn:hover{background:#3a332d}
+.switch-row{display:flex;align-items:center;gap:10px;background:var(--white);border:1px solid var(--line);padding:8px 12px;border-radius:3px}
+.switch-label{font-size:13px;font-weight:500}
+.switch{position:relative;display:inline-block;width:44px;height:24px}
+.switch input{opacity:0;width:0;height:0}
+.switch-track{position:absolute;inset:0;background:#D1D5DB;border-radius:24px;cursor:pointer;transition:.2s}
+.switch-track::before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:#FFFFFF;border-radius:50%;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.switch input:checked + .switch-track{background:var(--green-t)}
+.switch input:checked + .switch-track::before{transform:translateX(20px)}
+.switch-status{font-size:12px;font-weight:700;width:28px}
+
+/* ② SURPRISE BANNER */
+.banner{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);margin-top:32px}
+.bcell{padding:22px 24px;border-top:6px solid var(--gray);background:var(--white)}
+.bcell + .bcell{border-left:1px solid var(--line)}
+.bcell.red{border-top-color:var(--red)}
+.bcell.neutral{border-top-color:var(--gray)}
+.blabel{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--gray)}
+.bval{font-family:var(--mono);font-size:44px;font-weight:700;margin:6px 0 2px}
+.bval.red{color:var(--red-t)}
+.bsub{font-size:13px;color:var(--gray)}
+.bsub .mono{color:var(--ink);font-weight:700}
+
+/* ③ KPI */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.kpi{border:1px solid var(--line);background:var(--white);padding:18px 20px;position:relative}
+.kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gray)}
+.kpi.red::before{background:var(--red)} .kpi.green::before{background:var(--green)}
+.kpi-t{font-size:13px;font-weight:700}
+.kpi-t span{font-family:var(--mono);font-size:10px;color:var(--gray);display:block;letter-spacing:.1em;font-weight:400}
+.kpi-v{font-family:var(--mono);font-size:34px;font-weight:700;margin:6px 0}
+.kpi-v.na{font-size:20px;color:var(--gray)}
+.kpi-d{font-family:var(--mono);font-size:12px}
+.up{color:var(--red-t);font-weight:700} .down{color:var(--green-t);font-weight:700} .flat{color:var(--gray);font-weight:700}
+.kpi-n{font-size:12px;color:var(--gray);margin-top:6px}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:2px;margin-left:6px}
+.tag.red{background:var(--red-bg);color:var(--red-t)} .tag.green{background:var(--green-bg);color:var(--green-t)} .tag.gray{background:var(--gray-bg);color:var(--gray)}
+
+/* charts */
+.chart-box{border:1px solid var(--line);background:var(--white);padding:20px}
+.chart-h{position:relative;height:360px}
+.chart-h.tall{height:620px}
+.chart-fallback{display:none;font-size:13px;color:var(--red-t);padding:12px;background:var(--red-bg)}
+.legend-inline{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;margin-bottom:10px}
+.legend-inline i{display:inline-block;width:12px;height:12px;margin-right:6px;vertical-align:-1px}
+
+/* tables */
+.tbl-wrap{border:1px solid var(--line);max-height:640px;overflow:auto;background:var(--white)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+thead th{position:sticky;top:0;z-index:2;background:#1A1714;color:#FFFFFF;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.08em;text-align:left;padding:11px 14px}
+/* 다크 thead 내 강조 레이블: 화이트 금지 → 레드 계열(#F87171, #1A1714 대비 약 6:1) + 볼드 */
+thead th.hl{color:#F87171;font-weight:700}
+tbody td{padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr:nth-child(even){background:#F8F7F5}
+td.num{font-family:var(--mono);text-align:right;white-space:nowrap}
+td.lv1{padding-left:28px} td.lv2{padding-left:44px;color:#3b3530}
+tr.grp td{background:#EFEBE4;font-weight:700;font-size:12px;font-family:var(--mono);letter-spacing:.06em}
+td.c-up{background:var(--red-bg);color:var(--red-t);font-weight:700}
+td.c-down{background:var(--green-bg);color:var(--green-t);font-weight:700}
+td.c-flat{color:var(--gray)}
+td.note{font-size:12px;color:var(--gray)}
+td.note b{color:var(--ink)}
+tr.hl-row td{background:#FEE2E2 !important;color:#B91C1C;font-weight:700}
+
+/* ⑦ impact cards / ⑨ market */
+.cards4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.icard{border:1px solid var(--line);background:var(--white);padding:18px;border-top:4px solid var(--gray)}
+.icard.red{border-top-color:var(--red)} .icard.green{border-top-color:var(--green)}
+.icard h4{font-size:14px;font-weight:900}
+.icard .iv{font-family:var(--mono);font-size:26px;font-weight:700;margin:8px 0}
+.icard .iv.red{color:var(--red-t)} .icard .iv.na{color:var(--gray);font-size:16px}
+.icard p{font-size:13px;line-height:1.7;color:#3b3530}
+.mrow{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.mrow:last-child{border-bottom:none}
+.mrow .mono{font-weight:700;text-align:right}
+.mrow .na{color:var(--gray);font-weight:400}
+.mrow .red{color:var(--red-t)}
+
+/* ⑧ policy */
+.policy-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+.timeline{border:1px solid var(--line);background:var(--paper);padding:18px}
+.timeline h4{font-size:14px;margin-bottom:10px}
+.tl-item{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.tl-item:last-child{border-bottom:none}
+.tl-item .mono{font-size:11px;min-width:74px;color:var(--gray);padding-top:2px}
+.quote{border-left:3px solid var(--red-t);padding:8px 14px;background:var(--red-bg);font-size:13px;margin-top:12px}
+.quote cite{display:block;font-style:normal;font-size:11px;color:var(--gray);margin-top:4px}
+
+/* ⑩ conclusion */
+.concl{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.cpoint{border:1px solid var(--line);padding:20px;background:var(--white)}
+.cpoint .no{font-family:var(--serif-en);font-size:34px;color:var(--red-t);line-height:1}
+.cpoint h4{font-size:15px;font-weight:900;margin:8px 0}
+.cpoint p{font-size:13.5px;color:#3b3530}
+.policy-box{margin-top:16px;border:1px solid var(--ink);padding:20px;background:var(--paper)}
+.policy-box h4{font-family:var(--serif-en);font-size:20px;font-weight:400;margin-bottom:8px}
+.next{margin-top:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.next div{border:1px dashed var(--gray);padding:14px;font-size:13px}
+.next .mono{display:block;font-weight:700;font-size:13px;margin-bottom:4px}
+
+footer{background:var(--paper);border-top:3px solid var(--ink);margin-top:64px}
+footer .inner{max-width:1180px;margin:0 auto;padding:24px;font-size:12px;color:var(--gray);display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between}
+footer b{color:var(--ink);font-family:var(--mono)}
+
+@media (max-width:900px){
+  .cover h1{font-size:46px}
+  .banner,.kpis,.cards4,.concl,.next,.policy-grid{grid-template-columns:1fr}
+  .bcell + .bcell{border-left:none;border-top-width:6px}
+  .dl-cluster{align-items:flex-start}
+  .sec-sub{display:none}
+}
+</style>
+<style>.__cwhr-sel{outline:1px solid hsl(40 70% 40%) !important;outline-offset:0;}html[data-cwhr-mode]:not(#__cwhr_),html[data-cwhr-mode] :not(#__cwhr_){cursor:url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'24'%20height%3D'24'%20viewBox%3D'0%200%2024%2024'%3E%3Cpath%20d%3D'M12%20.5h0A11.5%2011.5%200%200%201%2023.5%2012v0A11.5%2011.5%200%200%201%2012%2023.5H2.5a2%202%200%200%201-2-2V12A11.5%2011.5%200%200%201%2012%20.5Z'%20fill%3D'%23fff'%20stroke%3D'rgba(0%2C0%2C0%2C0.22)'%20stroke-width%3D'1'%2F%3E%3C%2Fsvg%3E") 1 23, url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAACjklEQVR4AbRWS2gaURR9TGpiFTUEWpKQkA+EruqizWcRSBRT/G8KKpXiyo0ra1fVNiDFLmypFUo3iht/iO4Uay1FGwtFECl1p6KWLly4CGqrSMTY+wRFQ7WhGYd7Zu697845b+7M8B6BJh+UxcXFG3a7XeTxeHQAC+C12+1+ZLPZhHgMbp8FjLWxAkaj8U48Hg8lEomfIpEoLBaLLTKZTAd4LJFI3kD8HsZ+xGKxoMFgYI9T+JvAtUAg8FylUn3hcDj8ra0t6vLyMmKxWIhCofSAfZyDMRqXy+Wr1eqvPp/vKYjMAEZsRMDpdN6MRCKf+Xz+8cbGBm2kckIAtXShUGgKh8Mnfr9/Ybh0IKDT6a4vLS19EggE+wwGY7jmUj6TyUTQyv35+fmP0MbBexkISKVS+97e3u1LsU0oAo67Go3G1i/pCZjN5t3Nzc0H/zPzPlH/ip8EWvbQYrHs4hwWmN3e3n62traGfZy7MtbX12fYbPYTIKIQOzs7C6urq/cgINVWVlaO4EtjEXq9nken06mksgMZtJthtVp5xNzcHBsEIEWu0Wg0RKVS2USz2WTigFx6hPCkMTfRarXgB6WQzd/j63Q6bdK+nB7j0KnRaCCCIMpTE4D2oEql8m1qAvV6/VSr1U5PIJvN+qFjv6fyBIVC4ZfD4XgJAmekC9RqNZROp1+FQqESCCDSBWCVO1EoFC8wOQZpAnjm0Wj0O/xX94H4HNAzotvtNnreFU6lUgllMplAMpnclcvlp8NURC6Xi8BLGc5N9NvtNqpWq6hcLqN8Pn8OLUkAMe/g4EAOG4WzizcTJpPpA6zFIpfL9Ra2I45/IRgM2lKp1LtisXjs9XpvHR4eHimVythF4n78BwAA//8r8OPFAAAABklEQVQDAPCY8Oae0TJxAAAAAElFTkSuQmCC") 1 23, default !important;}html[data-cwhr-mode][data-cwhr-composing]:not(#__cwhr_),html[data-cwhr-mode][data-cwhr-composing] :not(#__cwhr_){cursor:default !important;}</style><style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body id="artifacts-component-root-html">
+
+<!-- ① 헤더 커버 -->
+<header class="cover">
+  <div class="cover-inner">
+    <div>
+      <div class="brand"><b>TNBfolio</b> · @TNBfolio · US MACRO INDICATOR DEEP-DIVE</div>
+      <h1>CPI<small>Consumer Price Index — October 2026</small></h1>
+      <div class="kr-sub">미국 소비자물가지수 · 2026년 10월분</div>
+      <div class="meta-row">
+        <span class="meta">발표 2026.11.10 (화) 08:30 ET / 22:30 KST</span>
+        <span class="meta">BLS · USDL-26-1685</span>
+        <span class="badge">채널 자체 분석</span>
+      </div>
+    </div>
+    <div class="dl-cluster">
+      <button class="dl-btn" onclick="downloadReport()">⬇ 리포트 다운로드 (HTML)</button>
+      <div class="switch-row">
+        <span class="switch-label">자동 다운로드</span>
+        <label class="switch">
+          <input type="checkbox" id="autoDlToggle" checked="" onchange="handleToggleChange(this.checked)">
+          <span class="switch-track"></span>
+        </label>
+        <span class="switch-status mono" id="switchStatus">ON</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- ② 서프라이즈 배너 -->
+<div class="banner">
+  <div class="bcell red">
+    <div class="blabel">ACTUAL · 헤드라인 MoM (SA)</div>
+    <div class="bval red">0.4%</div>
+    <div class="bsub">근원(Core) <span class="mono">0.3%</span> · 전월 헤드라인 <span class="mono">0.6%</span></div>
+  </div>
+  <div class="bcell neutral">
+    <div class="blabel">FORECAST · 블룸버그 이코노미스트 서베이</div>
+    <div class="bval">0.3%</div>
+    <div class="bsub">근원 전망 <span class="mono">0.2%</span> · 출처: FT 보도 인용</div>
+  </div>
+  <div class="bcell red">
+    <div class="blabel">SURPRISE · 발표치 − 전망치</div>
+    <div class="bval red">+0.1%p</div>
+    <div class="bsub">근원 <span class="mono up">+0.1%p</span> · 헤드라인·근원 모두 전망 상회(물가 압력 우위)</div>
+  </div>
+</div>
+<p class="foot">※ 서프라이즈 값은 원문의 발표치와 전망치를 단순 차감한 채널 계산치다. 전망치는 FT가 인용한 블룸버그 서베이 기준이며, 그 외 컨센서스(Reuters·WSJ 등)는 데이터 미제공이다. 상단 색상 바: 빨강=인플레 압력 우위, 초록=완화, 회색=중립.</p>
+
+<!-- ③ KPI -->
+<section>
+  <div class="sec-head"><span class="sec-num">③</span><span class="sec-title">Key Indicators</span><span class="sec-sub">핵심 KPI · 이전치 대비</span></div>
+  <div class="kpis">
+    <div class="kpi green">
+      <div class="kpi-t"><span>HEADLINE CPI · MoM SA</span>헤드라인 전월비<span class="tag red" style="display:inline-block;letter-spacing:0">전망 상회</span></div>
+      <div class="kpi-v">0.4%</div>
+      <div class="kpi-d"><span class="down">▼ 둔화</span> 전월 0.6%</div>
+      <div class="kpi-n">전월 대비로는 둔화했지만 전망치 0.3%를 웃돌았다.</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-t"><span>CORE CPI · MoM SA</span>근원 전월비<span class="tag red" style="display:inline-block;letter-spacing:0">전망 상회</span></div>
+      <div class="kpi-v">0.3%</div>
+      <div class="kpi-d"><span class="flat">▬ 보합</span> 전월 0.3% · 8월 0.3%</div>
+      <div class="kpi-n">3개월 연속 0.3%에 머물렀다. 전망치 0.2%로의 둔화는 실현되지 않았다.</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-t"><span>HEADLINE / CORE · YoY</span>전년비 (헤드라인·근원)</div>
+      <div class="kpi-v na">데이터 미제공</div>
+      <div class="kpi-d">헤드라인 전월(9월) YoY <b>3.7%</b> · 근원 전월 YoY 데이터 미제공</div>
+      <div class="kpi-n">2025년 10월 셧다운으로 기준 데이터가 없어 BLS가 12개월 변화율을 발표하지 않았다.</div>
+    </div>
+    <div class="kpi red">
+      <div class="kpi-t"><span>3M ANNUALIZED · HEADLINE</span>최근 3개월 연율</div>
+      <div class="kpi-v">5.7%</div>
+      <div class="kpi-d"><span class="up">▲ 목표 상회</span> Fed 목표 2%</div>
+      <div class="kpi-n">WSJ 산출치다. 전년비 공백 구간에서 추세 판단의 대체 지표로 평가된다.</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-t"><span>SHELTER · MoM SA</span>주거비 전월비</div>
+      <div class="kpi-v">0.3%</div>
+      <div class="kpi-d"><span class="down">▼ 둔화</span> 전월 0.4%</div>
+      <div class="kpi-n">전체 월간 상승분의 30% 이상을 차지했다(BLS).</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-t"><span>ENERGY · MoM SA</span>에너지 전월비</div>
+      <div class="kpi-v">0.7%</div>
+      <div class="kpi-d"><span class="down">▼ 둔화</span> 전월 5.2%</div>
+      <div class="kpi-n">상승 폭은 크게 줄었지만 휘발유 12개월(계절 미조정)은 37.4%로 여전히 높다.</div>
+    </div>
+  </div>
+  <p class="foot">※ 색상 로직(물가지표): 상승·가속=빨강(인플레 심화), 하락·둔화=초록(완화), 보합·미제공=회색. 화살표는 전월치 대비 방향이다.</p>
+</section>
+
+<!-- ④ 트렌드 차트 -->
+<section>
+  <div class="sec-head"><span class="sec-num">④</span><span class="sec-title">Monthly Trend</span><span class="sec-sub">헤드라인 vs 근원 전월비 (2026.04–10)</span></div>
+  <div class="chart-box">
+    <div class="legend-inline">
+      <span><i style="background:#B91C1C"></i>헤드라인 CPI MoM</span>
+      <span><i style="background:#1A1714"></i>근원 CPI MoM</span>
+      <span><i style="background:#FFFFFF;border:2px dashed #6B7280"></i>10월 전망치(블룸버그 서베이)</span>
+    </div>
+    <div class="chart-h"><canvas id="trendChart"></canvas></div>
+    <div class="chart-fallback" id="trendFallback">차트 라이브러리(Chart.js)를 불러오지 못했다. 수치는 ⑥ 데이터 테이블을 참조한다.</div>
+  </div>
+  <p class="foot">※ BLS Table A에 명시된 2026년 4~10월 계절조정 전월비 실측치만 사용했으며 추정치는 포함하지 않았다. WSJ 차트(2024~2026)는 막대별 수치가 원문에 명시되지 않아 반영하지 않았다. 2025년 10~11월은 정부 셧다운으로 데이터가 없다. 10월 포인트(확대 표시)는 당월이다.</p>
+</section>
+
+<!-- ⑤ 세부 항목 차트 -->
+<section>
+  <div class="sec-head"><span class="sec-num">⑤</span><span class="sec-title">Component Breakdown</span><span class="sec-sub">10월 항목별 전월비 (SA)</span></div>
+  <div class="chart-box">
+    <div class="legend-inline">
+      <span><i style="background:#EF4444"></i>상승(물가 압력)</span>
+      <span><i style="background:#10B981"></i>하락(완화)</span>
+      <span><i style="background:#6B7280"></i>보합</span>
+    </div>
+    <div class="chart-h tall"><canvas id="compChart"></canvas></div>
+    <div class="chart-fallback" id="compFallback">차트 라이브러리(Chart.js)를 불러오지 못했다. 수치는 ⑥ 데이터 테이블을 참조한다.</div>
+  </div>
+  <p class="foot">※ 출처: BLS Table A (2026년 10월 계절조정 전월비). 식품 외 외식·의료용품은 계절 미조정 항목이다(BLS 각주 1).</p>
+</section>
+
+<!-- ⑥ 데이터 테이블 -->
+<section>
+  <div class="sec-head"><span class="sec-num">⑥</span><span class="sec-title">Full Data Table</span><span class="sec-sub">BLS 원문 수치 그대로</span></div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th>항목명 (ITEM)</th>
+        <th class="hl" style="text-align:right">금월 · OCT 2026 (%)</th>
+        <th style="text-align:right">전월 · SEP 2026 (%)</th>
+        <th>12개월 / 비고</th>
+      </tr></thead>
+      <tbody id="dataBody"></tbody>
+    </table>
+  </div>
+  <p class="foot">※ 금월 셀 색상: 전월 대비 가속=빨강, 둔화=초록, 동일 또는 전월 데이터 미제공=회색. 12개월 변화율은 2025년 10월 데이터 공백으로 대부분 미발표이며, BLS가 공표한 휘발유(37.4)·신차(0.7)·중고차(-3.3)만 계절 미조정 기준으로 표기했다. 세부 항목의 전월치는 BLS 본문에 명시된 경우에만 기재했다.</p>
+</section>
+
+<!-- ⑦ 시장 영향 분석 -->
+<section>
+  <div class="sec-head"><span class="sec-num">⑦</span><span class="sec-title">Market Impact Analysis</span><span class="sec-sub">핵심 해석 4가지</span></div>
+  <div class="cards4">
+    <div class="icard red">
+      <h4>근원 물가의 고착</h4>
+      <div class="iv red">0.3% × 3개월</div>
+      <p>근원 CPI가 8·9·10월 연속 0.3%를 기록하며 0.2%로의 둔화 기대를 빗나갔다. 뱅가드는 관세·에너지·AI 수요라는 세 가지 충격이 근원 물가에 반영되고 있다고 진단했다.</p>
+    </div>
+    <div class="icard red">
+      <h4>추세 물가의 재가속</h4>
+      <div class="iv red">5.7% (3M 연율)</div>
+      <p>최근 3개월 연율 상승률이 Fed 목표 2%를 크게 웃돌았다. 전년비 공백 국면에서 시장은 단기 연율 지표에 더 큰 비중을 둘 것으로 평가된다.</p>
+    </div>
+    <div class="icard red">
+      <h4>에너지 2차 전가 우려</h4>
+      <div class="iv red">37.4% (휘발유 12M)</div>
+      <p>에너지 상승률은 0.7%로 둔화했지만 운송 서비스 0.8%, 자동차보험 0.7%가 오르며 비에너지 부문으로의 전가가 확인됐다. 9월까지 항공료는 전년 대비 22% 올랐다(WSJ).</p>
+    </div>
+    <div class="icard red">
+      <h4>단기 금리 재평가</h4>
+      <div class="iv red">2Y 4.71%</div>
+      <p>발표 직후 2년물 금리가 장중 최대 0.17%p 뛰었다. 정책금리 기대에 민감한 구간이 먼저 반응하며 12월 인상 확신이 강화된 것으로 평가된다.</p>
+    </div>
+  </div>
+  <p class="foot">※ 출처: BLS(근원·항목별 수치), WSJ(3개월 연율·항공료), FT(2년물 금리, 뱅가드 조시 허트 발언).</p>
+</section>
+
+<!-- ⑧ 정책 영향 -->
+<section>
+  <div class="sec-head"><span class="sec-num">⑧</span><span class="sec-title">Policy Impact · FedWatch</span><span class="sec-sub">12월 FOMC 시나리오 스냅샷</span></div>
+  <div class="policy-grid">
+    <div>
+      <div class="tbl-wrap" style="max-height:none">
+        <table>
+          <thead><tr>
+            <th>시나리오 (12월 FOMC)</th>
+            <th style="text-align:right">발표 전 확률</th>
+            <th class="hl" style="text-align:right">발표 후 확률</th>
+            <th>원문 근거 (정성)</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>동결</td><td class="num c-flat">데이터 미제공</td><td class="num c-flat">데이터 미제공</td><td class="note">원문에 동결 가능성 언급이 없다.</td></tr>
+            <tr class="hl-row"><td>+25bp 인상 (기본 시나리오)</td><td class="num">데이터 미제공</td><td class="num">데이터 미제공</td><td>발표 전부터 트레이더들이 이미 반영했고, 시장은 광범위하게 예상한다(FT).</td></tr>
+            <tr><td>+50bp 인상</td><td class="num c-flat">데이터 미제공</td><td class="num c-flat">데이터 미제공</td><td class="note">발표 후 선물시장이 소폭의 가능성을 반영하기 시작했다(FT). 월러 이사가 조건부로 언급했으나 다른 위원의 동조는 아직 없다(WSJ).</td></tr>
+            <tr><td>12월·1월 연속 인상 신호</td><td class="num c-flat">데이터 미제공</td><td class="num c-flat">데이터 미제공</td><td class="note">단일 회의 대폭 인상보다 덜 급진적인 대안으로 WSJ가 제시했다.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="foot">※ CME FedWatch 캡처 이미지가 첨부되지 않아 확률 수치와 Before/After 비교값은 모두 데이터 미제공으로 표기했다. 강조 행(+25bp)은 원문상 시장 기본 시나리오다. 근거 열은 FT·WSJ 기사 서술을 요약했다.</p>
+    </div>
+    <div class="timeline">
+      <h4>Fed 정책 경로 (원문 기준)</h4>
+      <div class="tl-item"><span class="mono">2026.09</span><span>3년여 만의 첫 금리 인상을 단행했다.<sup>†</sup></span></div>
+      <div class="tl-item"><span class="mono">2026.10</span><span>인상을 건너뛰었으나 12월 추가 인상 가능성을 시사했다(WSJ).</span></div>
+      <div class="tl-item"><span class="mono">2026.11.10</span><span>월러 이사가 CPI 발표 전 연설에서 50bp 인상 검토 가능성을 언급했다.</span></div>
+      <div class="tl-item"><span class="mono">2026.12</span><span>25bp 인상이 기본 시나리오로 평가된다(FT).</span></div>
+      <div class="quote">프랭클린템플턴 인스티튜트의 제프 슐츠는 이번 근원 CPI로 12월 인상이 사실상 확정됐다고 평가했다.<cite>FT 보도 요약</cite></div>
+      <p class="foot">† FT는 "3년 넘게 만의 첫 인상", WSJ는 "3년 만의 첫 인상"으로 표현해 차이가 있어 양측 표현을 병기한다. Fed의 25bp 초과 인상은 2022년이 마지막이다(WSJ).</p>
+    </div>
+  </div>
+</section>
+
+<!-- ⑨ 시장 반응 요약 -->
+<section>
+  <div class="sec-head"><span class="sec-num">⑨</span><span class="sec-title">Market Reaction</span><span class="sec-sub">발표 직후 스냅샷</span></div>
+  <div class="cards4">
+    <div class="icard red">
+      <h4>지수선물 · 주식</h4>
+      <div class="mrow"><span>S&amp;P500 선물</span><span class="mono red">-0.6%</span></div>
+      <div class="mrow"><span>나스닥100 선물</span><span class="mono red">-1.1% (하락 예상)</span></div>
+      <div class="mrow"><span>다우 선물</span><span class="mono na">데이터 미제공</span></div>
+      <div class="mrow"><span>발표 전/후 레벨</span><span class="mono na">데이터 미제공</span></div>
+    </div>
+    <div class="icard red">
+      <h4>채권</h4>
+      <div class="mrow"><span>미 2년물</span><span class="mono red">4.71%</span></div>
+      <div class="mrow"><span>장중 최대 변동</span><span class="mono red">+0.17%p</span></div>
+      <div class="mrow"><span>미 10년물</span><span class="mono na">데이터 미제공</span></div>
+      <div class="mrow"><span>발표 전 2년물</span><span class="mono na">데이터 미제공</span></div>
+    </div>
+    <div class="icard">
+      <h4>달러</h4>
+      <div class="mrow"><span>달러인덱스(DXY)</span><span class="mono na">데이터 미제공</span></div>
+      <div class="mrow"><span>달러/원</span><span class="mono na">데이터 미제공</span></div>
+      <div class="mrow"><span>달러/엔</span><span class="mono na">데이터 미제공</span></div>
+      <div class="mrow"><span>발표 전/후 비교</span><span class="mono na">데이터 미제공</span></div>
+    </div>
+    <div class="icard">
+      <h4>원자재 · 암호화폐</h4>
+      <div class="mrow"><span>WTI / 브렌트</span><span class="mono na">데이터 미제공</span></div>
+      <div class="mrow"><span>금</span><span class="mono na">데이터 미제공</span></div>
+      <div class="mrow"><span>비트코인</span><span class="mono na">데이터 미제공</span></div>
+      <div class="mrow"><span>美 휘발유 평균(10월)<sup>‡</sup></span><span class="mono">$4.32/gal</span></div>
+    </div>
+  </div>
+  <p class="foot">※ 실시간 시장 데이터 캡처 이미지가 첨부되지 않아 FT 기사 본문 수치만 반영했으며, 단일 시점 스냅샷이다. 발표 전/후 비교값은 데이터 미제공이다. 나스닥100은 FT가 "하락 예정" 상태로 보도한 수치다.<br>‡ AAA 집계 소매가(WSJ 인용)로 시장 반응 지표가 아닌 참고치다. 9월 평균은 $4.34/gal이며, 이란 전쟁 이전 대비 약 34% 높다.</p>
+</section>
+
+<!-- ⑩ 결론 및 전망 -->
+<section>
+  <div class="sec-head"><span class="sec-num">⑩</span><span class="sec-title">Conclusion &amp; Outlook</span><span class="sec-sub">핵심 시사점 · 통화정책 · 다음 지표</span></div>
+  <div class="concl">
+    <div class="cpoint">
+      <div class="no">01</div>
+      <h4>"덜 둔화한" 헤드라인, 꺾이지 않는 근원</h4>
+      <p>헤드라인은 0.6%에서 0.4%로 낮아졌지만 전망 0.3%를 넘었고, 근원은 0.3%에서 3개월째 멈췄다. 둔화 방향성보다 둔화 속도의 부족이 이번 지표의 본질로 평가된다.</p>
+    </div>
+    <div class="cpoint">
+      <div class="no">02</div>
+      <h4>에너지 충격의 2차 전가 국면</h4>
+      <p>에너지 상승률은 5.2%에서 0.7%로 급감했지만 운송 서비스·자동차보험·외식이 오르며 비에너지로의 확산 신호가 나타났다. Fed 연구진은 팬데믹 이후 에너지 가격이 다른 물가로 번지는 경향이 강해졌다고 분석했고, 월러 이사는 이를 근거로 경계를 촉구했다.</p>
+    </div>
+    <div class="cpoint">
+      <div class="no">03</div>
+      <h4>전년비 공백이 만든 판단의 비대칭</h4>
+      <p>12개월 변화율이 발표되지 않아 시장은 월간 수치와 3개월 연율(5.7%)에 의존하게 됐다. 직전 확인된 전년비는 9월의 3.7%다. 단기 지표 의존도가 높아지면서 월별 서프라이즈의 파급력이 커졌다고 평가된다.</p>
+    </div>
+  </div>
+  <div class="policy-box">
+    <h4>Monetary Policy Implication</h4>
+    <p>12월 FOMC의 25bp 인상은 기본 시나리오로 굳어졌다. 쟁점은 인상 폭과 속도로 이동했다. 월러 이사의 50bp 언급과 발표 후 선물시장의 소폭 반영이 꼬리 위험을 키웠고, WSJ는 12월·1월 연속 인상 신호를 대안으로 제시했다. 정치적으로는 지난주 중간선거에서 민주당이 상·하원을 확보했다고 FT가 전했으며, 민주당은 관세 축소와 이란 전쟁 종료 압박을 거론했으나 단기 물가 경로를 좌우할 수단은 여전히 Fed에 있다고 WSJ는 진단했다.</p>
+  </div>
+  <div class="next">
+    <div><span class="mono">2026.12.10 (목) 08:30 ET</span>11월 CPI 발표(BLS 공지). 근원 0.3% 고착 여부가 핵심이다.</div>
+    <div><span class="mono">12월 FOMC</span>인상 폭(25bp vs 50bp)과 1월 연속 인상 시그널을 확인해야 한다. 회의 일자는 원문에 데이터 미제공이다.</div>
+    <div><span class="mono">2027.02.11</span>2027년 1월 CPI부터 일부 세부 항목 명칭이 변경된다(BLS 공지).</div>
+  </div>
+</section>
+
+</main>
+
+<!-- ⑪ 푸터 -->
+<footer>
+  <div class="inner">
+    <span><b>TNBfolio</b> · @TNBfolio · 2026.11.10</span>
+    <span>출처: U.S. BLS (USDL-26-1685), Financial Times, The Wall Street Journal, AAA(WSJ 인용)</span>
+    <span>본 리포트는 채널 자체 분석으로 정보 제공 목적이며 투자 권유가 아니다. 투자 판단과 그 결과의 책임은 투자자 본인에게 있다.</span>
+  </div>
+</footer>
+
+<script>
+/* ===== 다운로드 컨트롤 (공용) ===== */
+const STORAGE_KEY = 'tnbfolio_auto_dl_cpi';
+
+function downloadReport(){
+  const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+  const blob = new Blob([html], {type:'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'cpi_202610_report.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1500);
+}
+
+function handleToggleChange(isOn){
+  document.getElementById('switchStatus').textContent = isOn ? 'ON' : 'OFF';
+  try{ localStorage.setItem(STORAGE_KEY, isOn ? '1' : '0'); }catch(e){}
+}
+
+function initToggleState(){
+  const toggle = document.getElementById('autoDlToggle');
+  let saved = null;
+  try{ saved = localStorage.getItem(STORAGE_KEY); }catch(e){}
+  if(saved === '0'){ toggle.checked = false; }
+  else if(saved === '1'){ toggle.checked = true; }
+  document.getElementById('switchStatus').textContent = toggle.checked ? 'ON' : 'OFF';
+  return toggle.checked;
+}
+
+/* ===== 데이터 (BLS 원문 그대로, 문자열 보존) ===== */
+const TABLE_A = [
+  {n:'All items (전체)', lv:0, oct:'0.4', sep:'0.6', note:'미발표 (2025.10 데이터 공백)'},
+  {n:'Food (식품)', lv:1, oct:'0.5', sep:'0.0', note:'미발표'},
+  {n:'Food at home (가정식)', lv:2, oct:'0.4', sep:'-0.1', note:'미발표'},
+  {n:'Food away from home (외식)¹', lv:2, oct:'0.5', sep:'0.2', note:'미발표'},
+  {n:'Energy (에너지)', lv:1, oct:'0.7', sep:'5.2', note:'미발표'},
+  {n:'Energy commodities (에너지 상품)', lv:2, oct:'0.8', sep:'9.3', note:'미발표'},
+  {n:'Gasoline, all types (휘발유)', lv:2, oct:'1.0', sep:'9.1', note:'<b>37.4</b> (12개월, 계절 미조정) · NSA 전월비 -0.7'},
+  {n:'Fuel oil (난방유)', lv:2, oct:'2.0', sep:'15.3', note:'미발표'},
+  {n:'Energy services (에너지 서비스)', lv:2, oct:'0.6', sep:'0.1', note:'미발표'},
+  {n:'Electricity (전기)', lv:2, oct:'0.9', sep:'0.2', note:'미발표'},
+  {n:'Utility (piped) gas service (도시가스)', lv:2, oct:'-0.8', sep:'-0.3', note:'미발표'},
+  {n:'All items less food and energy (근원)', lv:1, oct:'0.3', sep:'0.3', note:'미발표 · 8월도 0.3'},
+  {n:'Core goods (근원 상품)', lv:2, oct:'0.2', sep:'0.3', note:'미발표'},
+  {n:'New vehicles (신차)', lv:2, oct:'0.2', sep:'0.2', note:'<b>0.7</b> (12개월, 계절 미조정)'},
+  {n:'Used cars and trucks (중고차)', lv:2, oct:'-1.2', sep:'0.7', note:'<b>-3.3</b> (12개월, 계절 미조정)'},
+  {n:'Apparel (의류)', lv:2, oct:'0.1', sep:'0.3', note:'미발표'},
+  {n:'Medical care commodities (의료용품)¹', lv:2, oct:'0.5', sep:'-0.7', note:'미발표'},
+  {n:'Core services (근원 서비스)', lv:2, oct:'0.3', sep:'0.4', note:'미발표'},
+  {n:'Shelter (주거비)', lv:2, oct:'0.3', sep:'0.4', note:'전체 월간 상승분의 30% 이상 기여'},
+  {n:'Transportation services (운송 서비스)', lv:2, oct:'0.8', sep:'0.6', note:'미발표'},
+  {n:'Medical care services (의료 서비스)', lv:2, oct:'0.3', sep:'0.3', note:'미발표'}
+];
+const DETAIL = [
+  {n:'Other food at home (기타 가정식)', oct:'0.7', sep:null},
+  {n:'Snacks (스낵)', oct:'1.0', sep:null},
+  {n:'Meats, poultry, fish, and eggs (육류·가금·수산·계란)', oct:'0.5', sep:null},
+  {n:'Beef (소고기)', oct:'0.9', sep:null},
+  {n:'Fruits and vegetables (과일·채소)', oct:'0.6', sep:null},
+  {n:'Dairy and related products (유제품)', oct:'0.6', sep:null},
+  {n:'Nonalcoholic beverages (비알코올 음료)', oct:'-0.3', sep:'0.9'},
+  {n:'Cereals and bakery products (시리얼·베이커리)', oct:'0.0', sep:null},
+  {n:'Full service meals (풀서비스 외식)', oct:'0.7', sep:null},
+  {n:'Limited service meals (간편 외식)', oct:'0.4', sep:null},
+  {n:"Owners' equivalent rent (자가주거비)", oct:'0.3', sep:null},
+  {n:'Rent (임대료)', oct:'0.2', sep:null},
+  {n:'Lodging away from home (숙박)', oct:'0.6', sep:'2.0'},
+  {n:'Recreation (레크리에이션)', oct:'0.8', sep:'0.5'},
+  {n:'Motor vehicle insurance (자동차보험)', oct:'0.7', sep:null},
+  {n:'Household furnishings and operations (가구·가사)', oct:'0.2', sep:null},
+  {n:'Education (교육)', oct:'0.3', sep:null},
+  {n:'Medical care (의료 전체)', oct:'0.3', sep:'0.1'},
+  {n:'Hospital services (병원 서비스)', oct:'0.8', sep:null},
+  {n:"Physicians' services (의사 서비스)", oct:'0.4', sep:null},
+  {n:'Prescription drugs (처방약)', oct:'0.3', sep:null},
+  {n:'Communication (통신)', oct:'-0.1', sep:null}
+];
+const NSA = [
+  {n:'CPI-U 지수 레벨 (1982-84=100)', oct:'337.511', sep:null, note:'계절 미조정 전월비 0.2'},
+  {n:'CPI-W 지수 레벨 (1982-84=100)', oct:'331.147', sep:null, note:'계절 미조정 전월비 0.1'},
+  {n:'C-CPI-U 전월비 (NSA)', oct:'0.2', sep:null, note:'최근 10~12개월 수치는 수정 대상'}
+];
+
+function cellClass(oct, sep){
+  if(sep === null || sep === undefined) return 'c-flat';
+  const a = parseFloat(oct), b = parseFloat(sep);
+  if(a > b) return 'c-up';
+  if(a < b) return 'c-down';
+  return 'c-flat';
+}
+
+function renderTable(){
+  const body = document.getElementById('dataBody');
+  let h = '<tr class="grp"><td colspan="4">TABLE A · 계절조정 전월비 (SA)</td></tr>';
+  TABLE_A.forEach(function(r){
+    h += '<tr><td class="lv'+r.lv+'"'+(r.lv===0?' style="font-weight:700"':'')+'>'+r.n+'</td>'
+      + '<td class="num '+cellClass(r.oct, r.sep)+'">'+r.oct+'</td>'
+      + '<td class="num">'+r.sep+'</td>'
+      + '<td class="note">'+r.note+'</td></tr>';
+  });
+  h += '<tr class="grp"><td colspan="4">세부 항목 · BLS 본문 기재 (10월 전월비)</td></tr>';
+  DETAIL.forEach(function(r){
+    h += '<tr><td class="lv1">'+r.n+'</td>'
+      + '<td class="num '+cellClass(r.oct, r.sep)+'">'+r.oct+'</td>'
+      + '<td class="num">'+(r.sep===null?'<span style="color:#6B7280">데이터 미제공</span>':r.sep)+'</td>'
+      + '<td class="note">미발표</td></tr>';
+  });
+  h += '<tr class="grp"><td colspan="4">계절 미조정 지표 (NSA)</td></tr>';
+  NSA.forEach(function(r){
+    h += '<tr><td class="lv1">'+r.n+'</td>'
+      + '<td class="num c-flat" style="color:#1A1714;font-weight:700">'+r.oct+'</td>'
+      + '<td class="num"><span style="color:#6B7280">데이터 미제공</span></td>'
+      + '<td class="note">'+r.note+'</td></tr>';
+  });
+  body.innerHTML = h;
+}
+
+/* ===== 차트 ===== */
+function renderCharts(){
+  if(typeof Chart === 'undefined'){
+    document.getElementById('trendFallback').style.display = 'block';
+    document.getElementById('compFallback').style.display = 'block';
+    return;
+  }
+  Chart.defaults.font.family = "'JetBrains Mono', monospace";
+  Chart.defaults.color = '#1A1714';
+
+  const labels = ['2026.04','2026.05','2026.06','2026.07','2026.08','2026.09','2026.10'];
+  const headline = [0.6,0.5,-0.4,0.1,0.4,0.6,0.4];
+  const core = [0.4,0.2,0.0,0.2,0.3,0.3,0.3];
+  const rad = function(n){ return labels.map(function(_,i){ return i===labels.length-1 ? n : 4; }); };
+
+  const tc = document.getElementById('trendChart');
+  if(Chart.getChart(tc)) Chart.getChart(tc).destroy();
+  new Chart(tc, {
+    type:'line',
+    data:{labels:labels, datasets:[
+      {label:'헤드라인 CPI MoM', data:headline, borderColor:'#B91C1C', backgroundColor:'#B91C1C', borderWidth:2.5, tension:.25, pointRadius:rad(8), pointHoverRadius:rad(10)},
+      {label:'근원 CPI MoM', data:core, borderColor:'#1A1714', backgroundColor:'#1A1714', borderWidth:2.5, tension:.25, pointRadius:rad(8), pointHoverRadius:rad(10)},
+      {label:'헤드라인 전망 0.3', data:[null,null,null,null,null,null,0.3], borderColor:'#6B7280', backgroundColor:'#FFFFFF', pointStyle:'rectRot', pointRadius:7, pointBorderWidth:2, showLine:false},
+      {label:'근원 전망 0.2', data:[null,null,null,null,null,null,0.2], borderColor:'#6B7280', backgroundColor:'#FFFFFF', pointStyle:'triangle', pointRadius:7, pointBorderWidth:2, showLine:false}
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:function(c){ return c.dataset.label+': '+c.raw+'%'; }}}},
+      scales:{
+        y:{ticks:{callback:function(v){return v+'%';}}, grid:{color:'#EEEAE4'}},
+        x:{grid:{display:false}}
+      }
+    }
+  });
+
+  const comp = TABLE_A.filter(function(r){ return r.lv>0; })
+    .map(function(r){ return {n:r.n.replace('¹',''), v:parseFloat(r.oct), s:r.oct}; })
+    .sort(function(a,b){ return b.v - a.v; });
+  const cc = document.getElementById('compChart');
+  if(Chart.getChart(cc)) Chart.getChart(cc).destroy();
+  new Chart(cc, {
+    type:'bar',
+    data:{labels:comp.map(function(d){return d.n;}), datasets:[{
+      data:comp.map(function(d){return d.v;}),
+      backgroundColor:comp.map(function(d){ return d.v>0 ? '#EF4444' : (d.v<0 ? '#10B981' : '#6B7280'); }),
+      borderWidth:0, barThickness:18
+    }]},
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:function(c){ return comp[c.dataIndex].s+'%'; }}}},
+      scales:{
+        x:{ticks:{callback:function(v){return v+'%';}}, grid:{color:'#EEEAE4'}},
+        y:{ticks:{font:{family:"'Noto Serif KR', serif", size:11}}, grid:{display:false}}
+      }
+    }
+  });
+}
+
+
+</script>
+
+
+</body></html>
