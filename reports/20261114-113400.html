@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>엔비디아의 빈자리, 왜 반도체 전체가 흔들렸나</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#faf9f6; --card:#ffffff; --line:#e4e1da; --ink:#1d1d1b; --muted:#6b6a65;
+    --green:#1f7a4d; --green-fill:#1f7a4d; --on-green:#ffffff;
+    --teal:#2a8c8c; --teal-bg:#eef7f7;
+    --coral:#d9573f; --coral-bg:#fdf0ec;
+    --gray:#8a8a86; --gray-bg:#ecebe7;
+    --box:#f3f2ee;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#141413; --card:#1d1d1c; --line:#34332f; --ink:#ecebe6; --muted:#a3a29c;
+      --green:#4fbf86; --green-fill:#2f8f5e; --on-green:#ffffff;
+      --teal:#5cc0c0; --teal-bg:#1b2e2e;
+      --coral:#f07a62; --coral-bg:#35201b;
+      --gray:#a3a29c; --gray-bg:#2b2a27;
+      --box:#252522;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',sans-serif;line-height:1.75}
+  .wrap{max-width:760px;margin:0 auto;padding:40px 20px 56px}
+  .kicker{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+  h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:30px;line-height:1.35;margin:8px 0 6px}
+  .dek{color:var(--muted);font-size:15px;margin:0 0 28px}
+  figure{margin:0 0 36px}
+  .figcard{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:14px;overflow-x:auto}
+  .figcard svg{display:block;width:100%;min-width:640px;height:auto}
+  figcaption{font-size:13.5px;color:var(--muted);margin-top:10px;line-height:1.65}
+  figcaption b{color:var(--ink)}
+  article{max-width:65ch}
+  h2{font-family:'Noto Serif KR',serif;font-size:20px;margin:34px 0 10px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;color:var(--muted);border:1px solid var(--line);border-radius:3px;padding:1px 6px}
+  p{margin:0 0 14px;font-size:16px}
+  ol{padding-left:22px;margin:0 0 14px}
+  ol li{margin-bottom:10px;font-size:16px}
+  .num{font-family:'IBM Plex Mono',monospace;font-size:.94em}
+  .eq{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--coral);border-radius:4px;padding:18px 20px;margin:16px 0 18px;font-family:'IBM Plex Mono',monospace}
+  .eq .row{font-size:20px}
+  .eq .res{font-size:30px;color:var(--coral);font-weight:600;margin-top:4px}
+  .eq .sub{font-size:13px;color:var(--muted);margin-top:8px}
+  blockquote{margin:0 0 14px;padding:2px 0 2px 14px;border-left:2px solid var(--line);color:var(--ink);font-size:15.5px}
+  blockquote .who{display:block;font-size:13px;color:var(--muted)}
+  hr{border:0;border-top:1px solid var(--line);margin:34px 0 14px}
+  .final{font-weight:700;font-size:17px}
+  .by{text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);margin-top:30px}
+
+  /* SVG */
+  .s-green{stroke:var(--green)} .s-teal{stroke:var(--teal)} .s-coral{stroke:var(--coral)} .s-gray{stroke:var(--gray)} .s-ink{stroke:var(--ink)} .s-muted{stroke:var(--muted)}
+  .f-none{fill:none} .f-teal{fill:var(--teal-bg)} .f-coral{fill:var(--coral-bg)} .f-gray{fill:var(--gray-bg)} .f-green{fill:var(--green-fill)} .f-card{fill:var(--card)}
+  .t{font-family:'Noto Sans KR',sans-serif;fill:var(--ink)}
+  .m{font-family:'IBM Plex Mono',monospace;fill:var(--ink)}
+  .l{font-size:14px;font-weight:700} .d{font-size:12px} .mut{fill:var(--muted)}
+  .tg{fill:var(--green)} .tc{fill:var(--coral)} .tw{fill:var(--on-green)} .tt{fill:var(--teal)}
+</style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="kicker">TNBfolio · Strategy note · 2026.11.13 뉴욕</div>
+  <h1>엔비디아의 빈자리, 왜 반도체 전체가 흔들렸나</h1>
+  <p class="dek">경영진 공백과 끈적한 PPI가 겹친 하루, 지수는 혼조였지만 시장 폭은 더 나빠졌다.</p>
+
+  <figure>
+    <div class="figcard">
+<svg viewBox="0 0 680 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="11월 13일 뉴욕증시 매도 전이 모식도">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker>
+    <marker id="ahc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--coral)"/></marker>
+  </defs>
+
+  <!-- ===== 상단: 프로세스 블록도 ===== -->
+  <rect x="8" y="8" width="664" height="194" rx="4" class="s-green f-none" stroke-width="1.5"/>
+  <text x="22" y="32" class="t l tg">13일 뉴욕증시 — 매도 전이 경로</text>
+
+  <!-- 시작 조건 -->
+  <text x="54" y="80" text-anchor="middle" class="t l">13일 뉴욕장</text>
+  <text x="54" y="96" text-anchor="middle" class="t d mut">두 악재 소화</text>
+  <polyline points="22,108 32,102 42,116 52,108 62,124 72,116 84,136" class="s-ink f-none" stroke-width="1.2"/>
+  <line x1="88" y1="116" x2="101" y2="116" class="s-ink" stroke-width="1" marker-end="url(#ah)"/>
+
+  <!-- 진입 블록: 사다리꼴 -->
+  <polygon points="104,86 190,98 190,134 104,146" class="s-gray f-gray" stroke-width="1"/>
+  <text x="147" y="120" text-anchor="middle" class="m d">NVDA</text>
+  <text x="147" y="168" text-anchor="middle" class="t l">엔비디아 공백</text>
+  <text x="147" y="185" text-anchor="middle" class="m d mut">−2.01%, 시총 4조↓</text>
+  <line x1="190" y1="116" x2="211" y2="116" class="s-ink" stroke-width="1" marker-end="url(#ah)"/>
+
+  <!-- 브래킷 -->
+  <path d="M214,80 L214,72 L660,72 L660,80" class="s-muted f-none" stroke-width="0.8"/>
+  <text x="437" y="62" text-anchor="middle" class="t d mut">17일 NVDA 실적 · 19일 앤트로픽 상장 — 청약 자금 마련 매도 관측</text>
+
+  <!-- 단계 박스 -->
+  <rect x="214" y="88" width="128" height="56" rx="3" class="s-teal f-teal" stroke-width="1"/>
+  <text x="278" y="112" text-anchor="middle" class="t l">반도체 전면 하락</text>
+  <text x="278" y="130" text-anchor="middle" class="m d tt">SOX −3.43%</text>
+  <line x1="342" y1="116" x2="359" y2="116" class="s-ink" stroke-width="1" marker-end="url(#ah)"/>
+
+  <rect x="362" y="88" width="128" height="56" rx="3" class="s-teal f-teal" stroke-width="1"/>
+  <text x="426" y="112" text-anchor="middle" class="t l">기술 섹터 약세</text>
+  <text x="426" y="130" text-anchor="middle" class="m d tt">기술 −1.70%</text>
+  <line x1="490" y1="116" x2="507" y2="116" class="s-ink" stroke-width="1" marker-end="url(#ah)"/>
+
+  <rect x="510" y="88" width="150" height="56" rx="3" class="f-green" stroke="none"/>
+  <text x="585" y="112" text-anchor="middle" class="t l tw">방어주로 이동</text>
+  <text x="585" y="130" text-anchor="middle" class="m d tw">필수소비재 +1.39%</text>
+
+  <text x="437" y="176" text-anchor="middle" class="m d mut">다우 +0.10% · S&amp;P −0.40% · 나스닥 −0.91%</text>
+
+  <!-- 압력 경로 (코랄) -->
+  <polyline points="54,142 54,250 101,250" class="s-coral f-none" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#ahc)"/>
+  <rect x="104" y="226" width="176" height="48" rx="3" class="s-coral f-coral" stroke-width="1"/>
+  <text x="192" y="246" text-anchor="middle" class="t l tc">끈적한 PPI</text>
+  <text x="192" y="263" text-anchor="middle" class="m d">전년비 6.5%, 4년래 최고</text>
+  <line x1="280" y1="250" x2="301" y2="250" class="s-coral" stroke-width="1" marker-end="url(#ahc)"/>
+  <rect x="304" y="226" width="176" height="48" rx="3" class="s-coral f-coral" stroke-width="1"/>
+  <text x="392" y="246" text-anchor="middle" class="t l tc">장기금리 상승</text>
+  <text x="392" y="263" text-anchor="middle" class="m d">10년물 5.152% (+4.6bp)</text>
+  <line x1="480" y1="250" x2="501" y2="250" class="s-coral" stroke-width="1" marker-end="url(#ahc)"/>
+  <rect x="504" y="226" width="156" height="48" rx="3" class="s-coral f-coral" stroke-width="1"/>
+  <text x="582" y="246" text-anchor="middle" class="t l tc">12월 인상 반영</text>
+  <text x="582" y="263" text-anchor="middle" class="m d">25bp 확률 88.7%</text>
+
+  <!-- ===== 하단: 개념도 3단 ===== -->
+  <text x="16" y="318" class="t l">지수 혼조의 이면: 시장 폭은 더 나빠졌다</text>
+
+  <!-- 좌: 가격 경로 -->
+  <text x="24" y="352" class="t d mut">기준 = 전일 종가 (모식)</text>
+  <line x1="24" y1="400" x2="130" y2="400" class="s-muted" stroke-width="0.8" stroke-dasharray="3 3"/>
+  <polyline points="24,400 50,394 76,398 104,388 130,380" class="s-green f-none" stroke-width="1.5"/>
+  <polyline points="24,400 50,404 76,400 104,410 130,412" class="s-ink f-none" stroke-width="1.2"/>
+  <polyline points="24,400 50,410 76,414 104,428 130,436" class="s-coral f-none" stroke-width="1.2"/>
+  <polyline points="24,400 50,420 76,436 104,452 130,466" class="s-coral f-none" stroke-width="1.2" stroke-dasharray="4 2"/>
+  <text x="136" y="384" class="m d tg">다우 +0.10</text>
+  <text x="136" y="416" class="m d">S&amp;P −0.40</text>
+  <text x="136" y="440" class="m d tc">나스닥 −0.91</text>
+  <text x="136" y="470" class="m d tc">SOX −3.43</text>
+
+  <!-- ⇒ -->
+  <polygon points="216,398 234,398 234,390 250,406 234,422 234,414 216,414" class="s-ink f-none" stroke-width="1.2"/>
+
+  <!-- 가운데: 수식 -->
+  <text x="343" y="356" text-anchor="middle" class="t d mut">52주 신고가 − 신저가</text>
+  <text x="343" y="384" text-anchor="middle" class="m l" style="font-weight:500">신고가 120</text>
+  <text x="343" y="406" text-anchor="middle" class="m l" style="font-weight:500">− 신저가 668</text>
+  <line x1="283" y1="418" x2="403" y2="418" class="s-ink" stroke-width="0.8"/>
+  <text x="343" y="454" text-anchor="middle" class="m tc" style="font-size:30px;font-weight:600">= −548</text>
+
+  <!-- ⇒ -->
+  <polygon points="438,398 456,398 456,390 472,406 456,422 456,414 438,414" class="s-ink f-none" stroke-width="1.2"/>
+
+  <!-- 우: 막대 -->
+  <text x="518" y="356" text-anchor="middle" class="t d mut">신고가</text>
+  <text x="574" y="356" text-anchor="middle" class="t d mut">신저가</text>
+  <text x="630" y="356" text-anchor="middle" class="t d mut">순증</text>
+  <line x1="486" y1="410" x2="660" y2="410" class="s-muted" stroke-width="0.8" stroke-dasharray="3 3"/>
+  <rect x="500" y="399" width="36" height="11" class="s-green" fill="var(--green)" stroke-width="1"/>
+  <text x="518" y="393" text-anchor="middle" class="m d tg">+120</text>
+  <rect x="556" y="410" width="36" height="60" class="s-coral f-coral" stroke-width="1"/>
+  <text x="574" y="402" text-anchor="middle" class="m d tc">−668</text>
+  <rect x="612" y="410" width="36" height="49" class="s-coral f-card" stroke-width="2.2"/>
+  <text x="630" y="402" text-anchor="middle" class="m d tc" style="font-weight:600">−548</text>
+
+  <!-- 캡션 -->
+  <text x="111" y="502" text-anchor="middle" class="t l">지수는 혼조</text>
+  <text x="111" y="520" text-anchor="middle" class="t d mut">S&amp;P·나스닥 2거래일 연속 하락</text>
+  <text x="343" y="502" text-anchor="middle" class="t l">신고가 음수 7거래일차</text>
+  <text x="343" y="520" text-anchor="middle" class="m d mut">전일 147 − 535 = −388</text>
+  <text x="574" y="502" text-anchor="middle" class="t l">폭은 더 좁아졌다</text>
+  <text x="574" y="520" text-anchor="middle" class="m d mut">신저가 535 → 668개</text>
+
+  <text x="664" y="550" text-anchor="end" class="m d mut">by TNBfolio</text>
+</svg>
+    </div>
+    <figcaption><b>Fig. 1</b> 11월 13일 뉴욕증시 매도 전이 모식도. (상) 엔비디아 경영진 공백이 반도체 전면 하락과 기술 섹터 약세를 거쳐 방어주 이동으로 번진 경로와, 끈적한 PPI가 장기금리와 12월 인상 기대를 밀어 올린 압력 경로를 보여준다. (하) 다우만 오른 혼조 마감 뒤에서 52주 신고가에서 신저가를 뺀 값이 −548까지 벌어진 시장 폭 악화를 보여준다.</figcaption>
+  </figure>
+
+  <article>
+    <p>13일 뉴욕증시는 혼조로 마감했다. 엔비디아의 경영진 공백이 AI 투자심리를 위축시켰고, 끈적한 미국 생산자물가지수(PPI)까지 소화해야 했다. S&amp;P 500과 나스닥은 기술주 약세 여파로 2거래일 연속 하락했지만 다우존스30산업평균지수는 우량주 강세에 힘입어 소폭 상승했다. 지수 숫자만 보면 혼조지만, 돈은 분명히 한쪽에서 다른 쪽으로 움직였다.</p>
+
+    <h2>매도는 어떻게 번졌나 <span class="tag">Fig. 1 상단</span></h2>
+    <ol>
+      <li><b>엔비디아 공백:</b> 젠슨 황 전 CEO 사퇴 후폭풍과 중국 수출 규제 우회 판매 조사 악재가 겹치며 엔비디아는 <span class="num">2.01%</span> 하락했고, 지난 3월 이후 처음으로 종가 기준 시가총액 <span class="num">4조 달러</span>를 밑돌았다. 콜레트 크레스 CFO가 임시 CEO를 맡고 이언 벅 부사장과 Arm의 러네이 하스 CEO 등이 후임으로 거론되지만, 회사는 아직 헤드헌팅 업체 선정 단계라며 접촉설을 부인했다.</li>
+      <li><b>반도체 전면 하락:</b> 필라델피아 반도체지수는 구성 종목 30개가 모두 하락하며 <span class="num">3.43%</span> 급락했다. AMD(<span class="num">−8.75%</span>)와 브로드컴(<span class="num">−4.76%</span>)이 크게 내렸고 TSMC, 마이크론테크놀러지, 인텔도 2% 안팎 하락했다.</li>
+      <li><b>기술 섹터 약세:</b> 기술 섹터가 <span class="num">1.70%</span> 하락하며 지수를 압박했다. 시장 일각에서는 18일 공모가 확정 후 19일 나스닥에 상장하는 앤트로픽 공모주 청약 자금을 마련하려는 기술주 매도세가 유입됐다고 분석한다.</li>
+      <li><b>방어주로 이동:</b> 위험 회피 자금이 들어온 필수소비재 섹터는 <span class="num">1.39%</span> 올랐다. 버크셔해서웨이, 월마트, 비자, 존슨앤드존슨, JP모건체이스 등 전통 산업 우량주는 1% 안팎 올랐고, 11개 업종 중 6개가 상승, 5개가 하락했다.</li>
+    </ol>
+
+    <h2>또 하나의 압력, 끈적한 도매물가 <span class="tag">Fig. 1 상단 코랄</span></h2>
+    <p>미국 노동부가 발표한 10월 전품목 PPI는 전월 대비 <span class="num">0.3%</span> 올라 예상치(<span class="num">0.4%</span>)를 밑돌았다. 하지만 9월 수치가 <span class="num">1.3%</span>에서 <span class="num">1.4%</span>로 상향 조정됐고, 전년 대비 상승률은 <span class="num">6.5%</span>로 2022년 11월 이후 약 4년 만에 최고치를 경신했다. 근원 PPI는 전월 대비 <span class="num">0.3%</span> 올라 예상치에 부합했지만 직전 달 수치 역시 <span class="num">0.7%</span>에서 <span class="num">0.8%</span>로 올려 잡혔다.</p>
+    <p>CME 페드워치에 따르면 연방기금금리 선물시장은 12월 연준의 25bp 인상 확률을 <span class="num">88.7%</span>로 반영했고, 50bp 인상 가능성은 <span class="num">11.3%</span>로 줄었다. 10년물 국채금리는 <span class="num">4.60bp</span> 오른 <span class="num">5.1520%</span>를 기록했고, 2년물은 오후 3시 기준 <span class="num">0.10bp</span> 내린 <span class="num">4.8720%</span>였다가 장 후반 소폭 오름세로 돌아섰다. 10년물과 2년물 격차는 <span class="num">23.30bp</span>에서 <span class="num">28.00bp</span>로 벌어지며 수익률곡선 가팔라짐이 이어졌다. VIX는 <span class="num">3.21%</span> 오른 <span class="num">19.30</span>, 비트코인은 7만 달러 선 아래로 내려갔다.</p>
+
+    <h2>지수는 혼조, 체감은 하락 <span class="tag">Fig. 1 하단 좌</span></h2>
+    <p>다우 <span class="num">+0.10%</span>, S&amp;P 500 <span class="num">−0.40%</span>, 나스닥 <span class="num">−0.91%</span>로 마감했다. 필라델피아 반도체 <span class="num">−3.43%</span>, 매그니피센트 세븐 <span class="num">−0.29%</span>, S&amp;P 바이오텍 <span class="num">−0.43%</span>, 나스닥 바이오텍 <span class="num">−0.50%</span>였고 DJ 운송 <span class="num">+0.27%</span>, 나스닥 골든 드래곤 차이나 <span class="num">+0.84%</span>, 금 <span class="num">+0.06%</span>였다. 알버말은 <span class="num">−1.39%</span>, 코스피 야간선물은 <span class="num">−0.72%</span>를 기록했다.</p>
+
+    <h2>시장 폭의 산술 <span class="tag">Fig. 1 하단 중·우</span></h2>
+    <p>52주 신고가는 120개(전 거래일 147개), 신저가는 668개(전 거래일 535개)다. 신고가가 줄고 신저가가 늘면서 둘의 차이는 전일보다 더 벌어졌다. 신고가 음수 전환은 7거래일째다.</p>
+    <div class="eq">
+      <div class="row">신고가 120 − 신저가 668</div>
+      <div class="res">= −548</div>
+      <div class="sub">전 거래일: 147 − 535 = −388</div>
+    </div>
+
+    <h2>앞으로 볼 것 <span class="tag">Fig. 1 상단 브래킷</span></h2>
+    <p>시장은 17일 예정된 엔비디아의 실적 발표와 콜레트 크레스 임시 CEO의 AI 수주 잔고 관련 발언에 촉각을 곤두세우고 있다.</p>
+    <blockquote>엔비디아가 새로운 CEO를 찾는 과정에 상당한 시간이 걸릴 것이다. 엔비디아를 둘러싼 불확실성이 더 커질 수 있다.<span class="who">Thomas Martin · 글로벌트인베스트먼트 선임 포트폴리오 매니저</span></blockquote>
+    <blockquote>11월 들어 경유 가격이 진정되긴 했지만, 경유 충격은 여전히 경제로 퍼져나가고 있다. 연말연시를 거쳐 2027년까지 이어질 식료품 가격 상승세는 소비자 심리를 더욱 악화시킬 것이다.<span class="who">Joseph Brusuelas · RSM 수석 이코노미스트</span></blockquote>
+
+    <hr>
+    <p class="final">지수는 혼조였지만 시장 폭은 7거래일째 음수다. 다음 갈림길은 17일 엔비디아 실적이다.</p>
+  </article>
+
+  <div class="by">by TNBfolio</div>
+</div>
+</body>
+</html>
