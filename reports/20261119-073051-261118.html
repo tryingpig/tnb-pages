@@ -1,0 +1,2668 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>261118_매크로전략_히트맵</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; background: #FDFCFA; color: #1F2124; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  body { background: #FDFCFA; color: #1F2124; line-height: 1.5; overflow-x: hidden; }
+  a { text-decoration: none; color: inherit; }
+
+  /* Masthead */
+  .mh { max-width: 1180px; margin: 0 auto; padding: 48px 28px 34px; border-bottom: 1px solid #E7E2DA; }
+  .kicker { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: #A79E93; font-weight: 700; margin-bottom: 12px; }
+  h1 { font-size: clamp(30px, 4.2vw, 46px); font-weight: 800; letter-spacing: -.035em; color: #14171A; line-height: 1.15; margin-bottom: 16px; }
+  .hl { position: relative; display: inline-block; z-index: 1; }
+  .hl::after { content: ""; position: absolute; left: -2px; right: -2px; bottom: .08em; height: .28em; background: #FDC94F; opacity: .55; z-index: -1; border-radius: 2px; }
+  .lead { font-size: 14.5px; color: #6E6862; max-width: 720px; line-height: 1.65; margin-bottom: 24px; word-break: keep-all; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill { display: inline-flex; align-items: center; gap: 7px; background: #FFFFFF; border: 1px solid #E9E4DC; border-radius: 999px; padding: 5px 12px; font-size: 11.5px; font-weight: 600; color: #4F4B46; }
+  .chip { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; border: 1px solid rgba(31,33,36,.08); }
+
+  /* Sticky Nav */
+  .nav-wrap { position: sticky; top: 0; z-index: 40; background: rgba(253,252,250,.92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid #EFEAE2; }
+  .nav { max-width: 1180px; margin: 0 auto; padding: 0 28px; height: 50px; display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-lbl { font-size: 10px; font-weight: 800; letter-spacing: .16em; color: #A79E93; margin-right: 8px; flex-shrink: 0; }
+  .nav a { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: #3A3733; white-space: nowrap; transition: background .15s; flex-shrink: 0; }
+  .nav a:hover { background: #F4EFE7; }
+  .nav a span { color: #9E958B; font-size: 11.5px; font-weight: 700; }
+
+  /* Main Container & Section */
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 20px 28px 90px; }
+  .sec { padding-top: 46px; }
+  .sec-hd { display: flex; justify-content: space-between; align-items: flex-end; padding-bottom: 12px; border-bottom: 2px solid #1F2124; margin-bottom: 30px; gap: 16px; }
+  .sec-en { font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: #A79E93; font-weight: 700; margin-bottom: 4px; }
+  .sec-ko { font-size: 19px; font-weight: 800; color: #14171A; letter-spacing: -.02em; line-height: 1.25; }
+  .sec-cnt { font-size: 11.5px; text-transform: uppercase; color: #7C756D; font-weight: 600; letter-spacing: .04em; white-space: nowrap; }
+  .sec-cnt strong { font-size: 15px; font-weight: 800; color: #14171A; margin-right: 2px; }
+
+  /* Grid */
+  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px 26px; align-items: start; }
+  @media (max-width: 1000px) {
+    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 34px 22px; }
+  }
+  @media (max-width: 640px) {
+    .mh { padding: 34px 18px 26px; }
+    .nav { padding: 0 18px; }
+    .wrap { padding: 12px 18px 70px; }
+    .grid { grid-template-columns: 1fr; gap: 30px; }
+    .cov { aspect-ratio: 16/9 !important; }
+  }
+
+  /* Card */
+  .card { display: block; transition: transform .22s cubic-bezier(.2,.8,.2,1); }
+  .card:hover { transform: translateY(-3px); }
+  .cov { position: relative; aspect-ratio: 16/10; border-radius: 9px; overflow: hidden; border: 1px solid rgba(31,33,36,.06); box-shadow: inset 0 0 0 2px rgba(255,255,255,.55); }
+  .c-cat { position: absolute; top: 12px; left: 13px; font-size: 9px; letter-spacing: .14em; font-weight: 700; color: rgba(31,33,36,.42); max-width: 62%; text-transform: uppercase; line-height: 1.3; z-index: 2; }
+  .badge { position: absolute; top: 10px; right: 10px; display: inline-flex; align-items: center; gap: 5px; background: rgba(255,255,255,.86); border: 1px solid rgba(31,33,36,.10); border-radius: 999px; padding: 4px 9px; font-size: 11px; font-weight: 700; color: #25282B; z-index: 2; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .d-risk { background: #C0434F; }
+  .d-chk { background: #C08A22; }
+  .d-opp { background: #2E7D55; }
+  .art { position: absolute; width: 66%; right: -2px; bottom: -20px; opacity: .30; pointer-events: none; z-index: 1; }
+
+  /* Name Box */
+  .nbox { position: relative; z-index: 3; margin: -36px 0 0; background: #FFFDFB; border: 1px solid rgba(31,33,36,.07); border-radius: 8px; box-shadow: 0 1px 3px rgba(31,33,36,.06); padding: 12px 14px; }
+  .nbox h3 { font-size: 19px; line-height: 1.3; font-weight: 750; letter-spacing: -.025em; color: #14171A; margin-top: 0; word-break: keep-all; }
+  .nbox .tl { font-size: 12.5px; font-weight: 500; letter-spacing: 0; color: #847D75; }
+
+  /* Summary Bullets */
+  .sum { margin-top: 12px; list-style: none; }
+  .sum li { position: relative; padding-left: 12px; margin-bottom: 3px; font-size: 13.9px; line-height: 1.52; color: #4F4B46; word-break: keep-all; white-space: normal; }
+  .sum li::before { content: ""; position: absolute; left: 2px; top: .62em; width: 4px; height: 4px; border-radius: 50%; background: rgba(31,33,36,.30); }
+
+  /* Meta Row */
+  .meta { margin-top: 11px; display: flex; align-items: center; gap: 7px; font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; color: #A69E94; }
+  .meta svg { width: 10px; height: 10px; flex-shrink: 0; opacity: .65; }
+
+  /* Cover Colors */
+  .bg-r3 { background: #F2AFB8; }
+  .bg-r2 { background: #F7C3C9; }
+  .bg-r1 { background: #FBDDE0; }
+  .bg-c0 { background: #FCE6CF; }
+  .bg-o1 { background: #DAEEDE; }
+  .bg-o2 { background: #C9E9D4; }
+
+  /* Detail Panel (:target) */
+  .panel { display: none; position: fixed; inset: 0; z-index: 100; }
+  .panel:target { display: block; }
+  .scrim { position: fixed; inset: 0; background: rgba(23,25,27,.40); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); display: block; }
+  .sheet { position: fixed; top: 0; right: 0; width: min(580px, 100%); height: 100%; overflow-y: auto; background: #FFFDFB; box-shadow: -24px 0 70px rgba(0,0,0,.20); animation: slideIn .3s cubic-bezier(.16,1,.3,1) forwards; }
+  @keyframes slideIn {
+    from { transform: translateX(60px); opacity: .35; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  .p-nav { position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; background: rgba(255,253,251,.94); backdrop-filter: blur(8px); border-bottom: 1px solid #EFEAE2; }
+  .p-btns { display: flex; gap: 6px; }
+  .p-btn { display: inline-flex; align-items: center; justify-content: center; height: 30px; padding: 0 11px; border: 1px solid #E5DED4; border-radius: 7px; background: #FFFFFF; font-size: 12.5px; font-weight: 600; color: #2E3136; transition: background .15s; }
+  .p-btn:hover { background: #F6F2EB; }
+  .p-in { padding: 24px 28px 48px; }
+  @media (max-width: 640px) {
+    .p-nav { padding: 12px 18px; }
+    .p-in { padding: 20px 18px 40px; }
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .ch { font-size: 10.5px; font-weight: 700; border-radius: 999px; padding: 4px 10px; line-height: 1.2; }
+  .ch-risk { background: #FBE3E5; color: #8E2F3A; }
+  .ch-opp { background: #E2F1E6; color: #2C6748; }
+  .ch-chk { background: #FCEFD8; color: #7D5B18; }
+  .ch-def { background: #FAF6F0; color: #5D574F; }
+
+  .p-en { font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: #9E958B; font-weight: 700; margin-bottom: 6px; }
+  .p-h2 { font-size: 24px; line-height: 1.32; font-weight: 800; letter-spacing: -.03em; color: #14171A; margin-bottom: 10px; word-break: keep-all; }
+  .p-sub { font-size: 13.2px; line-height: 1.62; color: #6E6862; margin-bottom: 18px; word-break: keep-all; }
+
+  .kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 26px; }
+  @media (max-width: 640px) {
+    .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .kpis .kpi:last-child { grid-column: 1 / -1; }
+  }
+  .kpi { background: #F8F4EE; border: 1px solid #EDE6DB; border-radius: 7px; padding: 10px 11px; }
+  .kpi-l { font-size: 9px; text-transform: uppercase; letter-spacing: .08em; color: #8C847A; font-weight: 700; margin-bottom: 3px; }
+  .kpi-v { font-size: 14px; font-weight: 750; color: #14171A; line-height: 1.3; word-break: keep-all; }
+
+  .p-b { margin-top: 6px; }
+  .grp { border-bottom: 1px dashed #DED6CA; padding-bottom: 15px; margin-bottom: 15px; }
+  .grp:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+  .grp ul { list-style: none; }
+  .grp li { position: relative; padding-left: 15px; font-size: 14.2px; line-height: 1.74; color: #2E3136; margin-bottom: 7px; word-break: keep-all; }
+  .grp li:last-child { margin-bottom: 0; }
+  .grp li::before { content: "–"; position: absolute; left: 0; top: 0; color: #B2A99E; font-weight: 600; }
+
+  .p-src { margin-top: 28px; padding-top: 14px; border-top: 1px solid #EEE8DF; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: #9E958B; font-weight: 600; }
+</style>
+<style id="tnb-mobile">
+@media (max-width: 640px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0 !important; min-width: 0 !important;
+    max-width: 100% !important; overflow-x: hidden !important; }
+  body { width: auto !important; padding: 14px !important;
+    box-sizing: border-box !important; font-size: 16px !important; line-height: 1.65 !important; }
+  /* 넘침 방지 (자식이 화면 밖으로 못 나감) */
+  body * { max-width: 100% !important; box-sizing: border-box !important; }
+  /* 고정폭 컨테이너만 유동화 (이미 반응형인 flex/row 등은 건드리지 않음) */
+  [class*="container"], [class*="wrapper"], [class*="wrap"],
+  main, header, section, article, footer { width: auto !important; min-width: 0 !important; }
+  /* 다단 그리드 → 세로 스택 (그리드에 한함) */
+  [style*="grid-template-columns"], [class*="grid"] {
+    display: block !important; grid-template-columns: 1fr !important; }
+  /* 이미지/미디어 반응형 */
+  img, svg, canvas, video, iframe { max-width: 100% !important; height: auto !important; }
+  /* 넓은 표는 가로 스크롤 허용(찌그러짐 방지) */
+  table { display: block !important; width: 100% !important; overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute;visibility:hidden;" aria-hidden="true">
+  <defs>
+    <symbol id="a-pol" viewBox="0 0 100 100" fill="none" stroke="#1F2124" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="48" cy="52" r="28"/>
+      <ellipse cx="48" cy="52" rx="13" ry="28"/>
+      <line x1="21" y1="44" x2="75" y2="44"/>
+      <line x1="21" y1="60" x2="75" y2="60"/>
+      <path d="M32 86 H64 M48 80 V86"/>
+      <path d="M48 24 V10 L62 15 L48 20"/>
+    </symbol>
+    <symbol id="a-cb" viewBox="0 0 100 100" fill="none" stroke="#1F2124" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="16,36 50,16 84,36"/>
+      <line x1="20" y1="40" x2="80" y2="40"/>
+      <line x1="28" y1="40" x2="28" y2="74"/>
+      <line x1="42" y1="40" x2="42" y2="74"/>
+      <line x1="58" y1="40" x2="58" y2="74"/>
+      <line x1="72" y1="40" x2="72" y2="74"/>
+      <line x1="18" y1="74" x2="82" y2="74"/>
+      <line x1="14" y1="80" x2="86" y2="80"/>
+      <circle cx="50" cy="28" r="4.5"/>
+    </symbol>
+    <symbol id="a-corp" viewBox="0 0 100 100" fill="none" stroke="#1F2124" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="18" y="38" width="20" height="44"/>
+      <rect x="38" y="20" width="24" height="62"/>
+      <rect x="62" y="46" width="20" height="36"/>
+      <line x1="12" y1="82" x2="88" y2="82"/>
+      <line x1="45" y1="30" x2="45" y2="72" stroke-dasharray="3 5"/>
+      <line x1="55" y1="30" x2="55" y2="72" stroke-dasharray="3 5"/>
+      <line x1="28" y1="46" x2="28" y2="74" stroke-dasharray="3 5"/>
+      <line x1="72" y1="54" x2="72" y2="74" stroke-dasharray="3 5"/>
+    </symbol>
+    <symbol id="a-ind" viewBox="0 0 100 100" fill="none" stroke="#1F2124" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="50" cy="50" r="12"/>
+      <circle cx="50" cy="50" r="28" stroke-dasharray="4 5"/>
+      <line x1="50" y1="12" x2="50" y2="20"/>
+      <line x1="50" y1="80" x2="50" y2="88"/>
+      <line x1="12" y1="50" x2="20" y2="50"/>
+      <line x1="80" y1="50" x2="88" y2="50"/>
+      <line x1="23" y1="23" x2="29" y2="29"/>
+      <line x1="71" y1="71" x2="77" y2="77"/>
+      <line x1="77" y1="23" x2="71" y2="29"/>
+      <line x1="29" y1="71" x2="23" y2="77"/>
+    </symbol>
+    <symbol id="a-fin" viewBox="0 0 100 100" fill="none" stroke="#1F2124" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="18,20 18,80 84,80"/>
+      <polyline points="24,68 42,52 56,58 78,28"/>
+      <polyline points="66,28 78,28 78,40"/>
+    </symbol>
+    <symbol id="ic-chart" viewBox="0 0 12 12" fill="none" stroke="#A69E94" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="1,9 4.5,5.5 7,7.5 11,2.5"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div id="close" style="position:absolute;top:0;left:0;"></div>
+
+<header class="mh">
+  <div class="kicker">DAILY MACRO &amp; STRATEGY BRIEF · 2026.11.18 (수)</div>
+  <h1>발언자 <span class="hl">히트맵</span></h1>
+  <p class="lead">정치, 국제 외교, 매크로·중앙은행·기업·금융 분석, 전략 및 전망 4개 카테고리, 44명 발언자의 원문 발언 96개 그룹·200개 불릿을 표지 요약과 상세 패널로 정리했습니다. 카드를 클릭하면 원문 전문이 열립니다.</p>
+  <div class="legend">
+    <div class="pill"><span class="chip" style="background:#F2AFB8;"></span>리스크 −1.3 이하</div>
+    <div class="pill"><span class="chip" style="background:#F7C3C9;"></span>리스크 −1.2~−0.7</div>
+    <div class="pill"><span class="chip" style="background:#FBDDE0;"></span>경계 −0.6~−0.1</div>
+    <div class="pill"><span class="chip" style="background:#FCE6CF;"></span>체크·중립 0~+0.4</div>
+    <div class="pill"><span class="chip" style="background:#C9E9D4;"></span>기회 +0.5 이상</div>
+  </div>
+</header>
+
+<div class="nav-wrap">
+  <nav class="nav" aria-label="카테고리 탐색">
+    <span class="nav-lbl">INDEX</span>
+    <a href="#c1">정치·외교·매크로 <span>8</span></a>
+    <a href="#c2">중앙은행 <span>12</span></a>
+    <a href="#c3">기업 <span>9</span></a>
+    <a href="#c4">금융 분석·전략 <span>15</span></a>
+  </nav>
+</div>
+
+<main class="wrap">
+  <!-- Category 1 -->
+  <section class="sec" id="c1">
+    <div class="sec-hd">
+      <div>
+        <div class="sec-en">POLITICS · DIPLOMACY · MACRO</div>
+        <h2 class="sec-ko">정치, 국제 외교, 매크로</h2>
+      </div>
+      <div class="sec-cnt"><strong>8</strong> 발언자</div>
+    </div>
+    <div class="grid">
+
+      <!-- n1 -->
+      <a class="card" href="#n1">
+        <div class="cov bg-o1">
+          <span class="c-cat">POLITICS · MACRO</span>
+          <span class="badge"><span class="dot d-opp"></span>기회 +0.6</span>
+          <svg class="art"><use href="#a-pol"/></svg>
+        </div>
+        <div class="nbox"><h3>Donald Trump <span class="tl">(미 대통령)</span></h3></div>
+        <ul class="sum">
+          <li>필리핀과 정상회담·무역 협정 및 군사 협력 확대</li>
+          <li>알래스카 LNG·원자력 개발 협력 임박</li>
+          <li>태국, 미국산 제품 관세 장벽 인하 협정 서명</li>
+          <li>동맹국 중심 AI 기술 주도권 보장 및 이란 대처 자신</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 2 GROUPS · 5 NOTES</div>
+      </a>
+
+      <!-- n2 -->
+      <a class="card" href="#n2">
+        <div class="cov bg-r2">
+          <span class="c-cat">POLITICS · INTEL</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −0.9</span>
+          <svg class="art"><use href="#a-pol"/></svg>
+        </div>
+        <div class="nbox"><h3>Daniel Clayton <span class="tl">(미 국가정보국 국장)</span></h3></div>
+        <ul class="sum">
+          <li>미국 시스템 장애는 조직적·국가 배후 공격 아님</li>
+          <li>정교한 글로벌 네트워크 역량 보유한 이란발 위협 실질 증가</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 1 GROUPS · 2 NOTES</div>
+      </a>
+
+      <!-- n3 -->
+      <a class="card" href="#n3">
+        <div class="cov bg-r2">
+          <span class="c-cat">PUBLIC HEALTH</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −0.8</span>
+          <svg class="art"><use href="#a-pol"/></svg>
+        </div>
+        <div class="nbox"><h3>펜실베이니아주 보건부 <span class="tl">(PA DoH)</span></h3></div>
+        <ul class="sum">
+          <li>백신 미접종 클린턴 카운티 주민 사망, 누적 8명째</li>
+          <li>2026년 46개 카운티 누적 확진 1,589건 기록</li>
+          <li>11월 17일 기준 홍역 입원 환자 총 315명</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 1 GROUPS · 3 NOTES</div>
+      </a>
+
+      <!-- n4 -->
+      <a class="card" href="#n4">
+        <div class="cov bg-r2">
+          <span class="c-cat">EUROPE · DIPLOMACY</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −0.8</span>
+          <svg class="art"><use href="#a-pol"/></svg>
+        </div>
+        <div class="nbox"><h3>Ursula von der Leyen <span class="tl">(EU 집행위원장)</span></h3></div>
+        <ul class="sum">
+          <li>우크라이나 2027년 자금 충당용 450억 유로 대출 제안</li>
+          <li>예산 200억·군사 250억 유로 구성, 러 배상금으로 상환</li>
+          <li>다음 주 제22차 대러 제재 패키지 발표 예정</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 1 GROUPS · 3 NOTES</div>
+      </a>
+
+      <!-- n5 -->
+      <a class="card" href="#n5">
+        <div class="cov bg-r1">
+          <span class="c-cat">RUSSIA · MACRO</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −0.5</span>
+          <svg class="art"><use href="#a-pol"/></svg>
+        </div>
+        <div class="nbox"><h3>Vladimir Putin <span class="tl">(러시아 대통령)</span></h3></div>
+        <ul class="sum">
+          <li>러 무역 내 달러 비중 급락, 유럽이 대러 제재 역풍</li>
+          <li>APEC 협력 확대 위해 동부 물류·식량·비료 수출 확장</li>
+          <li>긴밀한 러·중 공조 속 미·중 정상회담 상당 성과 전망</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 1 GROUPS · 4 NOTES</div>
+      </a>
+
+      <!-- n6 -->
+      <a class="card" href="#n6">
+        <div class="cov bg-c0">
+          <span class="c-cat">CHINA · DIPLOMACY</span>
+          <span class="badge"><span class="dot d-chk"></span>체크 +0.4</span>
+          <svg class="art"><use href="#a-pol"/></svg>
+        </div>
+        <div class="nbox"><h3>Xi Jinping <span class="tl">(중국 국가주석)</span></h3></div>
+        <ul class="sum">
+          <li>WTO 수호 및 개방형 아태 경제·디지털·AI 협력 확대</li>
+          <li>트럼프 회담 고대하며 안정적·건설적 미·중 관계 촉구</li>
+          <li>한국과 글로벌 공급망 안정 및 한반도 긴장 완화 지지</li>
+          <li>러시아와 다극화 세계 주도 및 3자 회담 사전 논의</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 4 GROUPS · 11 NOTES</div>
+      </a>
+
+      <!-- n7 -->
+      <a class="card" href="#n7">
+        <div class="cov bg-r2">
+          <span class="c-cat">CHINA · TRADE</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −0.8</span>
+          <svg class="art"><use href="#a-pol"/></svg>
+        </div>
+        <div class="nbox"><h3>중국 상무부 <span class="tl">(MOFCOM)</span></h3></div>
+        <ul class="sum">
+          <li>한·중 FTA 2단계 실질 타결로 투자·서비스·금융 격상</li>
+          <li>미 상무부 동남아 수출 통제 및 해외 데이터센터 승인제 반대</li>
+          <li>원격 접속 제한 강행 시 무역 휴전 역행으로 보복 대응 경고</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 2 GROUPS · 4 NOTES</div>
+      </a>
+
+      <!-- n8 -->
+      <a class="card" href="#n8">
+        <div class="cov bg-c0">
+          <span class="c-cat">MIDDLE EAST · DIPLOMACY</span>
+          <span class="badge"><span class="dot d-chk"></span>체크 +0.1</span>
+          <svg class="art"><use href="#a-pol"/></svg>
+        </div>
+        <div class="nbox"><h3>Abbas Araghchi <span class="tl">(이란 외무장관)</span></h3></div>
+        <ul class="sum">
+          <li>오만 회담에서 역내 안보 프레임워크 집중 논의</li>
+          <li>미국의 행동 억제 및 전쟁 재발 방지 노력 다뤄</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 1 GROUPS · 2 NOTES</div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- Category 2 -->
+  <section class="sec" id="c2">
+    <div class="sec-hd">
+      <div>
+        <div class="sec-en">CENTRAL BANK · MONETARY POLICY</div>
+        <h2 class="sec-ko">중앙은행</h2>
+      </div>
+      <div class="sec-cnt"><strong>12</strong> 발언자</div>
+    </div>
+    <div class="grid">
+
+      <!-- n9 -->
+      <a class="card" href="#n9">
+        <div class="cov bg-r3">
+          <span class="c-cat">CENTRAL BANK · US FED</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −1.3</span>
+          <svg class="art"><use href="#a-cb"/></svg>
+        </div>
+        <div class="nbox"><h3>미 연준 10월 FOMC <span class="tl">(Fed)</span></h3></div>
+        <ul class="sum">
+          <li>10월 동결 지지했으나 대다수 인플레 상방 속 추가 인상 판단</li>
+          <li>2명 위원, 데이터 악화 시 12월 50bp 빅스텝 검토 지적</li>
+          <li>AI 인프라 투자를 인플레·금융안정 리스크 원인으로 논의</li>
+          <li>2% 물가 목표 의지 소통 강조 및 성장 전망 소폭 상향</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 2 GROUPS · 7 NOTES</div>
+      </a>
+
+      <!-- n10 -->
+      <a class="card" href="#n10">
+        <div class="cov bg-r3">
+          <span class="c-cat">CENTRAL BANK · US FED</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −1.4</span>
+          <svg class="art"><use href="#a-cb"/></svg>
+        </div>
+        <div class="nbox"><h3>Michael Barr <span class="tl">(미 연준 이사)</span></h3></div>
+        <ul class="sum">
+          <li>견조한 경제·고물가 속 2% 복귀 위해 추가 금리 인상 지지</li>
+          <li>통제 불능 AI 에이전트 봇의 초고속 자금 이동 대재앙 경고</li>
+          <li>수 분 내 뱅크런 가속 시 당국 개입 시한 압도 위험</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 2 GROUPS · 6 NOTES</div>
+      </a>
+
+      <!-- n11 -->
+      <a class="card" href="#n11">
+        <div class="cov bg-r3">
+          <span class="c-cat">CENTRAL BANK · US FED</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −1.5</span>
+          <svg class="art"><use href="#a-cb"/></svg>
+        </div>
+        <div class="nbox"><h3>Christopher Waller <span class="tl">(미 연준 이사)</span></h3></div>
+        <ul class="sum">
+          <li>근원 물가 연율 3.5%·서비스 70%가 3% 초과 등 확산</li>
+          <li>12월·1월 분할 대신 12월 50bp 빅스텝 인상 검토 촉구</li>
+          <li>작년 3차례 보험성 금리 인하 되돌림 이상의 긴축 필요</li>
+          <li>AI 가격 책정에 거품 없으며 자금 조달 우려는 은행권 국한</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 2 GROUPS · 6 NOTES</div>
+      </a>
+
+      <!-- n12 -->
+      <a class="card" href="#n12">
+        <div class="cov bg-r2">
+          <span class="c-cat">CENTRAL BANK · SF FED</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −0.9</span>
+          <svg class="art"><use href="#a-cb"/></svg>
+        </div>
+        <div class="nbox"><h3>Mary Daly <span class="tl">(샌프란시스코 연은 총재)</span></h3></div>
+        <ul class="sum">
+          <li>장기 고물가 속 신중하고 점진적인 추가 금리 인상 지지</li>
+          <li>AI가 여타 재화·서비스 가격에 상승 압력 가할 가능성</li>
+          <li>하위 계층까지 소비 회복탄력적, 노동시장은 안정적</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 2 GROUPS · 5 NOTES</div>
+      </a>
+
+      <!-- n13 -->
+      <a class="card" href="#n13">
+        <div class="cov bg-r2">
+          <span class="c-cat">CENTRAL BANK · MINN FED</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −1.1</span>
+          <svg class="art"><use href="#a-cb"/></svg>
+        </div>
+        <div class="nbox"><h3>Neel Kashkari <span class="tl">(미니애폴리스 연은 총재)</span></h3></div>
+        <ul class="sum">
+          <li>공급 충격 고물가로 물가 목표 미달, 기대 인플레 고정 필수</li>
+          <li>시장은 연준 위원 예상보다 더 많은 금리 인상 전망</li>
+          <li>AI 대규모 투자는 집중 위험과 실재하는 인플레 압력 초래</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 2 GROUPS · 6 NOTES</div>
+      </a>
+
+      <!-- n14 -->
+      <a class="card" href="#n14">
+        <div class="cov bg-r3">
+          <span class="c-cat">CENTRAL BANK · ECB</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −1.4</span>
+          <svg class="art"><use href="#a-cb"/></svg>
+        </div>
+        <div class="nbox"><h3>유럽중앙은행 <span class="tl">(ECB)</span></h3></div>
+        <ul class="sum">
+          <li>대형 헤지펀드 국채 베이시스 레버리지 거래 시스템 리스크 경고</li>
+          <li>빅테크 AI 차입 열풍, 과거 서브프라임 버블과 역사적 유사</li>
+          <li>사모신용 전이 감독 강화 및 고부채국 재정 준칙 엄격 적용</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 3 GROUPS · 9 NOTES</div>
+      </a>
+
+      <!-- n15 -->
+      <a class="card" href="#n15">
+        <div class="cov bg-r1">
+          <span class="c-cat">CENTRAL BANK · ECB</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −0.3</span>
+          <svg class="art"><use href="#a-cb"/></svg>
+        </div>
+        <div class="nbox"><h3>Christine Lagarde <span class="tl">(ECB 총재)</span></h3></div>
+        <ul class="sum">
+          <li>인공지능(AI) 기업 가치평가는 결국 조정받을 것</li>
+          <li>유럽 경제 회복탄력성 유지, AI·재정 정책이 성장 뒷받침</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 2 GROUPS · 3 NOTES</div>
+      </a>
+
+      <!-- n16 -->
+      <a class="card" href="#n16">
+        <div class="cov bg-r2">
+          <span class="c-cat">CENTRAL BANK · ECB</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −1.0</span>
+          <svg class="art"><use href="#a-cb"/></svg>
+        </div>
+        <div class="nbox"><h3>Boris Vujcic <span class="tl">(ECB 정책위원)</span></h3></div>
+        <ul class="sum">
+          <li>2027년 2차 파급효과 속 현 상황 12월 금리 인상 매우 유력</li>
+          <li>헤지펀드 발 급격한 시장 조정 시 부의 효과로 소비 위축</li>
+          <li>ECB 대차대조표 개방 반대 및 지급준비율(MRR) 논의 예정</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 1 GROUPS · 4 NOTES</div>
+      </a>
+
+      <!-- n17 -->
+      <a class="card" href="#n17">
+        <div class="cov bg-r2">
+          <span class="c-cat">CENTRAL BANK · BOE</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −1.1</span>
+          <svg class="art"><use href="#a-cb"/></svg>
+        </div>
+        <div class="nbox"><h3>영란은행 <span class="tl">(BoE)</span></h3></div>
+        <ul class="sum">
+          <li>사모신용 시장 위기 증폭 여부 점검 스트레스 테스트 실시</li>
+          <li>사모신용·전통 은행권 자금 연계 및 기업 대출 손실 전이 분석</li>
+          <li>누적 비용 압력으로 내년 중반까지 인플레 추가 상승 전망</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 2 GROUPS · 5 NOTES</div>
+      </a>
+
+      <!-- n18 -->
+      <a class="card" href="#n18">
+        <div class="cov bg-r1">
+          <span class="c-cat">CENTRAL BANK · BOE</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −0.6</span>
+          <svg class="art"><use href="#a-cb"/></svg>
+        </div>
+        <div class="nbox"><h3>Andrew Bailey <span class="tl">(영란은행 총재)</span></h3></div>
+        <ul class="sum">
+          <li>에너지 인플레 지속 시 기준금리 추가 인상 가능성 열어둬</li>
+          <li>올해 영 GDP 성장률 1.6% 예상, 민간 부문이 회복탄력성 주도</li>
+          <li>단기 물가 추가 상승하나 에너지 완화로 CPI 5% 미만 정점 전망</li>
+          <li>AI 경제학 전문팀 구성 및 역대 최고 속도 보안 패치 적용</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 4 GROUPS · 11 NOTES</div>
+      </a>
+
+      <!-- n19 -->
+      <a class="card" href="#n19">
+        <div class="cov bg-r1">
+          <span class="c-cat">CENTRAL BANK · BOJ</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −0.6</span>
+          <svg class="art"><use href="#a-cb"/></svg>
+        </div>
+        <div class="nbox"><h3>Kazuo Ueda <span class="tl">(일본은행 총재)</span></h3></div>
+        <ul class="sum">
+          <li>완화적 금융 여건 속 2% 물가 안정 위해 정책금리 점진 인상</li>
+          <li>식료품 소비세 인하와 엔화 약세의 물가 순영향 가늠 어려워</li>
+          <li>장기 금리 불균형 급등 시 유연한 시장 운영 실시</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 2 GROUPS · 6 NOTES</div>
+      </a>
+
+      <!-- n20 -->
+      <a class="card" href="#n20">
+        <div class="cov bg-r1">
+          <span class="c-cat">CENTRAL BANK · RBNZ</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −0.5</span>
+          <svg class="art"><use href="#a-cb"/></svg>
+        </div>
+        <div class="nbox"><h3>Anna Breman <span class="tl">(뉴질랜드 중앙은행 총재)</span></h3></div>
+        <ul class="sum">
+          <li>불균등한 회복·수요 부진으로 기업 비용 가격 전가 어려워</li>
+          <li>근원 인플레 고공 및 유가 상승 간접 파급효과 경계</li>
+          <li>물가·경기 양방향 위험 속 비용 전이 정도 면밀 모니터링</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 1 GROUPS · 3 NOTES</div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- Category 3 -->
+  <section class="sec" id="c3">
+    <div class="sec-hd">
+      <div>
+        <div class="sec-en">CORPORATE · AI &amp; INFRASTRUCTURE</div>
+        <h2 class="sec-ko">기업</h2>
+      </div>
+      <div class="sec-cnt"><strong>9</strong> 발언자</div>
+    </div>
+    <div class="grid">
+
+      <!-- n21 -->
+      <a class="card" href="#n21">
+        <div class="cov bg-o2">
+          <span class="c-cat">CORPORATE · NVIDIA</span>
+          <span class="badge"><span class="dot d-opp"></span>기회 +1.0</span>
+          <svg class="art"><use href="#a-corp"/></svg>
+        </div>
+        <div class="nbox"><h3>Colette Kress <span class="tl">(엔비디아 CFO 겸 임시 CEO)</span></h3></div>
+        <ul class="sum">
+          <li>루빈 제품군 200억 달러 매출, FY28 매출 성장률 75% 상향</li>
+          <li>클라우드 수주 잔고 2.5조 달러 증가, 컴퓨팅 용량 수요 긴급</li>
+          <li>데이터센터 보증 시설 준비 시점 개시·지연 시 소멸 원칙 유지</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 1 GROUPS · 4 NOTES</div>
+      </a>
+
+      <!-- n22 -->
+      <a class="card" href="#n22">
+        <div class="cov bg-r2">
+          <span class="c-cat">CORPORATE · NVIDIA</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −0.9</span>
+          <svg class="art"><use href="#a-corp"/></svg>
+        </div>
+        <div class="nbox"><h3>Harvey Jones <span class="tl">(엔비디아 이사회 의장)</span></h3></div>
+        <ul class="sum">
+          <li>젠슨 황 CEO 복귀 계획 없음, 하이드릭 앤 스트러글스 선임</li>
+          <li>실적 콘퍼런스콜서 사임 및 진행 중인 조사 질의응답 배제</li>
+          <li>적합한 상임 CEO 인선 전까지는 서두르지 않을 방침</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 1 GROUPS · 3 NOTES</div>
+      </a>
+
+      <!-- n23 -->
+      <a class="card" href="#n23">
+        <div class="cov bg-o1">
+          <span class="c-cat">CORPORATE · NVIDIA</span>
+          <span class="badge"><span class="dot d-opp"></span>기회 +0.7</span>
+          <svg class="art"><use href="#a-corp"/></svg>
+        </div>
+        <div class="nbox"><h3>엔비디아 <span class="tl">(Nvidia)</span></h3></div>
+        <ul class="sum">
+          <li>네오클라우드 선별 지원, 차기 회계연도 CPU 매출 2배 이상 전망</li>
+          <li>2027년 하반기 킨서스 양산 및 TSMC 첨단 패키징 다년 계약</li>
+          <li>구형 칩 더 높은 가격 재계약 및 RTX 스파크 데스크톱 출시</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 1 GROUPS · 3 NOTES</div>
+      </a>
+
+      <!-- n24 -->
+      <a class="card" href="#n24">
+        <div class="cov bg-o1">
+          <span class="c-cat">CORPORATE · MICROSOFT</span>
+          <span class="badge"><span class="dot d-opp"></span>기회 +0.6</span>
+          <svg class="art"><use href="#a-corp"/></svg>
+        </div>
+        <div class="nbox"><h3>마이크로소프트 <span class="tl">(Microsoft)</span></h3></div>
+        <ul class="sum">
+          <li>애저용 CXL·기밀 컴퓨팅 탑재 제온 프로세서 인텔과 협력</li>
+          <li>다이아몬드 래피즈 CPU 포함 다년간 인텔 제온 공급 확정</li>
+          <li>차별화된 애저 인프라 구축 위해 인텔 파트너십 심화</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 1 GROUPS · 3 NOTES</div>
+      </a>
+
+      <!-- n25 -->
+      <a class="card" href="#n25">
+        <div class="cov bg-c0">
+          <span class="c-cat">CORPORATE · OPENAI</span>
+          <span class="badge"><span class="dot d-chk"></span>체크 +0.2</span>
+          <svg class="art"><use href="#a-corp"/></svg>
+        </div>
+        <div class="nbox"><h3>Sam Altman <span class="tl">(오픈AI CEO)</span></h3></div>
+        <ul class="sum">
+          <li>AI 기업 경쟁 심화 속 업계 공통 안전 표준 필요성 제기</li>
+          <li>젠슨 황 사태에 깊은 개인적 공감대 및 감사 표명</li>
+          <li>앤트로픽 IPO 수요 고갈 우려 일축, 오픈AI 2027년 상장 계획</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 3 GROUPS · 7 NOTES</div>
+      </a>
+
+      <!-- n26 -->
+      <a class="card" href="#n26">
+        <div class="cov bg-o2">
+          <span class="c-cat">CORPORATE · PERPLEXITY</span>
+          <span class="badge"><span class="dot d-opp"></span>기회 +1.0</span>
+          <svg class="art"><use href="#a-corp"/></svg>
+        </div>
+        <div class="nbox"><h3>Aravind Srinivas <span class="tl">(퍼플렉시티 CEO)</span></h3></div>
+        <ul class="sum">
+          <li>ARR 전년비 4.7배 성장 10억 달러 돌파·매출총이익률 +17% 전환</li>
+          <li>빠른 성장 힘입어 당초 2028년에서 내년 1분기 포함 조기 IPO 가능</li>
+          <li>로컬 구동 '퍼플렉시티 컴퓨터'·오픈소스 샌드박스 '스페이스' 공개</li>
+          <li>엔비디아와 네모트론 4 협력 및 프론티어 모델 전면 오픈소스화</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 8 GROUPS · 24 NOTES</div>
+      </a>
+
+      <!-- n27 -->
+      <a class="card" href="#n27">
+        <div class="cov bg-o1">
+          <span class="c-cat">CORPORATE · SILICON DATA</span>
+          <span class="badge"><span class="dot d-opp"></span>기회 +0.5</span>
+          <svg class="art"><use href="#a-corp"/></svg>
+        </div>
+        <div class="nbox"><h3>Carmen Li <span class="tl">(실리콘 데이터 CEO)</span></h3></div>
+        <ul class="sum">
+          <li>BofA·씨티와 컴퓨팅 자산 담보 대출 리스크 헤지·지수 협력</li>
+          <li>수출 규제 용량 확대와 2028년 구축 불확실성 서로 상쇄</li>
+          <li>CFTC의 CME 컴퓨팅 선물 심사 60일 연장은 긍정적 조율 과정</li>
+          <li>오픈소스 혼합 사용 확산으로 LLM 토큰 지수 하락세</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 6 GROUPS · 13 NOTES</div>
+      </a>
+
+      <!-- n28 -->
+      <a class="card" href="#n28">
+        <div class="cov bg-o1">
+          <span class="c-cat">CORPORATE · SKANSKA</span>
+          <span class="badge"><span class="dot d-opp"></span>기회 +0.7</span>
+          <svg class="art"><use href="#a-corp"/></svg>
+        </div>
+        <div class="nbox"><h3>Anders Danielsson <span class="tl">(스칸스카 CEO)</span></h3></div>
+        <ul class="sum">
+          <li>데이터센터 포함 3분기 전체 수주 사상 최고치 680억 크로나</li>
+          <li>전 수주 잔고 자금 조달 완료, 부지·전력 확보 총력</li>
+          <li>민주당 데이터센터 속도 조절 공약에도 사업 영향 우려 일축</li>
+          <li>완공 포트폴리오 임대율 82% 및 중부 유럽 대형 매각 2건 성사</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 5 GROUPS · 15 NOTES</div>
+      </a>
+
+      <!-- n29 -->
+      <a class="card" href="#n29">
+        <div class="cov bg-o1">
+          <span class="c-cat">CORPORATE · SOFTBANK</span>
+          <span class="badge"><span class="dot d-opp"></span>기회 +0.8</span>
+          <svg class="art"><use href="#a-corp"/></svg>
+        </div>
+        <div class="nbox"><h3>Masayoshi Son <span class="tl">(소프트뱅크그룹 회장)</span></h3></div>
+        <ul class="sum">
+          <li>AI 칩·데이터센터·로봇·에너지 인프라 4대 핵심 분야 석권 구상</li>
+          <li>Arm 설계 역량 기반 차세대 AI 전용 칩 및 전력망 적극 투자</li>
+          <li>4대 축 결합해 초인공지능(ASI) 시대 생태계 주도</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 1 GROUPS · 3 NOTES</div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- Category 4 -->
+  <section class="sec" id="c4">
+    <div class="sec-hd">
+      <div>
+        <div class="sec-en">RESEARCH · STRATEGY &amp; OUTLOOK</div>
+        <h2 class="sec-ko">금융 분석, 전략 및 전망</h2>
+      </div>
+      <div class="sec-cnt"><strong>15</strong> 발언자</div>
+    </div>
+    <div class="grid">
+
+      <!-- n30 -->
+      <a class="card" href="#n30">
+        <div class="cov bg-o1">
+          <span class="c-cat">RESEARCH · MORGAN STANLEY</span>
+          <span class="badge"><span class="dot d-opp"></span>기회 +0.7</span>
+          <svg class="art"><use href="#a-fin"/></svg>
+        </div>
+        <div class="nbox"><h3>모건스탠리 <span class="tl">(Morgan Stanley)</span></h3></div>
+        <ul class="sum">
+          <li>2027년 외환 전망서 달러/엔 환율 162엔 도달 예상</li>
+          <li>한국, 구조 개혁과 반도체·AI 하드웨어 우위로 경제 르네상스</li>
+          <li>밸류업·지배구조 개선으로 외인 유입 및 잠재성장률 도약</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 2 GROUPS · 4 NOTES</div>
+      </a>
+
+      <!-- n31 -->
+      <a class="card" href="#n31">
+        <div class="cov bg-o1">
+          <span class="c-cat">STRATEGY · MORGAN STANLEY</span>
+          <span class="badge"><span class="dot d-opp"></span>기회 +0.6</span>
+          <svg class="art"><use href="#a-fin"/></svg>
+        </div>
+        <div class="nbox"><h3>Mike Wilson <span class="tl">(모건스탠리 CIO)</span></h3></div>
+        <ul class="sum">
+          <li>S&amp;P 500 7,100~7,300선 조정 구간은 펀더멘털 대비 좋은 매수 기회</li>
+          <li>12월 9일 FOMC 25bp 인상이 조정장의 최종 저점 형성 전망</li>
+          <li>유가 하락으로 내년 12월·3월 예상 인상 중 한 차례 제외 가능</li>
+          <li>대규모 자본 조달 변화율 정점 통과, 우량 퀄리티 트레이드 진행</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 5 GROUPS · 15 NOTES</div>
+      </a>
+
+      <!-- n32 -->
+      <a class="card" href="#n32">
+        <div class="cov bg-r2">
+          <span class="c-cat">RESEARCH · GOLDMAN SACHS</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −1.0</span>
+          <svg class="art"><use href="#a-fin"/></svg>
+        </div>
+        <div class="nbox"><h3>골드만삭스 <span class="tl">(Goldman Sachs)</span></h3></div>
+        <ul class="sum">
+          <li>AI 종목 주가·기대감 과열, 설비투자 대비 기업 매출 속도 미흡</li>
+          <li>ROI 의구심 확대 시 고평가 AI 주도주 가파른 조정 위험</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 1 GROUPS · 3 NOTES</div>
+      </a>
+
+      <!-- n33 -->
+      <a class="card" href="#n33">
+        <div class="cov bg-r3">
+          <span class="c-cat">RESEARCH · BOFA</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −1.3</span>
+          <svg class="art"><use href="#a-fin"/></svg>
+        </div>
+        <div class="nbox"><h3>뱅크오브아메리카 <span class="tl">(BofA)</span></h3></div>
+        <ul class="sum">
+          <li>끈적한 물가 속 연준의 새로운 금리 인상 사이클 고약한 변수</li>
+          <li>막대한 정부 부채·이자 비용 속 추가 인상 시 재정·시장 압박 증폭</li>
+          <li>국채 금리 상승이 신용 스프레드 확대와 유동성 경색 유발</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 1 GROUPS · 3 NOTES</div>
+      </a>
+
+      <!-- n34 -->
+      <a class="card" href="#n34">
+        <div class="cov bg-r1">
+          <span class="c-cat">RESEARCH · RAYMOND JAMES</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −0.6</span>
+          <svg class="art"><use href="#a-fin"/></svg>
+        </div>
+        <div class="nbox"><h3>레이몬드 제임스 <span class="tl">(Raymond James)</span></h3></div>
+        <ul class="sum">
+          <li>엔비디아의 급증하는 재무적 약정 규모 잠재 리스크 지목</li>
+          <li>장기 구매 약정은 향후 AI 수요 둔화 시 재고·마진 압박 우려</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 1 GROUPS · 3 NOTES</div>
+      </a>
+
+      <!-- n35 -->
+      <a class="card" href="#n35">
+        <div class="cov bg-r2">
+          <span class="c-cat">ECONOMICS · MOODY'S</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −0.9</span>
+          <svg class="art"><use href="#a-fin"/></svg>
+        </div>
+        <div class="nbox"><h3>Mark Zandi <span class="tl">(무디스 수석 이코노미스트)</span></h3></div>
+        <ul class="sum">
+          <li>데이터센터 전력 급증이 전력망 병목·에너지 비용 상승 유발</li>
+          <li>빅테크 자본·인재 쏠림으로 전통 제조·중소기업 투자·구인난 심화</li>
+          <li>고용 재편 불확실성이 소비 심리를 제약하는 AI 붐 3대 부작용</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 1 GROUPS · 3 NOTES</div>
+      </a>
+
+      <!-- n36 -->
+      <a class="card" href="#n36">
+        <div class="cov bg-o1">
+          <span class="c-cat">PRIVATE CREDIT · APOLLO</span>
+          <span class="badge"><span class="dot d-opp"></span>기회 +0.8</span>
+          <svg class="art"><use href="#a-fin"/></svg>
+        </div>
+        <div class="nbox"><h3>Marc Rowan <span class="tl">(아폴로 CEO)</span></h3></div>
+        <ul class="sum">
+          <li>사모 시장 최고 매력 분야는 대출·지분 중간 성격의 하이브리드 자본</li>
+          <li>하방 방어와 주식 수준 수익률 동시 추구 가능한 유연한 조달 수단</li>
+          <li>고금리 속 지분 희석 최소화하려는 기업 수요로 시장 폭발 성장</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 1 GROUPS · 3 NOTES</div>
+      </a>
+
+      <!-- n37 -->
+      <a class="card" href="#n37">
+        <div class="cov bg-r1">
+          <span class="c-cat">HEDGE FUND · PERSHING SQUARE</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −0.4</span>
+          <svg class="art"><use href="#a-fin"/></svg>
+        </div>
+        <div class="nbox"><h3>Bill Ackman <span class="tl">(퍼싱스퀘어 CEO)</span></h3></div>
+        <ul class="sum">
+          <li>엔비디아 이사회의 젠슨 황 복귀 거부는 주주 이익에 반하는 행동</li>
+          <li>회사·고객 영향 고려 없이 젠슨 황 해임·사임 강요 비판</li>
+          <li>마이크로소프트는 주가 저평가 상태로 강세 입장 유지</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 1 GROUPS · 3 NOTES</div>
+      </a>
+
+      <!-- n38 -->
+      <a class="card" href="#n38">
+        <div class="cov bg-r2">
+          <span class="c-cat">MACRO · DUQUESNE</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −0.8</span>
+          <svg class="art"><use href="#a-fin"/></svg>
+        </div>
+        <div class="nbox"><h3>Stanley Druckenmiller <span class="tl">(듀케인 회장)</span></h3></div>
+        <ul class="sum">
+          <li>글로벌 제조업 둔화·중국 수요 부진 속 구리 하락 숏 포지션</li>
+          <li>긴축 시차·밸류 부담 고려해 주식 시장은 중립 입장 유지</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 1 GROUPS · 3 NOTES</div>
+      </a>
+
+      <!-- n39 -->
+      <a class="card" href="#n39">
+        <div class="cov bg-r2">
+          <span class="c-cat">WEALTH · BAHNSEN GROUP</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −0.9</span>
+          <svg class="art"><use href="#a-fin"/></svg>
+        </div>
+        <div class="nbox"><h3>David Bahnsen <span class="tl">(더 바슨 그룹 CIO)</span></h3></div>
+        <ul class="sum">
+          <li>앤스로픽 IPO 투자는 소수만 생존한 1997년 초기 인터넷 시대와 유사</li>
+          <li>과도한 밸류 거품 속 실질 현금 창출 능력과 수익 모델 검증 필요</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 1 GROUPS · 3 NOTES</div>
+      </a>
+
+      <!-- n40 -->
+      <a class="card" href="#n40">
+        <div class="cov bg-r3">
+          <span class="c-cat">STRATEGY · EURO PACIFIC</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −1.6</span>
+          <svg class="art"><use href="#a-fin"/></svg>
+        </div>
+        <div class="nbox"><h3>Peter Schiff <span class="tl">(유로 퍼시픽 전략가)</span></h3></div>
+        <ul class="sum">
+          <li>차기 글로벌 금융위기 주범은 막대한 부채로 지탱된 AI 거품 붕괴</li>
+          <li>수천억 달러 유입은 닷컴·2008년보다 큰 역대급 자본 오배분</li>
+          <li>인플레 재발·금리 상승 시 부채 의존 AI 기업 연쇄 도산 경고</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 1 GROUPS · 3 NOTES</div>
+      </a>
+
+      <!-- n41 -->
+      <a class="card" href="#n41">
+        <div class="cov bg-r3">
+          <span class="c-cat">EQUITY · NEUBERGER BERMAN</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −1.3</span>
+          <svg class="art"><use href="#a-fin"/></svg>
+        </div>
+        <div class="nbox"><h3>Steve Eisman <span class="tl">(뉴버거 버먼 매니저)</span></h3></div>
+        <ul class="sum">
+          <li>젠슨 황이 구축한 가상 수직 지주회사 해체, 파장 가늠 불가</li>
+          <li>수직 지주회사 일부였던 네오클라우드 기업들 생태계 퇴출 위기</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 1 GROUPS · 2 NOTES</div>
+      </a>
+
+      <!-- n42 -->
+      <a class="card" href="#n42">
+        <div class="cov bg-r3">
+          <span class="c-cat">FINANCIALS · WHITNEY ADVISORY</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −1.4</span>
+          <svg class="art"><use href="#a-fin"/></svg>
+        </div>
+        <div class="nbox"><h3>Meredith Whitney <span class="tl">(휘트니 어드바이저리 CEO)</span></h3></div>
+        <ul class="sum">
+          <li>우량 차주 편중 대출로 전체 가구 50% 배제, 상위·하위 소비 양극화</li>
+          <li>홈디포 실적 부진 등 상위 계층까지 주택 개보수·소비 압박 확산</li>
+          <li>엔비디아 고객 자금 지원 자기거래·SPV 회계 구조 의문 제기</li>
+          <li>금융기관의 데이터센터·AI 노출도로 생태계 위축 시 취약</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 4 GROUPS · 11 NOTES</div>
+      </a>
+
+      <!-- n43 -->
+      <a class="card" href="#n43">
+        <div class="cov bg-r2">
+          <span class="c-cat">COMMODITIES · CIBC</span>
+          <span class="badge"><span class="dot d-risk"></span>리스크 −1.2</span>
+          <svg class="art"><use href="#a-fin"/></svg>
+        </div>
+        <div class="nbox"><h3>Rebecca Babin <span class="tl">(CIBC 수석 에너지 트레이더)</span></h3></div>
+        <ul class="sum">
+          <li>원유 물동량 복귀에도 중동 시설 피격·러 경유 제약으로 정제유 부족</li>
+          <li>2027년 공급 과잉 전망은 호르무즈 정상화 가정한 서류상 잉여</li>
+          <li>호르무즈 미복귀 시 유가 120달러·경유 200달러 급등 위험</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 2 GROUPS · 6 NOTES</div>
+      </a>
+
+      <!-- n44 -->
+      <a class="card" href="#n44">
+        <div class="cov bg-c0">
+          <span class="c-cat">RESEARCH · UBS</span>
+          <span class="badge"><span class="dot d-chk"></span>체크 +0.0</span>
+          <svg class="art"><use href="#a-fin"/></svg>
+        </div>
+        <div class="nbox"><h3>UBS <span class="tl">(UBS)</span></h3></div>
+        <ul class="sum">
+          <li>2027년 말 S&amp;P 500 지수 최대 8,200선 도달 가능성 제시</li>
+          <li>반면 'AI 버블 붕괴' 시나리오 현실화 시 5,500선까지 급락 경고</li>
+        </ul>
+        <div class="meta"><svg><use href="#ic-chart"/></svg>NOV 18 · 1 GROUPS · 2 NOTES</div>
+      </a>
+
+    </div>
+  </section>
+</main>
+
+<!-- DETAIL PANELS (1 to 44) -->
+
+<div class="panel" id="n1">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n44">‹ 이전</a><a class="p-btn" href="#n2">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">정치, 국제 외교, 매크로</span>
+        <span class="ch ch-opp">기회 +0.6</span>
+        <span class="ch ch-def">동남아 무역·에너지 협정</span>
+      </div>
+      <div class="p-en">POLITICS · US PRESIDENT</div>
+      <h2 class="p-h2">필리핀·태국 무역 협정 타결 및 알래스카 LNG·원자력 개발 협력 임박</h2>
+      <p class="p-sub">필리핀·태국 관세 인하 및 무역 협정 · 동맹국 주도 AI 생태계 보장 · 서필리핀해 및 이란 우려 일축</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">주요 협정국</div><div class="kpi-v">필리핀 · 태국</div></div>
+        <div class="kpi"><div class="kpi-l">핵심 협력 분야</div><div class="kpi-v">LNG · 원자력</div></div>
+        <div class="kpi"><div class="kpi-l">기술 전략</div><div class="kpi-v">가치공유국 AI</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>필리핀과의 정상회담 및 무역 협정 체결을 통해 양국 동맹이 전례 없는 수준에 도달했으며 군사 협력도 확대 중이다.</li>
+          <li>필리핀과 체결한 새로운 무역 협정은 미국 농민과 에너지 업계에 큰 도움이 될 것이며, 알래스카 LNG 및 주요 원자력 에너지 개발 협력이 임박한 상태다.</li>
+          <li>서필리핀해의 긴장 우려를 일축하며, 이란 문제에 대해서도 매우 잘 대처하고 있다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>핵심 기술인 AI의 미래가 가치와 공동 이익을 공유하는 국가들에 의해 주도되도록 보장할 것이다.</li>
+          <li>태국이 미국산 제품에 대한 관세 장벽을 낮추는 무역 협정에 서명했다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Donald Trump (미국 대통령) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n2">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n1">‹ 이전</a><a class="p-btn" href="#n3">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">정치, 국제 외교, 매크로</span>
+        <span class="ch ch-risk">리스크 −0.9</span>
+        <span class="ch ch-def">사이버·안보 위협</span>
+      </div>
+      <div class="p-en">POLITICS · US INTELLIGENCE</div>
+      <h2 class="p-h2">정교한 글로벌 네트워크 역량을 갖춘 이란발 안보 위협 실질 증가</h2>
+      <p class="p-sub">미국 시스템 장애의 국가 배후설 부인 · 이란발 사이버·네트워크 위협 고조 경고</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">위협 주체</div><div class="kpi-v">이란 네트워크</div></div>
+        <div class="kpi"><div class="kpi-l">시스템 장애</div><div class="kpi-v">국가 배후 아님</div></div>
+        <div class="kpi"><div class="kpi-l">위협 추세</div><div class="kpi-v">실질적 증가</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>미국의 시스템 장애는 조직적이거나 국가가 배후에 있는 공격이 아니다.</li>
+          <li>정교한 글로벌 네트워크 역량을 보유한 이란발 위협이 실질적으로 증가했다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Daniel Clayton (미국 국가정보국 국장) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n3">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n2">‹ 이전</a><a class="p-btn" href="#n4">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">정치, 국제 외교, 매크로</span>
+        <span class="ch ch-risk">리스크 −0.8</span>
+        <span class="ch ch-def">공중보건·감염병</span>
+      </div>
+      <div class="p-en">PUBLIC HEALTH · PENNSYLVANIA DOH</div>
+      <h2 class="p-h2">펜실베이니아주 홍역 확산 지속 — 누적 확진 1,589건·사망 8명</h2>
+      <p class="p-sub">백신 미접종 주민 추가 사망 · 주내 46개 카운티 확산 · 입원 환자 315명 기록</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">누적 확진</div><div class="kpi-v">1,589건</div></div>
+        <div class="kpi"><div class="kpi-l">입원 환자</div><div class="kpi-v">315명</div></div>
+        <div class="kpi"><div class="kpi-l">누적 사망</div><div class="kpi-v">8명</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>홍역에 감염된 백신 미접종 클린턴 카운티 주민이 사망해 누적 8번째 사망자가 발생했다.</li>
+          <li>2026년 현재까지 펜실베이니아주 46개 카운티에서 1,589건의 홍역 확진 사례가 기록됐다.</li>
+          <li>11월 17일 기준 홍역 관련 입원 환자는 총 315명이다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Pennsylvania Department of Health (미국 펜실베이니아주 보건부) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n4">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n3">‹ 이전</a><a class="p-btn" href="#n5">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">정치, 국제 외교, 매크로</span>
+        <span class="ch ch-risk">리스크 −0.8</span>
+        <span class="ch ch-def">우크라이나 지원·대러 제재</span>
+      </div>
+      <div class="p-en">EUROPE · EUROPEAN COMMISSION</div>
+      <h2 class="p-h2">우크라이나 450억 유로 대출 제안 및 제22차 대러 제재 예고</h2>
+      <p class="p-sub">예산 200억·군사 250억 유로 대출 · 러 전쟁 배상금 상환 조건 · 다음 주 제22차 제재 발표</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">대출 규모</div><div class="kpi-v">450억 유로</div></div>
+        <div class="kpi"><div class="kpi-l">군사 / 예산</div><div class="kpi-v">250억 / 200억</div></div>
+        <div class="kpi"><div class="kpi-l">추가 제재</div><div class="kpi-v">제22차 패키지</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>EU 집행위원회는 우크라이나의 2027년 자금 수요 충당을 위해 450억 유로 규모의 대출을 제안한다.</li>
+          <li>예산 지원용 200억 유로와 군사적 필요용 250억 유로로 구성된 이 대출은 향후 러시아의 전쟁 배상금으로 상환될 것이다.</li>
+          <li>다음 주에 제22차 대러 제재 패키지를 발표할 예정이다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Ursula von der Leyen (유럽연합 집행위원장) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n5">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n4">‹ 이전</a><a class="p-btn" href="#n6">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">정치, 국제 외교, 매크로</span>
+        <span class="ch ch-risk">리스크 −0.5</span>
+        <span class="ch ch-def">탈달러·동방 물류·러중 공조</span>
+      </div>
+      <div class="p-en">POLITICS · RUSSIA</div>
+      <h2 class="p-h2">러 무역 내 달러 비중 급감 — APEC 동부 물류망 및 식량 수출 확대</h2>
+      <p class="p-sub">대러 제재 역풍 주장 · 동부 물류 및 비료·식량 수출 확대 · 미·중 정상회담 성과 전망</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">결제 통화</div><div class="kpi-v">달러 비중 급감</div></div>
+        <div class="kpi"><div class="kpi-l">APEC 협력</div><div class="kpi-v">식량·비료 수출</div></div>
+        <div class="kpi"><div class="kpi-l">외교 축</div><div class="kpi-v">러·중 공조 긴밀</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>인위적인 장벽과 관세는 더 이상 경쟁국 경제를 파괴할 수 없으며, 오히려 유럽이 대러 제재로 고통받고 있다.</li>
+          <li>러시아 무역 거래에서 미국 달러의 비중이 급격히 하락했으며, 과거 패권국들이 타국의 성장을 억누려 시도 중이다.</li>
+          <li>APEC과의 협력을 확대하기 위해 동부 물류망을 확장하고 식량 및 비료 수출 시장을 넓힐 준비가 되어 있다.</li>
+          <li>러·중 외교 정책 파트너십은 긴밀히 작동 중이며, 트럼프 대통령과 시진핑 주석의 회담에서 상당한 성과가 나올 전망이다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Vladimir Putin (러시아 대통령) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n6">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n5">‹ 이전</a><a class="p-btn" href="#n7">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">정치, 국제 외교, 매크로</span>
+        <span class="ch ch-chk">체크 +0.4</span>
+        <span class="ch ch-def">미중·한중·중러 다자 외교</span>
+      </div>
+      <div class="p-en">POLITICS · CHINA</div>
+      <h2 class="p-h2">개방형 아태 경제·AI 협력 확대 및 미·중·러 3자 회담 사전 논의</h2>
+      <p class="p-sub">WTO 수호와 웨강아오 개방 · 트럼프 회담 고대 · 한국과 공급망 안정 및 한반도 긴장 완화 지지</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">대미 기조</div><div class="kpi-v">건설적 관계 촉구</div></div>
+        <div class="kpi"><div class="kpi-l">대한 기조</div><div class="kpi-v">공급망·한반도 안정</div></div>
+        <div class="kpi"><div class="kpi-l">대러 기조</div><div class="kpi-v">다극화·3자 회담 논의</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>중국은 WTO를 수호하고 자유무역과 글로벌 공급망 안정을 유지하며 공동 번영을 위한 아태 공동체를 구축할 준비가 되어 있다.</li>
+          <li>무역 및 투자 장벽을 제거해 개방형 아태 경제를 구축하고, 디지털 경제와 AI 분야 협력을 확대해 견조한 경제 성장을 촉진할 것이다.</li>
+          <li>웨강아오 대만구의 협력을 강화하고 개방형 시장 조성을 가속화해 고품질 상품 및 서비스 수입을 늘리고 있다.</li>
+          <li>APEC 회원국들은 대화와 협의로 이견을 해결하고 혁신과 성장을 촉진해야 한다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>트럼프 대통령과의 회담을 고대하고 있다.</li>
+          <li>안정적이고 건설적인 미·중 관계를 촉구한다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>중국은 한국과 함께 글로벌 산업 및 공급망의 안정과 원활한 작동을 유지할 준비가 되어 있다.</li>
+          <li>중국은 한반도의 안정을 증진하고 긴장을 완화하기 위한 노력을 지지한다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>중·러 관계는 장기적 관점을 유지하며 도전을 이겨내 왔으므로, 양국은 포괄적 협력을 강화할 실질적 조치를 채택해야 한다.</li>
+          <li>중국과 러시아는 다극화 세계로의 움직임을 주도하고 촉진해야 한다.</li>
+          <li>트럼프 대통령과의 다가오는 3자 회담에 대해 푸틴 대통령과 논의했다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Xi Jinping (중국 국가주석) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n7">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n6">‹ 이전</a><a class="p-btn" href="#n8">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">정치, 국제 외교, 매크로</span>
+        <span class="ch ch-risk">리스크 −0.8</span>
+        <span class="ch ch-def">한중 FTA·미 AI 수출통제 반발</span>
+      </div>
+      <div class="p-en">TRADE · CHINA MOFCOM</div>
+      <h2 class="p-h2">한·중 FTA 2단계 실질 타결 — 미 AI 컴퓨팅 원격 접속 제한 시 보복 경고</h2>
+      <p class="p-sub">한국과 투자·서비스·금융 협력 격상 · 미 상무부 동남아 수출통제 및 해외 데이터센터 승인제 단호 반대</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">한·중 FTA</div><div class="kpi-v">2단계 실질 타결</div></div>
+        <div class="kpi"><div class="kpi-l">대미 쟁점</div><div class="kpi-v">해외 DC 컴퓨팅 통제</div></div>
+        <div class="kpi"><div class="kpi-l">대응 기조</div><div class="kpi-v">강행 시 보복 조치</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>한국과의 자유무역협정(FTA) 2단계 협상을 실질적으로 타결해 투자, 서비스, 금융 협력을 격상시켰다.</li>
+          <li>한국과의 상호 투자를 확대할 것이다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>미국 상무부의 동남아 수출 통제 추가 및 해외 데이터센터의 중국 고객 대상 컴퓨팅 제공 승인 의무화 조치에 단호히 반대한다.</li>
+          <li>미국의 조치는 미·중 무역 휴전 합의에 역행하는 행위이므로, 원격 접속 제한 강행 시 보복 대응 조치를 취할 것이다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Ministry of Commerce of the People's Republic of China (중국 상무부) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n8">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n7">‹ 이전</a><a class="p-btn" href="#n9">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">정치, 국제 외교, 매크로</span>
+        <span class="ch ch-chk">체크 +0.1</span>
+        <span class="ch ch-def">중동 안보·오만 회담</span>
+      </div>
+      <div class="p-en">DIPLOMACY · IRAN FOREIGN MINISTRY</div>
+      <h2 class="p-h2">오만 회담서 역내 안보 프레임워크 및 전쟁 재발 방지 방안 논의</h2>
+      <p class="p-sub">오만 중재 외교 · 역내 안보 틀 구축 및 미국의 군사적 행동 억제 논의</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">회담 장소</div><div class="kpi-v">오만</div></div>
+        <div class="kpi"><div class="kpi-l">핵심 의제</div><div class="kpi-v">역내 안보 틀</div></div>
+        <div class="kpi"><div class="kpi-l">목표</div><div class="kpi-v">전쟁 재발 방지</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>오만 회담에서 역내 안보 프레임워크가 논의되었다.</li>
+          <li>오만 회담에서는 미국의 행동과 전쟁의 재발을 막기 위한 노력이 다루어졌다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Abbas Araghchi (이란 외무장관) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n9">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n8">‹ 이전</a><a class="p-btn" href="#n10">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">중앙은행</span>
+        <span class="ch ch-risk">리스크 −1.3</span>
+        <span class="ch ch-def">FOMC 의사록·추가 인상·AI 물가</span>
+      </div>
+      <div class="p-en">CENTRAL BANK · US FEDERAL RESERVE</div>
+      <h2 class="p-h2">대다수 위원 추가 인상 판단 — 2명은 데이터 악화 시 12월 50bp 검토 지적</h2>
+      <p class="p-sub">10월 동결에도 매파적 기조 확인 · 2% 목표 의지 소통 강조 · AI 인프라 투자의 물가·금융안정 영향 논의</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">빅스텝 소수견해</div><div class="kpi-v">12월 50bp (2명)</div></div>
+        <div class="kpi"><div class="kpi-l">물가 목표</div><div class="kpi-v">2% 의지 강조</div></div>
+        <div class="kpi"><div class="kpi-l">AI 인프라</div><div class="kpi-v">인플레·안정 리스크</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>대부분의 위원들은 10월 금리 동결을 지지했으나, 대다수가 인플레이션 상방 위험을 경계하며 추가 금리 인상이 적절할 것으로 판단했다.</li>
+          <li>일부 위원들은 높은 인플레이션을 이유로 10월 25bp 인상을 선호했으며, 두 명은 데이터 악화 시 12월 50bp 인상 검토를 지적했다.</li>
+          <li>소수 위원들은 끈적한 인플레이션으로 인해 보다 제약적인 정책 기조로의 전환이 필요할 수 있다고 관측했다.</li>
+          <li>다수 위원들은 10월 동결이 인플레이션을 2% 목표로 되돌리겠다는 의지의 약화가 아님을 소통해야 한다고 강조했다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>다수 위원들은 AI 인프라 구축을 인플레이션 위험의 원인으로 보았으며, 몇몇은 AI 투자 급증의 과도함을 지적했다.</li>
+          <li>위원들은 AI 인프라 구축이 금융 안정성과 잠재 생산성에 미치는 영향을 광범위하게 논의했다.</li>
+          <li>다수 위원들은 노동시장의 완만한 긴축 징후를 지목했으며, 연준 실무진의 경제 성장 전망은 9월 대비 다소 강해졌다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Federal Reserve (미국 연방준비제도 - 10월 FOMC 의사록) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n10">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n9">‹ 이전</a><a class="p-btn" href="#n11">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">중앙은행</span>
+        <span class="ch ch-risk">리스크 −1.4</span>
+        <span class="ch ch-def">추가 금리 인상·AI 뱅크런 경고</span>
+      </div>
+      <div class="p-en">CENTRAL BANK · US FED GOVERNOR</div>
+      <h2 class="p-h2">추가 금리 인상 지지 및 통제 불능 AI 에이전트 촉발 뱅크런 대재앙 경고</h2>
+      <p class="p-sub">견조한 경제·고물가 속 추가 인상 지지 · AI 에이전트의 초고속 자율 자금 이동이 규제 개입 시한 압도 우려</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">통화정책</div><div class="kpi-v">추가 금리 인상</div></div>
+        <div class="kpi"><div class="kpi-l">물가 목표</div><div class="kpi-v">2% 하향 안정</div></div>
+        <div class="kpi"><div class="kpi-l">시스템 리스크</div><div class="kpi-v">수 분 내 AI 뱅크런</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>높은 인플레이션이 가정에 압박을 가하고 있으므로 물가를 2%로 낮추기 위한 추가 금리 인상이 적절하다.</li>
+          <li>낮은 실업률과 함께 경제가 견조하며, 예상대로 전개된다면 추가 금리 인상을 지지할 것이다.</li>
+          <li>연준의 다음 행보를 결정하기 위해 향후 경제 데이터를 면밀히 주시할 것이다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>통제 불능 상태의 AI 에이전트 봇이 금리 차이나 안정성 신호를 포착해 초고속 자율 자금 이동을 실행할 경우 금융 시스템에 대재앙이 닥칠 수 있다.</li>
+          <li>AI 에이전트가 단 몇 분 만에 뱅크런을 가속화해 전통적인 유동성 관리와 규제 개입 시한을 압도할 위험이 있다.</li>
+          <li>AI가 촉발한 은행 뱅크런을 연준을 비롯한 모든 당국이 막지 못하는 사태가 발생할 수 있다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Michael Barr (미국 연방준비제도 이사) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n11">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n10">‹ 이전</a><a class="p-btn" href="#n12">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">중앙은행</span>
+        <span class="ch ch-risk">리스크 −1.5</span>
+        <span class="ch ch-def">12월 50bp 빅스텝 검토 촉구</span>
+      </div>
+      <div class="p-en">CENTRAL BANK · US FED GOVERNOR</div>
+      <h2 class="p-h2">광범위한 물가 확산 차단 위해 12월 50bp 빅스텝 금리 인상 검토해야</h2>
+      <p class="p-sub">근원 물가 연율 3.5%·서비스 70%가 3% 초과 · 작년 3회 인하 되돌림 이상 필요 · AI 가격 거품 부인</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">12월 제안</div><div class="kpi-v">50bp 빅스텝</div></div>
+        <div class="kpi"><div class="kpi-l">근원 물가</div><div class="kpi-v">연율 3.5%</div></div>
+        <div class="kpi"><div class="kpi-l">AI 밸류 진단</div><div class="kpi-v">가격 거품 없음</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>근원 물가가 연율 3.5% 수준을 가리키고 근원 서비스 품목의 70%가 3%를 초과하는 등 인플레이션이 광범위하게 확산 중이다.</li>
+          <li>기대 인플레이션 고착화를 차단하기 위해 12월과 1월에 나누어 올리기보다 12월 회의에서 50bp의 빅스텝 금리 인상을 검토해야 한다.</li>
+          <li>연준은 50bp를 단행하거나 성명서와 기자회견을 통해 더 강력한 긴축 정책을 시사할 필요가 있다.</li>
+          <li>인플레이션을 낮추기 위해서는 작년의 3차례 보험성 금리 인하를 되돌리는 것 이상의 조치가 필요할 것이다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>AI는 혁신적 변화를 가져올 진정한 기술적 변화이며, 현재 AI 가격 책정 방식에는 거품 같은 요소가 전혀 없다.</li>
+          <li>AI 자금 조달에 대한 우려는 은행권에 국한되며 일부 투자는 수익을 내지 못할 수도 있다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Christopher Waller (미국 연방준비제도 이사) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n12">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n11">‹ 이전</a><a class="p-btn" href="#n13">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">중앙은행</span>
+        <span class="ch ch-risk">리스크 −0.9</span>
+        <span class="ch ch-def">점진적 금리 인상·AI 물가 압력</span>
+      </div>
+      <div class="p-en">CENTRAL BANK · SAN FRANCISCO FED</div>
+      <h2 class="p-h2">장기 고물가 속 신중하고 점진적인 금리 인상 지지 — AI 가격 상승 압력 경계</h2>
+      <p class="p-sub">신중·점진적 인상 접근법 유지 · AI의 여타 재화·서비스 가격 자극 가능성 · 하위 소득층 소비 회복탄력성</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">인상 속도</div><div class="kpi-v">신중·점진적</div></div>
+        <div class="kpi"><div class="kpi-l">AI 파급</div><div class="kpi-v">물가 상승 압력</div></div>
+        <div class="kpi"><div class="kpi-l">소비·고용</div><div class="kpi-v">회복탄력·안정</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>인플레이션이 너무 오랫동안 높은 수준을 유지해 왔으나 향후 전개 방향은 불확실하다.</li>
+          <li>통화정책에 대해 신중하고 점진적인 접근 방식을 지속하며 금리를 인상하는 것을 지지한다.</li>
+          <li>인공지능(AI)이 여타 재화와 서비스 가격에 상승 압력을 가할 수 있다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>소득 하위 절반 계층에서조차 소비 지출이 회복탄력적이며, 이는 강점인 동시에 위험 요인이다.</li>
+          <li>전반적인 노동시장은 안정적이나 역동성은 크지 않다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Mary Daly (샌프란시스코 연방준비은행 총재) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n13">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n12">‹ 이전</a><a class="p-btn" href="#n14">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">중앙은행</span>
+        <span class="ch ch-risk">리스크 −1.1</span>
+        <span class="ch ch-def">공급 충격·AI 인플레 효과</span>
+      </div>
+      <div class="p-en">CENTRAL BANK · MINNEAPOLIS FED</div>
+      <h2 class="p-h2">공급 충격 고물가 및 AI 인프라 구축의 실재하는 인플레 압력 경고</h2>
+      <p class="p-sub">기대 인플레이션 고정 필수 · 시장의 더 가파른 금리 인상 전망 · AI 집중 위험 및 불분명한 생산성 효과</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">물가 원인</div><div class="kpi-v">공급충격·AI인프라</div></div>
+        <div class="kpi"><div class="kpi-l">시장 기대</div><div class="kpi-v">위원 예상 상회 인상</div></div>
+        <div class="kpi"><div class="kpi-l">AI 생산성</div><div class="kpi-v">효과 여전히 불분명</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>공급 충격에서 비롯된 높은 인플레이션으로 인해 연준은 이중 책무 중 물가 목표를 달성하지 못하고 있다.</li>
+          <li>강력한 수요와 회복탄력적인 노동시장 속에서 기대 인플레이션이 고정되도록 반드시 보장해야 한다.</li>
+          <li>시장은 연준이 현재 위원들의 예상보다 금리를 더 많이 인상해야 할 것으로 판단하고 있다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>인공지능(AI)에 대한 대규모 투자는 집중 위험을 초래한다.</li>
+          <li>미국 내 AI 인프라 구축으로 인한 인플레이션 영향은 실재한다.</li>
+          <li>인공지능(AI)이 미국 생산성에 미치는 영향은 여전히 불분명하다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Neel Kashkari (미니애폴리스 연방준비은행 총재) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n14">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n13">‹ 이전</a><a class="p-btn" href="#n15">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">중앙은행</span>
+        <span class="ch ch-risk">리스크 −1.4</span>
+        <span class="ch ch-def">헤지펀드 레버리지·AI 부채·재정</span>
+      </div>
+      <div class="p-en">CENTRAL BANK · EUROPEAN CENTRAL BANK</div>
+      <h2 class="p-h2">헤지펀드 국채 베이시스 거래와 빅테크 AI 차입 열풍의 시스템 리스크 경고</h2>
+      <p class="p-sub">취약국 국채 유동성 위축 시 청산 전이 · AI 차입의 서브프라임 유사성 · 프랑스 스프레드 확대 등 재정 규율 촉구</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">국채 리스크</div><div class="kpi-v">베이시스 레버리지</div></div>
+        <div class="kpi"><div class="kpi-l">AI 부채 비유</div><div class="kpi-v">서브프라임 유사</div></div>
+        <div class="kpi"><div class="kpi-l">재정 감독</div><div class="kpi-v">EU 준칙 엄격 적용</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>소수 대형 헤지펀드의 차입을 동반한 국채 베이시스 거래 확대가 유로존 국채의 변동성 위험을 크게 높이고 있다.</li>
+          <li>재정 취약국의 국채 유동성이 위축될 경우 헤지펀드의 포지션 청산이 시장 전반의 시스템 리스크로 전이될 우려가 있다.</li>
+          <li>시장 충격 시 급격한 매도세가 촉발될 수 있으므로 레버리지 거래에 대한 경계가 필요하다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>빅테크 기업의 AI 인프라 구축을 위한 대규모 차입 열풍은 과거 서브프라임 모기지 버블과 역사적 유사성을 띠고 있다.</li>
+          <li>불확실한 미래 수익을 담보로 부채를 늘리는 구조는 금리 상승이나 수익화 지연 시 금융 시스템에 심각한 충격을 줄 수 있다.</li>
+          <li>비은행 금융기관과 사모신용 시장을 통해 확산되는 AI 관련 부채의 전이 경로를 파악하고 감독을 강화해야 한다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>시장 규율이 고부채 국가들의 재정 정책 시정을 강제해야 하며, 프랑스 국채 스프레드 확대는 국가별 고유 위험을 시사한다.</li>
+          <li>재정 건전화가 시급하며 국가 위험의 추가적인 재평가가 가능하다.</li>
+          <li>EU 재정 준칙의 엄격한 적용이 필수적이다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · European Central Bank (유럽중앙은행) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n15">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n14">‹ 이전</a><a class="p-btn" href="#n16">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">중앙은행</span>
+        <span class="ch ch-risk">리스크 −0.3</span>
+        <span class="ch ch-def">AI 밸류 조정·유럽 경제 회복력</span>
+      </div>
+      <div class="p-en">CENTRAL BANK · ECB PRESIDENT</div>
+      <h2 class="p-h2">AI 기업 가치평가는 결국 조정받을 것 — 유럽 경제는 회복탄력성 유지</h2>
+      <p class="p-sub">AI 밸류에이션 조정 불가피 전망 · AI 투자와 재정 정책이 뒷받침한 유럽 성장세 평가</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">AI 밸류</div><div class="kpi-v">결국 조정 전망</div></div>
+        <div class="kpi"><div class="kpi-l">유럽 경기</div><div class="kpi-v">회복탄력성 유지</div></div>
+        <div class="kpi"><div class="kpi-l">성장 동력</div><div class="kpi-v">AI · 재정 정책</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>인공지능(AI) 기업 가치평가는 결국 조정을 받게 될 것이다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>유럽은 회복탄력적인 경제를 유지해 왔다.</li>
+          <li>인공지능(AI)과 재정 정책이 유럽의 성장을 뒷받침했다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Christine Lagarde (유럽중앙은행 총재) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n16">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n15">‹ 이전</a><a class="p-btn" href="#n17">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">중앙은행</span>
+        <span class="ch ch-risk">리스크 −1.0</span>
+        <span class="ch ch-def">12월 ECB 인상 유력·지준율 논의</span>
+      </div>
+      <div class="p-en">CENTRAL BANK · ECB GOVERNING COUNCIL</div>
+      <h2 class="p-h2">2027년 2차 파급효과 속 12월 금리 인상 매우 유력 — 지급준비율 논의 예고</h2>
+      <p class="p-sub">ECB 대차대조표 개방 반대 · 헤지펀드 발 조정 시 부의 효과 소비 위축 · 스태그플레이션 가능성 낮아</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">12월 통화정책</div><div class="kpi-v">금리 인상 매우 유력</div></div>
+        <div class="kpi"><div class="kpi-l">유동성 정책</div><div class="kpi-v">지급준비율(MRR) 논의</div></div>
+        <div class="kpi"><div class="kpi-l">스태그플레이션</div><div class="kpi-v">가능성 작음</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>자금에 ECB 대차대조표를 개방하는 방안에 반대하기로 결정했으며, 곧 지급준비율(MRR)에 대해 논의할 예정이다.</li>
+          <li>헤지펀드 활동으로 인한 급격한 시장 조정은 부의 효과를 통해 유럽과 미국의 소비를 위축시킬 수 있다.</li>
+          <li>현재 스태그플레이션 가능성은 작으며 재정 문제는 재정 정책으로 해결해야 한다.</li>
+          <li>2027년 2차 파급효과가 확실시되는 가운데 현 상황에서는 12월 금리 인상이 매우 유력하다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Boris Vujcic (유럽중앙은행 정책위원) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n17">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n16">‹ 이전</a><a class="p-btn" href="#n18">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">중앙은행</span>
+        <span class="ch ch-risk">리스크 −1.1</span>
+        <span class="ch ch-def">사모신용 스트레스 테스트·물가 상승</span>
+      </div>
+      <div class="p-en">CENTRAL BANK · BANK OF ENGLAND</div>
+      <h2 class="p-h2">사모신용 시장 위기 증폭 여부 점검 스트레스 테스트 실시 및 내년 물가 추가 상승</h2>
+      <p class="p-sub">사모신용·은행권 연계 고리 및 기업 대출 손실 전이 분석 · 내년 중반까지 인플레 상승 전망</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">감독 조치</div><div class="kpi-v">사모신용 스트레스테스트</div></div>
+        <div class="kpi"><div class="kpi-l">물가 경로</div><div class="kpi-v">내년 중반까지 상승</div></div>
+        <div class="kpi"><div class="kpi-l">목표 기준</div><div class="kpi-v">인플레 2% 복귀</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>규제가 느슨하고 투명성이 낮은 사모신용 시장이 경제 충격 시 금융 시스템 위기를 증폭시키는지 점검하기 위해 스트레스 테스트를 실시할 예정이다.</li>
+          <li>사모신용 시장과 전통 은행권 간의 복잡한 자금 연계 고리를 면밀히 분석해 잠재적 시스템 리스크에 선제적으로 대응할 것이다.</li>
+          <li>부실 발생 시 손실 규모와 전이 경로를 예측하기 어려워진 기업 대출 시장을 면밀히 점검해야 한다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>이미 누적된 비용 압력으로 인해 내년 중반까지 인플레이션이 추가로 상승할 것으로 예상한다.</li>
+          <li>인플레이션이 2% 목표치로 복귀하여 유지되도록 금리를 계속 설정할 것이다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Bank of England (영란은행) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n18">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n17">‹ 이전</a><a class="p-btn" href="#n19">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">중앙은행</span>
+        <span class="ch ch-risk">리스크 −0.6</span>
+        <span class="ch ch-def">추가 인상 여지·CPI 5% 미만 정점</span>
+      </div>
+      <div class="p-en">CENTRAL BANK · BOE GOVERNOR</div>
+      <h2 class="p-h2">에너지 인플레 지속 시 추가 금리 인상 가능 — CPI는 5% 미만서 정점 전망</h2>
+      <p class="p-sub">올해 영국 GDP 1.6% 성장 예상 · 민간 부문 주도 회복 · AI 경제학 팀 구성 및 최고 속도 보안 패치</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">올해 GDP 전망</div><div class="kpi-v">1.6%</div></div>
+        <div class="kpi"><div class="kpi-l">CPI 정점 예상</div><div class="kpi-v">5% 미만</div></div>
+        <div class="kpi"><div class="kpi-l">내부 조직</div><div class="kpi-v">AI 경제학 팀 신설</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>통화정책은 미리 정해진 경로를 따르지 않으며, 에너지 인플레이션이 지속될 경우 기준금리를 추가로 인상해야 할 수도 있다.</li>
+          <li>파이프라인 내 인플레이션 압력이 지난 금리 인상을 정당화했으며, 11월 전망상 올해 영국 GDP 성장률은 1.6%로 예상된다.</li>
+          <li>금리 인상 이후에도 데이터에 기반해 유연하게 통화정책을 운용할 것이다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>활동 성장이 회복되면서 노동시장의 유휴 인력 여력이 안정화되었다.</li>
+          <li>영국의 성장세가 나아졌지만 여전히 더 분발해야 한다.</li>
+          <li>올해의 회복탄력성은 주로 민간 부문이 주도하고 있다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>인플레이션 상승은 좌절스러운 일이며 유감스럽게도 물가가 추가로 상승할 전망이다.</li>
+          <li>더 강한 식품 인플레이션 예상은 현실화되지 않았으며, 에너지 가격 완화로 CPI는 5% 미만에서 정점을 찍을 가능성이 높다.</li>
+          <li>물가 상방 압력이 여전하지만 정점 통과 가능성도 공존하는 상태다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>영란은행은 인공지능(AI) 경제학을 전문으로 하는 팀을 구성하고 있다.</li>
+          <li>영란은행은 시스템을 보호하기 위해 역대 최고 속도로 보안 패치를 적용하고 있다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Andrew Bailey (영국 영란은행 총재) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n19">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n18">‹ 이전</a><a class="p-btn" href="#n20">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">중앙은행</span>
+        <span class="ch ch-risk">리스크 −0.6</span>
+        <span class="ch ch-def">점진적 금리 인상·감세·엔저 평가</span>
+      </div>
+      <div class="p-en">CENTRAL BANK · BANK OF JAPAN GOVERNOR</div>
+      <h2 class="p-h2">2% 물가 안정 위해 정책금리 점진 인상 — 식료품 감세와 엔저 순영향 주시</h2>
+      <p class="p-sub">완화적 여건 속 점진 인상 기조 유지 · 장기금리 불균형 급등 시 유연 대응 · 재정 뒷받침 오해 경계</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">금리 기조</div><div class="kpi-v">점진적 인상</div></div>
+        <div class="kpi"><div class="kpi-l">물가 변수</div><div class="kpi-v">소비세 인하 vs 엔저</div></div>
+        <div class="kpi"><div class="kpi-l">국채 운영</div><div class="kpi-v">급등 시 유연 개입</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>식료품 소비세 인하는 가계 실질 구매력을 높여 경제 성장을 돕고 단기 물가를 낮추겠으나, 식품 가격과 근원 인플레이션에 미치는 영향은 불확실하다.</li>
+          <li>엔화 약세는 수입 비용 증가로 식료품 가격 상승 위험을 초래하므로, 감세와 엔저가 물가에 미치는 전반적인 순영향을 가늠하기 어렵다.</li>
+          <li>식료품 판매세 인하가 기조적 인플레이션과 임금 상승 흐름에 미치는 영향을 평가해 적절한 통화정책을 적용할 것이다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>인플레이션이 2% 부근에서 안정적으로 유지되도록 보장하는 것이 중요하며, 완화적 금융 여건 속에서 정책금리를 점진적으로 인상해 나갈 것이다.</li>
+          <li>장기 금리는 시장 움직임에 의해 결정되나, 불균형적으로 급등하는 드문 경우에는 유연한 시장 운영을 실시한다.</li>
+          <li>중앙은행의 국채 매입이 정부의 재정 정책을 뒷받침하는 것으로 비춰질 경우 장기 금리가 상승할 수 있다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Kazuo Ueda (일본은행 총재) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n20">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n19">‹ 이전</a><a class="p-btn" href="#n21">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">중앙은행</span>
+        <span class="ch ch-risk">리스크 −0.5</span>
+        <span class="ch ch-def">수요 부진 vs 근원 물가·유가</span>
+      </div>
+      <div class="p-en">CENTRAL BANK · RBNZ GOVERNOR</div>
+      <h2 class="p-h2">불균등 회복 속 수요 부진과 고근원 물가·유가 상승 양방향 위험 공존</h2>
+      <p class="p-sub">기업 가격 전가 난항 · 기대 인플레 안정적이나 근원 물가 고공 · 비용의 물가 전이 모니터링</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">경기 진단</div><div class="kpi-v">불균등 회복·수요부진</div></div>
+        <div class="kpi"><div class="kpi-l">상방 요인</div><div class="kpi-v">근원물가·유가 파급</div></div>
+        <div class="kpi"><div class="kpi-l">위험 균형</div><div class="kpi-v">물가·경기 양방향</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>경제 회복세가 불균등하고 수요 부진으로 기업들이 비용 상승분을 가격에 전가하기 어려운 상황이다.</li>
+          <li>기대 인플레이션은 안정적이나 근원 인플레이션이 여전히 높고 유가 상승의 간접 파급효과가 클 수 있다.</li>
+          <li>인플레이션과 경제 모두에 양방향 위험이 존재하므로 높은 비용의 물가 전이 정도를 면밀히 모니터링할 것이다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Anna Breman (뉴질랜드 중앙은행 총재) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n21">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n20">‹ 이전</a><a class="p-btn" href="#n22">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">기업</span>
+        <span class="ch ch-opp">기회 +1.0</span>
+        <span class="ch ch-def">루빈 200억$·FY28 성장 75%</span>
+      </div>
+      <div class="p-en">CORPORATE · NVIDIA CFO / INTERIM CEO</div>
+      <h2 class="p-h2">루빈 200억 달러 매출 달성 및 FY28 매출 성장률 전망치 75%로 상향</h2>
+      <p class="p-sub">클라우드 수주 잔고 2.5조 달러 증가 · 프론티어 연구소 매출 비중 15%→14% · 데이터센터 보증 원칙 유지</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">루빈 매출</div><div class="kpi-v">200억 달러</div></div>
+        <div class="kpi"><div class="kpi-l">FY28 성장률</div><div class="kpi-v">YoY 75% 상향</div></div>
+        <div class="kpi"><div class="kpi-l">클라우드 수주잔고</div><div class="kpi-v">2조 5,000억 달러</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>루빈 제품군이 200억 달러 매출을 창출했으며, 2028 회계연도 매출 성장률 전망치를 전년 대비 75%로 상향 조정한다.</li>
+          <li>클라우드 업계의 수주 잔고가 2조 5,000억 달러로 증가했고 주요 프론티어 연구소는 현재 데이터센터 매출의 15%, 향후 14%를 기여할 전망이다.</li>
+          <li>데이터센터 보증은 시설 준비 시점부터 시작되며 구축 지연 시 소멸한다는 기존 기준에는 변함이 없다.</li>
+          <li>하이퍼스케일러들이 가용 컴퓨팅 용량을 긴급히 찾고 있으며 당사의 고객 기반이나 공급업체 지지에는 아무런 변화가 없다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Colette Kress (엔비디아 CFO 겸 임시 CEO) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n22">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n21">‹ 이전</a><a class="p-btn" href="#n23">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">기업</span>
+        <span class="ch ch-risk">리스크 −0.9</span>
+        <span class="ch ch-def">젠슨 황 복귀 불가·CEO 물색</span>
+      </div>
+      <div class="p-en">CORPORATE · NVIDIA BOARD CHAIR</div>
+      <h2 class="p-h2">젠슨 황 CEO 복귀 계획 없음 — 하이드릭 앤 스트러글스 선임해 후임 물색</h2>
+      <p class="p-sub">실적 발표 콜서 사임 및 조사 관련 질의응답 전면 배제 · 적합한 인선 전까지 서두르지 않을 방침</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">젠슨 황 복귀</div><div class="kpi-v">계획 없음</div></div>
+        <div class="kpi"><div class="kpi-l">서치펌 선임</div><div class="kpi-v">하이드릭 앤 스트러글스</div></div>
+        <div class="kpi"><div class="kpi-l">인선 원칙</div><div class="kpi-v">신중 선정 (속도전 배제)</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>젠슨 황을 CEO로 복귀시킬 계획이 없으며 후임 CEO 물색을 주도하기 위해 하이드릭 앤 스트러글스를 선임했다.</li>
+          <li>오늘 실적 발표 콘퍼런스콜에서는 젠슨 황의 사임이나 진행 중인 조사에 대해 언급하거나 질문을 받지 않을 것이다.</li>
+          <li>가능한 한 빨리 상임 CEO를 임명하고 싶지만 적합한 인물을 찾기 전까지는 인선을 서두르지 않을 것이다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Harvey Jones (엔비디아 이사회 의장) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n23">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n22">‹ 이전</a><a class="p-btn" href="#n24">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">기업</span>
+        <span class="ch ch-opp">기회 +0.7</span>
+        <span class="ch ch-def">CPU 2배·TSMC 패키징 계약</span>
+      </div>
+      <div class="p-en">CORPORATE · NVIDIA</div>
+      <h2 class="p-h2">차기 회계연도 CPU 매출 2배 이상 전망 및 TSMC 첨단 패키징 다년 계약 체결</h2>
+      <p class="p-sub">네오클라우드 선별 지원 · 2027년 하반기 킨서스 양산 · 구형 칩 고가 재계약 및 RTX 스파크 출시</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">차기 CPU 매출</div><div class="kpi-v">2배 이상 증가</div></div>
+        <div class="kpi"><div class="kpi-l">킨서스 양산</div><div class="kpi-v">2027년 하반기</div></div>
+        <div class="kpi"><div class="kpi-l">신규 데스크톱</div><div class="kpi-v">RTX 스파크 출시</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>네오클라우드 지원에 있어 규율을 지키고 선별적으로 접근할 것이며, 차기 회계연도 CPU 매출은 두 배 이상 증가할 전망이다.</li>
+          <li>킨서스의 생산량은 2027년 하반기에 시작되며, TSMC와 수십억 달러 규모의 대만 내 첨단 패키징 사업 확대 다년 계약을 체결했다.</li>
+          <li>구형 칩들은 더 높은 가격에 재계약되었고, 에이수스, 델, MSI의 RTX 스파크 소형 데스크톱이 현재 출시되었다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Nvidia (엔비디아) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n24">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n23">‹ 이전</a><a class="p-btn" href="#n25">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">기업</span>
+        <span class="ch ch-opp">기회 +0.6</span>
+        <span class="ch ch-def">애저·인텔 제온 다년 계약</span>
+      </div>
+      <div class="p-en">CORPORATE · MICROSOFT</div>
+      <h2 class="p-h2">애저용 다이아몬드 래피즈 포함 다년간 인텔 제온 프로세서 공급 확정</h2>
+      <p class="p-sub">CXL·퀵어시스트·기밀 컴퓨팅 탑재 제온 협력 · 차별화된 애저 인프라 구축 심화</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">협력 파트너</div><div class="kpi-v">인텔 (Intel)</div></div>
+        <div class="kpi"><div class="kpi-l">핵심 프로세서</div><div class="kpi-v">다이아몬드 래피즈</div></div>
+        <div class="kpi"><div class="kpi-l">적용 분야</div><div class="kpi-v">애저 기밀 컴퓨팅</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>애저용 CXL, 퀵어시스트 및 기밀 컴퓨팅을 탑재한 제온 프로세서 분야에서 인텔과 협력할 것이다.</li>
+          <li>이번 합의로 애저용 다이아몬드 래피즈 CPU를 포함한 다년간의 인텔 제온 공급이 확정되었다.</li>
+          <li>차별화된 애저 인프라를 제공하기 위해 인텔과의 협력을 심화한다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Microsoft (마이크로소프트) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n25">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n24">‹ 이전</a><a class="p-btn" href="#n26">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">기업</span>
+        <span class="ch ch-chk">체크 +0.2</span>
+        <span class="ch ch-def">AI 안전 표준·2027년 상장 계획</span>
+      </div>
+      <div class="p-en">CORPORATE · OPENAI CEO</div>
+      <h2 class="p-h2">AI 업계 공통 안전 표준 필요성 제기 및 오픈AI 2027년 중 상장 계획 확인</h2>
+      <p class="p-sub">젠슨 황 사태에 개인적 공감과 감사 표명 · 앤트로픽 선행 IPO에 따른 수요 고갈 우려 일축</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">오픈AI IPO</div><div class="kpi-v">2027년 중 계획</div></div>
+        <div class="kpi"><div class="kpi-l">앤트로픽 상장</div><div class="kpi-v">수요 고갈 우려 일축</div></div>
+        <div class="kpi"><div class="kpi-l">업계 과제</div><div class="kpi-v">공통 안전 표준</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>인공지능(AI) 업계에는 일부 공통된 안전 표준이 필요할 것이다.</li>
+          <li>인공지능(AI) 기업 간 경쟁 심화가 안전성을 훼손할 수 있다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>젠슨 황과 그가 세운 회사가 없는 AI 혁명은 상상하기 어렵고, 결점이 있더라도 오랫동안 나의 영웅이었으며 회사에 감사한다.</li>
+          <li>과거 비슷한 경험을 겪으며 느꼈던 감정을 기억하고 있기에 이번 사태에 대해 개인적으로 강한 공감대를 가지고 있다.</li>
+          <li>서로 초기 베팅을 주고받았던 젠슨 황에게 극도의 감사를 느낀다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>이번 주 앤트로픽의 IPO가 먼저 진행되면서 투자자 수요를 고갈시킬 것이라는 우려는 걱정할 일이 아니다.</li>
+          <li>오픈AI는 2027년 중 어느 시점에 상장할 계획이다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Sam Altman (오픈AI 최고경영자) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n26">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n25">‹ 이전</a><a class="p-btn" href="#n27">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">기업</span>
+        <span class="ch ch-opp">기회 +1.0</span>
+        <span class="ch ch-def">ARR 10억$·흑자전환·조기 IPO</span>
+      </div>
+      <div class="p-en">CORPORATE · PERPLEXITY CEO</div>
+      <h2 class="p-h2">ARR 10억 달러 돌파 및 매출총이익률 +17% 흑자 전환 — 내년 1분기 조기 상장 가능</h2>
+      <p class="p-sub">로컬 AI '퍼플렉시티 컴퓨터'·샌드박스 '스페이스' 공개 · 프론티어 모델 전면 오픈소스화 및 엔비디아 협력</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">ARR (YoY 4.7배)</div><div class="kpi-v">10억 달러 돌파</div></div>
+        <div class="kpi"><div class="kpi-l">매출총이익률</div><div class="kpi-v">-200% → +17%</div></div>
+        <div class="kpi"><div class="kpi-l">IPO 시점</div><div class="kpi-v">내년 1분기 포함 가능</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>젠슨 황은 창업자로서 끊임없는 집념과 결단력을 보여주었으며, 까다로운 사용자로서 제품 개선 방향을 자주 제시해 주었다.</li>
+          <li>퍼플렉시티 사용자들은 적은 자원으로 돌파구를 찾는 그의 정신을 반영하며, 그와는 주로 오픈 웨이트 모델과 답변 정확도 향상을 논의했다.</li>
+          <li>젠슨 황의 헌신과 통찰력은 퍼플렉시티가 핵심 가치를 발전시키는 데 중요한 밑거름이 되었다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>젠슨 황이 구축한 생태계 토대 위에서 많은 기업이 오픈소스에 참여하도록 '퍼플렉시티 프론티어 리서치'를 발표했다.</li>
+          <li>멀티 에이전트 오케스트레이션과 지속 학습 등 당사가 훈련하는 모든 모델을 오픈소스로 공개해 생태계 작동을 도울 것이다.</li>
+          <li>네모트론과 뮤즈 같은 미국산 오픈 웨이트 모델 생태계를 계속 육성해 미국을 오픈소스 강국으로 만들어야 한다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>엔비디아는 퍼플렉시티의 투자자이며, 양사의 사업은 매우 순조롭게 진행되고 있다.</li>
+          <li>퍼플렉시티는 네모트론 3.5에 기여했고 네모트론 4에서도 협력할 예정이며 엔비디아 연합 프로그램의 창립 멤버다.</li>
+          <li>단순 자금 지원을 바라는 타 스타트업과 달리 엔비디아와 깊은 기술적 파트너십을 맺고 있다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>에이전트 폭주 뉴스로 규제 기관과 금융기관 사이에서 안전하고 주권이 보장된 AI(Sovereign AI)에 대한 관심이 높아지고 있다.</li>
+          <li>핵심 IP와 민감 데이터를 클라우드 모델로부터 보호하기 위해 노트북이나 DGX 스파크 등 격리된 로컬 환경에서 구동되는 '퍼플렉시티 컴퓨터'를 개발 중이다.</li>
+          <li>진정한 AI 안전은 기업이 데이터를 로컬에서 완벽히 통제할 수 있는 통제권에서 비롯된다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>클라우드상에서 확장 가능하고 안전하며 저렴한 일회용 샌드박스 시스템을 구축하는 것이 핵심 보안 과제다.</li>
+          <li>엔비디아의 오픈 시큐어 얼라이언스에 발맞춰 퍼플렉시티 컴퓨터를 구동하는 샌드박스 플랫폼 '스페이스'를 오픈소스로 공개했다.</li>
+          <li>호스트-게스트 격리 우회 네트워크 문제를 해결해 연구 블로그에 공개했으며, 스페이스가 미래 에이전트 구동 표준이 되기를 희망한다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>연간 반복 매출(ARR)이 전년 대비 4.7배 성장한 10억 달러를 돌파했고, 전체 매출 총이익률은 2025년 4분기 마이너스 200%에서 현재 플러스 17%로 전환되었다.</li>
+          <li>프론티어 연구소보다 5배 적은 자본을 지출하고도 10억 달러 매출에 도달한 가장 자본 효율적인 기업이다.</li>
+          <li>애플리케이션 기업도 사후학습과 검색·브라우저 등 풀스택 기반 기술을 구축하면 파운데이션 모델 연구소보다 자본 효율적으로 대규모 매출을 올릴 수 있음을 입증했다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>이번 주 상장하는 앤트로픽은 토큰 과금과 기업용 시장 공략이라는 AI 비즈니스 모델이 실제로 작동함을 보여주었으며 성공을 응원한다.</li>
+          <li>당초 2028년 IPO를 염두에 두었으나 ARR 10억 달러 돌파 등 사업이 예상보다 빠르게 성장하고 있어 내년 1분기를 포함해 언제든 상장 서류를 제출할 수 있다.</li>
+          <li>미국 경제는 성공적인 IPO를 통해 다음 GDP 성장을 이끌어낼 것이며 퍼플렉시티의 도구들이 이를 뒷받침할 것이다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>검색은 정확성을 입증한 시작점일 뿐이며, 진정한 수익화 잠재력은 '퍼플렉시티 컴퓨터'와 '팀메이트'로 상시 근무하는 AI 동료를 제공하는 데 있다.</li>
+          <li>내부 조사 결과 직원들은 주당 1일, 상위 20%는 주당 1주일치의 추가 업무 효과를 얻고 있으며, 이는 수천만 토큰으로 수억 달러 노동을 대체하는 수준이다.</li>
+          <li>모든 기업이 이러한 AI 도구를 활용해 인력 효율성을 극대화할 수 있도록 지원할 것이다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Aravind Srinivas (퍼플렉시티 공동창업자 겸 최고경영자) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n27">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n26">‹ 이전</a><a class="p-btn" href="#n28">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">기업</span>
+        <span class="ch ch-opp">기회 +0.5</span>
+        <span class="ch ch-def">GPU 지수·CME 컴퓨팅 선물</span>
+      </div>
+      <div class="p-en">CORPORATE · SILICON DATA CEO</div>
+      <h2 class="p-h2">BofA·씨티와 컴퓨팅 담보 대출 헤지 협력 — CME 선물 심사 60일 연장은 긍정적 조율</h2>
+      <p class="p-sub">원격 접속 규제와 2028년 공급 불확실성 상쇄 · 오픈소스 혼합 확산으로 LLM 토큰 지수 하락세</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">금융 파트너</div><div class="kpi-v">BofA · 씨티은행</div></div>
+        <div class="kpi"><div class="kpi-l">지수 커버리지</div><div class="kpi-v">100개 이상 업체</div></div>
+        <div class="kpi"><div class="kpi-l">CFTC 심사</div><div class="kpi-v">60일 연장 (긍정적)</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>뱅크오브아메리카와 씨티은행은 350만 달러 시리즈 A 투자 전부터 지난 2년간 위험 노출 헤지와 대출 관리 방안을 함께 논의해 온 긴밀한 파트너다.</li>
+          <li>자산 담보 대출에서는 잔존 가치와 현금흐름, 대출 커버리지 비율이 핵심이며, 이를 뒷받침할 벤치마크 지수와 리스크 관리 도구가 필수적이다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>표준화된 B200 풀 구성과 지역 내 경매 방식을 통해 컴퓨팅 자원을 대체 가능하게 만들고, CME 선물 거래로 변동성을 헤지할 수 있다.</li>
+          <li>현재 GPU 현물 지수는 수급 변화가 없어 안정적이나, 최근의 수출 규제와 인프라 구축 불확실성으로 인해 미래 기대치는 분명히 변화했다.</li>
+          <li>실리콘 데이터 지수는 정규화된 글로벌 수치로서 컴퓨팅 시장의 가격 발견과 리스크 관리를 지원한다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>원격 접속 수출 규제는 중국 기업의 접근을 차단해 미국 내 사용자들을 위한 컴퓨팅 가용 용량을 늘려주는 효과가 있다.</li>
+          <li>반면 중간선거 등으로 인한 2028년 인프라 구축 불확실성은 미래 공급을 저해해 두 변수가 서로 상쇄 작용을 일으킨다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>금융기관이 장기 리스크를 헤지하면 인프라 대출 금리가 낮아져 최종 소비자가 더 저렴한 GPU와 AI 토큰을 이용하게 된다.</li>
+          <li>CFTC의 CME 컴퓨팅 선물 심사 기한 60일 연장은 결함 때문이 아니라 생태계 참여자들과의 조율 과정일 뿐이며 매우 긍정적인 피드백을 받고 있다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>엔비디아는 서버 판매 후 임대 가격 통제권이 없으며, 클라우드 제공업체들이 수급에 따라 임대료를 결정한다.</li>
+          <li>실리콘 데이터 지수는 전 세계 100개 이상 업체의 데이터를 포괄하며 개별 비중이 낮아 특정 기업이 지수를 조작하기 어렵다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>LLM 토큰 지수 하락은 모델 할인 때문이 아니라 소비자들이 비싼 폐쇄형 모델 단독 사용에서 오픈소스 혼합 사용으로 이동하고 있기 때문이다.</li>
+          <li>실제로는 오픈소스 모델의 성능 향상과 폐쇄형 모델의 가격 안정화로 지난 1년간 모든 개별 토큰 가격은 오히려 상승했다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Carmen Li (실리콘 데이터 창립자 겸 최고경영자) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n28">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n27">‹ 이전</a><a class="p-btn" href="#n29">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">기업</span>
+        <span class="ch ch-opp">기회 +0.7</span>
+        <span class="ch ch-def">사상 최고 수주 680억 크로나</span>
+      </div>
+      <div class="p-en">CORPORATE · SKANSKA CEO</div>
+      <h2 class="p-h2">데이터센터 포함 3분기 수주액 사상 최고 680억 크로나 — 자금 조달 100% 완료</h2>
+      <p class="p-sub">미 민주당 속도 조절 공약 영향 우려 일축 · 병목인 부지·전력 확보 총력 · 완공 자산 임대율 82% 및 유럽 매각 성사</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">3분기 수주액</div><div class="kpi-v">680억 크로나 (최고)</div></div>
+        <div class="kpi"><div class="kpi-l">완공 임대율</div><div class="kpi-v">82%</div></div>
+        <div class="kpi"><div class="kpi-l">핵심 병목</div><div class="kpi-v">부지 · 전력 접근성</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>3분기에 둔화세 없이 데이터센터를 포함한 전체 수주액이 사상 최고치인 680억 크로나를 기록했다.</li>
+          <li>40년 이상 데이터센터를 건설해 온 유리한 입지를 바탕으로 해당 프로젝트들을 성공적으로 수주해 왔다.</li>
+          <li>견조한 수주 실적을 바탕으로 향후 건설 부문에서도 안정적인 성장세를 이어갈 것이다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>모든 수주 잔고는 자금 조달이 완료되었고 구속력 있는 계약을 보유해 자금이나 물류에 대한 우려가 없다.</li>
+          <li>데이터센터 건설에는 전력이 필수적이므로 대형 고객사들과 긴밀히 협력해 새로운 부지와 전력을 물색하고 있다.</li>
+          <li>고객사의 확장 수요에 발맞춰 신규 부지 확보에 총력을 기울이고 있다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>50년 이상 다양한 미국 정치 환경에서 사업을 영위해 왔으므로 민주당의 데이터센터 속도 조절 공약에 대해 우려하지 않는다.</li>
+          <li>향후에도 미국과 스웨덴의 전통 인프라는 물론 학교, 병원, 데이터센터 등 사회 인프라 분야에서 건전한 수주 파이프라인을 보유하고 있다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>데이터센터 건설의 병목 현상은 부지와 전력 접근성이며, 이를 해결하려면 데이터센터 건설을 위한 정치적 의지가 필요하다.</li>
+          <li>고객사와 협력해 냉각수 재활용 등 데이터센터의 지속 가능성과 미래 회복탄력성을 높이기 위한 조치를 취하고 있다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>미국과 스웨덴의 전통 인프라 투자가 3분기 사상 최고 수주액을 견인했으나, 미국 내 프로젝트 개발 거래 시장은 여전히 부진하다.</li>
+          <li>완공 포트폴리오의 임대율이 82%로 높아 양호한 현금흐름을 창출하고 있으며, 중부 유럽에서는 바르샤바와 부다페스트에서 수익성 높은 대규모 매각 2건을 성사시켰다.</li>
+          <li>향후 완공된 프로젝트 중 일부를 추가 매각할 계획이며 미국 거래 시장에서도 활동이 살아나기를 기대한다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Anders Danielsson (스칸스카 최고경영자) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n29">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n28">‹ 이전</a><a class="p-btn" href="#n30">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">기업</span>
+        <span class="ch ch-opp">기회 +0.8</span>
+        <span class="ch ch-def">AI 4대 축·초인공지능(ASI)</span>
+      </div>
+      <div class="p-en">CORPORATE · SOFTBANK GROUP CHAIRMAN</div>
+      <h2 class="p-h2">AI 칩·데이터센터·로봇·에너지 인프라 4대 핵심 축 석권해 ASI 생태계 주도</h2>
+      <p class="p-sub">Arm 설계 역량 기반 전용 AI 칩 개발 · 대규모 데이터센터 및 전력망 적극 투자</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">4대 핵심 축</div><div class="kpi-v">칩·DC·로봇·에너지</div></div>
+        <div class="kpi"><div class="kpi-l">설계 기반</div><div class="kpi-v">Arm 반도체 역량</div></div>
+        <div class="kpi"><div class="kpi-l">최종 목표</div><div class="kpi-v">ASI 생태계 주도</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>모든 시간과 에너지를 인공지능(AI)에 쏟아 AI 칩, 데이터센터, 로봇공학, 에너지 인프라 등 4대 핵심 분야를 석권할 구상이다.</li>
+          <li>Arm의 반도체 설계 역량을 기반으로 차세대 AI 전용 칩을 개발하고 대규모 데이터센터와 전력망 구축에 적극 투자할 계획이다.</li>
+          <li>4대 축을 유기적으로 결합해 현존 인류 지능의 수만 배에 달하는 초인공지능(ASI) 시대의 생태계를 주도할 것이다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Masayoshi Son (소프트뱅크그룹 회장) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n30">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n29">‹ 이전</a><a class="p-btn" href="#n31">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">금융 분석, 전략 및 전망</span>
+        <span class="ch ch-opp">기회 +0.7</span>
+        <span class="ch ch-def">한국 경제 르네상스·엔화 162엔</span>
+      </div>
+      <div class="p-en">RESEARCH · MORGAN STANLEY</div>
+      <h2 class="p-h2">한국, 구조 개혁과 반도체·AI 하드웨어 우위로 경제 르네상스 — 달러/엔 162엔 전망</h2>
+      <p class="p-sub">기업 밸류업·지배구조 개선으로 외국인 유입 촉진 · 첨단 제조 설비투자로 잠재성장률 도약</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">2027 달러/엔</div><div class="kpi-v">162엔 도달 예상</div></div>
+        <div class="kpi"><div class="kpi-l">한국 핵심 동력</div><div class="kpi-v">반도체·AI·밸류업</div></div>
+        <div class="kpi"><div class="kpi-l">거시 전망</div><div class="kpi-v">잠재성장률 도약</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>2027년 외환 전망에서 달러/엔 환율이 162엔을 향해 나아갈 것으로 예상한다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>한국 경제가 구조적 개혁과 반도체·AI 하드웨어 분야의 압도적 기술 우위에 힘입어 새로운 경제 르네상스를 맞이하고 있다.</li>
+          <li>정부의 기업 밸류업 프로그램과 지배구조 개선 노력이 코리아 디스카운트를 해소하고 외국인 투자 자금 유입을 촉진 중이다.</li>
+          <li>내수 회복과 첨단 제조업 중심의 설비투자 확대로 향후 수년간 한국의 잠재성장률이 한 단계 도약할 것이다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Morgan Stanley (모건스탠리) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n31">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n30">‹ 이전</a><a class="p-btn" href="#n32">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">금융 분석, 전략 및 전망</span>
+        <span class="ch ch-opp">기회 +0.6</span>
+        <span class="ch ch-def">S&amp;P 7,100~7,300 매수 기회</span>
+      </div>
+      <div class="p-en">STRATEGY · MORGAN STANLEY CIO</div>
+      <h2 class="p-h2">S&amp;P 500 7,100~7,300선 조정은 좋은 매수 기회 — 12월 9일 FOMC가 최종 저점 형성</h2>
+      <p class="p-sub">유가 하락으로 인상 1회 제외 가능 · 선행 PER 18배·2027년 두 자릿수 이익 성장 · 자본 조달 변화율 정점 통과</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">S&amp;P 매수 구간</div><div class="kpi-v">7,100~7,300선</div></div>
+        <div class="kpi"><div class="kpi-l">선행 PER</div><div class="kpi-v">18배 (개별 16~17배)</div></div>
+        <div class="kpi"><div class="kpi-l">저점 이벤트</div><div class="kpi-v">12월 9일 FOMC</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>금리 상승으로 증시가 조정을 받았으나 시장은 우량 프로젝트를 선별하는 건전한 퀄리티 트레이드를 진행 중이다.</li>
+          <li>유가 하락세가 연준의 부담을 덜어줄 것이므로 내년 12월과 3월로 예상되는 두 차례의 금리 인상 중 한 차례는 시장 가격에서 제외될 가능성이 있다.</li>
+          <li>장기물 금리 상승과 고유가 등을 통해 시장이 이미 연준을 대신해 긴축 역할을 상당 부분 수행했다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>Kevin Warsh 연준 의장은 시장이 중립금리 수준을 스스로 알려주기를 원하며, 금리가 5.35%까지 오른 뒤 반락하며 경기 둔화 임계점을 확인했다.</li>
+          <li>금리 투자자들의 가장 큰 문제는 연준이 더 이상 시장을 떠받쳐주지 않는다는 점이며, 시장 참여자들은 새로운 의장에 적응하는 법을 배우고 있다.</li>
+          <li>여러 면에서 시장이 연준의 통화정책 긴축 역할을 대신 해낸 셈이다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>조정 마무리를 위한 세 가지 해소 이벤트 중 첫 번째인 중간선거는 지났고, 두 번째인 대규모 자본 조달 물량도 12~1월 계절적 비수기에 둔화될 것이다.</li>
+          <li>가장 큰 변수인 연준은 12월 9일 회의에서 기준금리를 25bp 인상할 전망이며, 연말 유동성 압박 속 금리 인상이 마지막 관문이다.</li>
+          <li>2~3주 앞으로 다가온 12월 FOMC 회의 시점이 지난 6월부터 시작된 이번 조정장의 최종 저점을 형성할 것이다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>S&amp;P 500 지수가 시장 내부 건전성이 가리키던 목표 조정 수준에 도달했으며, 현재 7,100~7,300선 구간은 매수하기에 매우 좋은 기회다.</li>
+          <li>시장 선행 PER은 18배, 평균 개별 종목은 16~17배로 이익 전망 대비 비싸지 않으며 2027년에도 두 자릿수 이익 성장이 예상된다.</li>
+          <li>투자자 모두가 불편함을 느끼는 현재의 10% 조정 구간이 오히려 양호한 펀더멘털을 바탕으로 진입할 좋은 매수 신호다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>2년 전 시작된 대규모 자본 조달 사이클은 현재 신규 물량 공급의 변화율이 정점을 지났을 가능성이 크며 이미 시장 가격에 반영되었다.</li>
+          <li>시장은 여전히 ROIC가 높은 우량 프로젝트에 충분한 유동성을 공급하고 있으며, 이들 프로젝트는 향후 성장 여력이 많이 남아 있다.</li>
+          <li>다가오는 앤스로픽 IPO를 앞두고 시장은 AI 관련 자본 조달 급증세를 이미 상당 부분 소화했다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Mike Wilson (모건스탠리 최고투자책임자 겸 수석 미국 주식 전략가) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n32">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n31">‹ 이전</a><a class="p-btn" href="#n33">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">금융 분석, 전략 및 전망</span>
+        <span class="ch ch-risk">리스크 −1.0</span>
+        <span class="ch ch-def">AI 주가 과열·ROI 의구심</span>
+      </div>
+      <div class="p-en">RESEARCH · GOLDMAN SACHS</div>
+      <h2 class="p-h2">AI 종목 기대감 과열 — 설비투자 대비 매출·생산성 미흡 시 가파른 조정 위험</h2>
+      <p class="p-sub">하이퍼스케일러 천문학적 투자 vs 현장 AI 수익화 속도 괴리 · ROI 의구심 시 주도주 급락 경고</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">밸류 진단</div><div class="kpi-v">주가·기대감 과열</div></div>
+        <div class="kpi"><div class="kpi-l">핵심 괴리</div><div class="kpi-v">CapEx vs 실제 매출</div></div>
+        <div class="kpi"><div class="kpi-l">하방 리스크</div><div class="kpi-v">고평가 주도주 조정</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>인공지능(AI) 관련 종목들의 주가 상승과 시장의 기대감이 지나치게 앞서 나가며 과열 양상을 보이고 있다.</li>
+          <li>하이퍼스케일러들의 천문학적 설비투자에 비해 실제 기업 현장의 AI 기반 매출과 생산성 향상 속도는 기대에 미치지 못하고 있다.</li>
+          <li>투자 수익률(ROI)에 대한 의구심이 커질 경우 고평가된 AI 주도주들을 중심으로 가파른 주가 조정이 나타날 위험이 있다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Goldman Sachs (골드만삭스) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n33">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n32">‹ 이전</a><a class="p-btn" href="#n34">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">금융 분석, 전략 및 전망</span>
+        <span class="ch ch-risk">리스크 −1.3</span>
+        <span class="ch ch-def">연준 새 인상 사이클·신용 경색</span>
+      </div>
+      <div class="p-en">RESEARCH · BANK OF AMERICA</div>
+      <h2 class="p-h2">연준의 새로운 금리 인상 사이클이 시장의 고약한 변수 — 재정 압박·유동성 경색 경고</h2>
+      <p class="p-sub">막대한 정부 부채·이자 비용 속 추가 인상 위험 · 국채 금리 상승에 따른 신용 스프레드 확대 우려</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">통화 기조</div><div class="kpi-v">새 금리 인상 사이클</div></div>
+        <div class="kpi"><div class="kpi-l">재정 취약점</div><div class="kpi-v">정부 부채·이자 비용</div></div>
+        <div class="kpi"><div class="kpi-l">시장 파급</div><div class="kpi-v">스프레드 확대·경색</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>끈적한 인플레이션으로 연준이 예상보다 더 높고 긴 긴축을 유지하면서 새로운 금리 인상 사이클이 시장에 고약한 변수가 될 것이다.</li>
+          <li>막대한 정부 부채와 높은 이자 비용 속에서 추가 금리 인상이 단행되면 재정 압박과 금융시장 변동성이 동시에 증폭될 위험이 크다.</li>
+          <li>국채 금리 상승이 신용 스프레드 확대와 유동성 경색을 유발해 위험자산 전반에 심각한 하방 압력을 가할 수 있다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Bank of America (뱅크오브아메리카) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n34">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n33">‹ 이전</a><a class="p-btn" href="#n35">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">금융 분석, 전략 및 전망</span>
+        <span class="ch ch-risk">리스크 −0.6</span>
+        <span class="ch ch-def">엔비디아 재무적 약정 리스크</span>
+      </div>
+      <div class="p-en">RESEARCH · RAYMOND JAMES</div>
+      <h2 class="p-h2">엔비디아의 급증하는 장기 구매·재무적 약정 규모, 수요 둔화 시 마진 압박 리스크</h2>
+      <p class="p-sub">공급망 확보 위한 막대한 장기 약정 누적 · 매출 고성장 이면의 재무적 의무 구조 주시 필요</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">대상 기업</div><div class="kpi-v">엔비디아 (Nvidia)</div></div>
+        <div class="kpi"><div class="kpi-l">리스크 요인</div><div class="kpi-v">장기 구매·재무 약정</div></div>
+        <div class="kpi"><div class="kpi-l">시나리오</div><div class="kpi-v">수요 둔화 시 재고 부담</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>엔비디아의 급증하는 재무적 약정 규모가 회사의 잠재적 리스크 요인으로 작용하고 있다.</li>
+          <li>공급망 확보와 차세대 칩 생산을 위한 막대한 장기 구매 약정은 향후 AI 수요 둔화 시 재고 부담과 마진 압박으로 이어질 수 있다.</li>
+          <li>폭발적인 매출 성장세 이면에 누적되고 있는 재무적 의무의 규모와 구조를 면밀히 주시할 필요가 있다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Raymond James (레이몬드 제임스) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n35">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n34">‹ 이전</a><a class="p-btn" href="#n36">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">금융 분석, 전략 및 전망</span>
+        <span class="ch ch-risk">리스크 −0.9</span>
+        <span class="ch ch-def">AI 붐 3대 경제 부작용</span>
+      </div>
+      <div class="p-en">ECONOMICS · MOODY'S ANALYTICS</div>
+      <h2 class="p-h2">전력망 병목·자본 쏠림·고용 불확실성 등 AI 붐 3대 부작용이 단기 성장 제약</h2>
+      <p class="p-sub">데이터센터 전력 급증으로 가계·타 산업 에너지 부담 · 전통 제조업 투자 위축 및 구인난 심화</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">부작용 1</div><div class="kpi-v">전력망 병목·비용 상승</div></div>
+        <div class="kpi"><div class="kpi-l">부작용 2</div><div class="kpi-v">전통 제조 자본·인재 난</div></div>
+        <div class="kpi"><div class="kpi-l">부작용 3</div><div class="kpi-v">고용 불확실·소비 위축</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>데이터센터의 막대한 전력 수요 급증이 전력망 병목과 에너지 비용 상승을 유발해 타 산업과 가계에 부담을 주고 있다.</li>
+          <li>빅테크로의 극단적인 자본·인재 쏠림이 전통 제조업과 중소기업의 투자 위축 및 구인난을 심화시키고 있다.</li>
+          <li>AI 도입에 따른 고용 재편과 불확실성이 소비 심리를 위축시키는 등 AI 붐의 세 가지 부작용이 단기 경제 성장을 제약하고 있다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Mark Zandi (무디스 애널리틱스 수석 이코노미스트) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n36">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n35">‹ 이전</a><a class="p-btn" href="#n37">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">금융 분석, 전략 및 전망</span>
+        <span class="ch ch-opp">기회 +0.8</span>
+        <span class="ch ch-def">사모 하이브리드 자본 폭발 성장</span>
+      </div>
+      <div class="p-en">PRIVATE MARKETS · APOLLO CEO</div>
+      <h2 class="p-h2">사모 시장 최고 투자 기회는 선순위 대출·지분 중간 성격의 하이브리드 자본</h2>
+      <p class="p-sub">하방 방어와 주식 수준 수익률 동시 추구 · 고금리 환경 속 지분 희석 최소화 기업 수요 급증</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">최선호 자산</div><div class="kpi-v">하이브리드 자본</div></div>
+        <div class="kpi"><div class="kpi-l">수익 구조</div><div class="kpi-v">하방방어 + 주식수익</div></div>
+        <div class="kpi"><div class="kpi-l">시장 동인</div><div class="kpi-v">고금리·희석 최소화</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>현재 사모 시장에서 가장 매력적인 투자 기회는 선순위 대출과 지분 투자의 중간 성격을 띤 하이브리드 자본 분야다.</li>
+          <li>하이브리드 자본은 하방 위험을 방어하면서도 주식 수준의 높은 수익률을 추구할 수 있는 유연한 자금 조달 수단이다.</li>
+          <li>고금리 환경에서 지분 희석을 최소화하며 부채 차환이나 성장 자금을 조달하려는 기업 수요가 급증해 시장이 폭발적으로 성장 중이다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Marc Rowan (아폴로 글로벌 매니지먼트 최고경영자) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n37">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n36">‹ 이전</a><a class="p-btn" href="#n38">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">금융 분석, 전략 및 전망</span>
+        <span class="ch ch-risk">리스크 −0.4</span>
+        <span class="ch ch-def">엔비디아 이사회 비판·MS 강세</span>
+      </div>
+      <div class="p-en">HEDGE FUND · PERSHING SQUARE CEO</div>
+      <h2 class="p-h2">엔비디아 이사회의 젠슨 황 복귀 거부는 주주 이익 반해 — 마이크로소프트 저평가 강세</h2>
+      <p class="p-sub">회사·고객 영향 고려 없이 젠슨 황 사임 강요 비판 · 마이크로소프트 주가 저평가 매수 관점 유지</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">엔비디아 입장</div><div class="kpi-v">이사회 결정 비판</div></div>
+        <div class="kpi"><div class="kpi-l">MS 입장</div><div class="kpi-v">저평가 · 강세 유지</div></div>
+        <div class="kpi"><div class="kpi-l">쟁점</div><div class="kpi-v">주주 최선 이익 훼손</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>엔비디아 이사회가 젠슨 황의 CEO 복귀를 거부함으로써 주주의 최선의 이익에 반하는 행동을 하고 있다.</li>
+          <li>이사회는 정책 위반 또는 불륜 의혹에 대응해 회사와 고객에 미칠 영향을 신중히 고려하지 않은 채 젠슨 황을 해임하거나 사임을 강요했다.</li>
+          <li>마이크로소프트에 대해서는 주가가 저평가되어 있다고 판단하며 여전히 강세 입장을 유지한다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Bill Ackman (퍼싱스퀘어 CEO) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n38">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n37">‹ 이전</a><a class="p-btn" href="#n39">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">금융 분석, 전략 및 전망</span>
+        <span class="ch ch-risk">리스크 −0.8</span>
+        <span class="ch ch-def">구리 숏 포지션·주식 중립</span>
+      </div>
+      <div class="p-en">MACRO · DUQUESNE FAMILY OFFICE</div>
+      <h2 class="p-h2">글로벌 제조업 둔화·중국 수요 부진 속 구리 숏 포지션 — 주식은 중립 유지</h2>
+      <p class="p-sub">통화 긴축 시차 효과 및 높은 밸류 부담으로 주식 공격적 비중 확대 자제</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">원자재 포지션</div><div class="kpi-v">구리 하락 숏</div></div>
+        <div class="kpi"><div class="kpi-l">주식 스탠스</div><div class="kpi-v">중립 유지</div></div>
+        <div class="kpi"><div class="kpi-l">핵심 근거</div><div class="kpi-v">제조업 둔화·긴축 시차</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>현재 구리 가격 하락에 베팅하는 숏 포지션을 취하고 있으며 주식 시장에 대해서는 중립적인 입장을 유지한다.</li>
+          <li>글로벌 제조업 경기의 둔화 조짐과 중국의 수요 부진이 구리 가격에 하방 압력을 가하고 있다.</li>
+          <li>통화 긴축의 시차 효과와 높은 밸류에이션 부담을 고려할 때 주식 시장에서 공격적으로 비중을 확대할 시점은 아니다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Stanley Druckenmiller (듀케인 패밀리 오피스 회장) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n39">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n38">‹ 이전</a><a class="p-btn" href="#n40">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">금융 분석, 전략 및 전망</span>
+        <span class="ch ch-risk">리스크 −0.9</span>
+        <span class="ch ch-def">앤스로픽 IPO·밸류 거품 경고</span>
+      </div>
+      <div class="p-en">WEALTH · THE BAHNSEN GROUP CIO</div>
+      <h2 class="p-h2">앤스로픽 IPO 투자는 1997년 초기 인터넷 시대와 판박이 — 실질 현금창출력 따져야</h2>
+      <p class="p-sub">소수 승자만 생존하는 구조 · 미래 불확실성 미반영한 과도한 밸류에이션 거품 경계</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">역사적 비유</div><div class="kpi-v">1997년 아마존 상장</div></div>
+        <div class="kpi"><div class="kpi-l">밸류 평가</div><div class="kpi-v">과도한 거품 혼재</div></div>
+        <div class="kpi"><div class="kpi-l">투자 기준</div><div class="kpi-v">실질 현금 창출 능력</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>앤스로픽의 IPO 투자는 소수의 기업만이 생존해 승자가 되었던 1997년 아마존 상장 당시의 초기 인터넷 시대와 다를 바 없다.</li>
+          <li>현재 AI 투자 열풍에는 과도한 밸류에이션 거품이 혼재해 있으며 앤스로픽의 기업가치 역시 미래 불확실성을 반영하지 못한 수준이다.</li>
+          <li>투자자들은 단기 유행에 휩쓸리기보다 기업의 실질적인 현금 창출 능력과 장기적인 수익 모델을 냉정하게 따져봐야 한다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · David Bahnsen (더 바슨 그룹 최고투자책임자) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n40">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n39">‹ 이전</a><a class="p-btn" href="#n41">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">금융 분석, 전략 및 전망</span>
+        <span class="ch ch-risk">리스크 −1.6</span>
+        <span class="ch ch-def">부채 기반 AI 거품 붕괴·금융위기</span>
+      </div>
+      <div class="p-en">STRATEGY · EURO PACIFIC ASSET MANAGEMENT</div>
+      <h2 class="p-h2">차기 글로벌 금융위기 주범은 막대한 부채로 지탱된 AI 산업 거품 붕괴</h2>
+      <p class="p-sub">닷컴·2008년 위기 뛰어넘는 자본 오배분 · 인플레 재발과 금리 상승 시 AI·기술주 연쇄 도산 경고</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">위기 진원지</div><div class="kpi-v">부채 기반 AI 버블</div></div>
+        <div class="kpi"><div class="kpi-l">자본 오배분</div><div class="kpi-v">닷컴·2008년 상회</div></div>
+        <div class="kpi"><div class="kpi-l">뇌관 트리거</div><div class="kpi-v">인플레 재발·금리 상승</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>차기 글로벌 금융위기의 주범은 비트코인이 아니라 막대한 부채로 지탱되고 있는 인공지능(AI) 산업의 거품 붕괴가 될 것이다.</li>
+          <li>수익 모델이 미검증된 AI 기업에 수천억 달러가 유입된 것은 닷컴 버블이나 2008년 금융위기 때보다 더 큰 자본 오배분이다.</li>
+          <li>인플레이션 재발로 금리가 상승하면 부채에 의존해 연명하던 AI 및 기술 기업들이 연쇄 도산하며 금융 시스템 위기를 초래할 것이다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Peter Schiff (유로 퍼시픽 자산운용 수석 글로벌 전략가) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n41">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n40">‹ 이전</a><a class="p-btn" href="#n42">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">금융 분석, 전략 및 전망</span>
+        <span class="ch ch-risk">리스크 −1.3</span>
+        <span class="ch ch-def">수직 지주회사 해체·네오클라우드 퇴출</span>
+      </div>
+      <div class="p-en">EQUITY · NEUBERGER BERMAN</div>
+      <h2 class="p-h2">젠슨 황의 가상 수직 지주회사 해체 중 — 네오클라우드 생태계 퇴출 위기</h2>
+      <p class="p-sub">엔비디아 생태계 결속 구조 균열 · 파장 규모 가늠 불가 속 네오클라우드 직격탄 전망</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">구조 변화</div><div class="kpi-v">가상 수직 지주 해체</div></div>
+        <div class="kpi"><div class="kpi-l">최대 피해주</div><div class="kpi-v">네오클라우드 기업</div></div>
+        <div class="kpi"><div class="kpi-l">파장 전망</div><div class="kpi-v">현시점 가늠 불가</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>젠슨 황이 구축했던 이른바 가상 수직 지주회사가 현재 해체되고 있으며, 그 파장은 현시점에서 누구도 알 수 없다.</li>
+          <li>네오클라우드 기업들은 모두 그 수직 지주회사의 일부였기 때문에 큰 곤경에 처해 있으며, 곧 그 생태계에서 퇴출당할 것이다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Steve Eisman (뉴버거 버먼 수석 포트폴리오 매니저) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n42">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n41">‹ 이전</a><a class="p-btn" href="#n43">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">금융 분석, 전략 및 전망</span>
+        <span class="ch ch-risk">리스크 −1.4</span>
+        <span class="ch ch-def">소비 양극화·엔비디아 회계·은행 노출</span>
+      </div>
+      <div class="p-en">FINANCIALS · WHITNEY ADVISORY GROUP CEO</div>
+      <h2 class="p-h2">하위 50% 대출 배제와 상위층 압박 확산 — 엔비디아 자기거래·SPV 회계 의문</h2>
+      <p class="p-sub">식료품 지출 증가율 1% 미만 · 홈디포 부진 · 금융기관의 데이터센터 직접 투자·차입자 노출 취약성</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">대출 배제 가구</div><div class="kpi-v">전체 가구 50%</div></div>
+        <div class="kpi"><div class="kpi-l">식료품 지출 증가</div><div class="kpi-v">연중 1% 미만</div></div>
+        <div class="kpi"><div class="kpi-l">회계 쟁점</div><div class="kpi-v">자기거래 · SPV 구조</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>모든 은행이 우량 차주에게만 대출하면서 전체 가구의 50%가 대출에서 배제되어 상위 20%와 하위 50% 간 거대한 격차가 발생했다.</li>
+          <li>높은 임대료와 주담대 비용, 식료품 가격 급등으로 하위 계층 소비자들이 식료품 지출과 주유 사이에서 양자택일을 강요받고 있다.</li>
+          <li>올해 내내 식료품 지출 증가율이 1% 미만에 머무는 등 제한된 소득 내에서 중대한 소비 위축이 나타나고 있다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>경제적 압박이 상위 계층으로도 번지고 있으며 홈디포의 실적 부진은 주택 개보수 투자와 신규 주택 거래가 위축되었음을 보여준다.</li>
+          <li>상위 20%는 휘발유 가격 상승을 흡수하고 있으나 전반적인 소비자들이 점점 더 어려운 선택을 내리고 있다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>엔비디아가 고객사에 자금을 대주어 자사 칩을 사게 하는 사실상의 자기거래로 실적을 만들어내 진정한 수익 창출력이 우려된다.</li>
+          <li>데이터센터 건설 지연 속에서 미사용 칩의 가치 하락 여부와 특수목적법인(SPV)의 임대료 상환 구조 작동 여부에 회계적 의문이 제기된다.</li>
+          <li>다만 베팅 세수를 뺏긴 주(State)들이 세수 확보를 위해 데이터센터를 원하고 있어 기존 시설의 가치 상승과 확장은 계속될 것이다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>최근 주가 하락에도 투자자들이 막대한 평가이익을 보유 중이어서 계좌 손실이 장기화되기 전까지는 위기를 심각하게 받아들이지 않을 것이다.</li>
+          <li>금융기관들은 데이터센터 직접 투자와 AI 상장 주관 수익, 최대 차입자 노출 등으로 인해 AI 생태계 위축 시 취약할 수밖에 없다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Meredith Whitney (메레디스 휘트니 어드바이저리 그룹 최고경영자) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n43">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n42">‹ 이전</a><a class="p-btn" href="#n44">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">금융 분석, 전략 및 전망</span>
+        <span class="ch ch-risk">리스크 −1.2</span>
+        <span class="ch ch-def">정제유 구조적 공급난·유가 120$</span>
+      </div>
+      <div class="p-en">COMMODITIES · CIBC PRIVATE WEALTH</div>
+      <h2 class="p-h2">정제유 구조적 공급난 지속 — 호르무즈 미복귀 시 유가 120달러·경유 200달러 위협</h2>
+      <p class="p-sub">중동 피격 정유시설 미가동·러 경유 제약 · 2027년 공급 과잉 전망은 서류상 잉여에 불과</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">유가 상방 시나리오</div><div class="kpi-v">배럴당 120달러</div></div>
+        <div class="kpi"><div class="kpi-l">경유 상방 시나리오</div><div class="kpi-v">200달러 급등</div></div>
+        <div class="kpi"><div class="kpi-l">시장 병목</div><div class="kpi-v">정제유 공급 수단 부재</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>선박 환적과 군사 호위, 사우디 동서 송유관 덕분에 원유 물동량은 복귀했으나 피격된 중동 정유 시설 미가동으로 정제유는 부족한 상태다.</li>
+          <li>우크라이나 공격에 따른 러시아의 경유 공급 제약까지 겹치면서 공급 조절 수단이 제한적인 정제유 시장은 원유 시장과 다른 양상을 띤다.</li>
+          <li>소비자가 구매하는 휘발유와 경유 등 정제유 공급난은 비싼 비용을 들여 원유를 운송하더라도 해결되지 않는 구조적 문제다.</li>
+        </ul></div>
+        <div class="grp"><ul>
+          <li>골드만삭스와 IEA의 2027년 공급 과잉 전망은 호르무즈 해협 물동량이 2025년 수준을 초과한다는 가정에 기반한 서류상의 잉여일 뿐이다.</li>
+          <li>호르무즈 해협 물동량이 회복되지 않으면 유가는 배럴당 120달러, 경유 가격은 200달러까지 치솟을 수 있으며 실제로도 완만한 상승세가 예상된다.</li>
+          <li>이란과의 평화 협정이나 러시아와의 의미 있는 합의가 도출되지 않는 한 정제유 시장의 공급 확대 수단은 전혀 없는 상태다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · Rebecca Babin (CIBC 프라이빗 웰스 수석 에너지 트레이더 겸 전무이사) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="n44">
+  <a class="scrim" href="#close" aria-label="닫기"></a>
+  <div class="sheet">
+    <div class="p-nav">
+      <div class="p-btns"><a class="p-btn" href="#n43">‹ 이전</a><a class="p-btn" href="#n1">다음 ›</a></div>
+      <a class="p-btn" href="#close">✕ 닫기</a>
+    </div>
+    <div class="p-in">
+      <div class="chips">
+        <span class="ch ch-def">금융 분석, 전략 및 전망</span>
+        <span class="ch ch-chk">체크 +0.0</span>
+        <span class="ch ch-def">S&amp;P 8,200 vs 버블 붕괴 5,500</span>
+      </div>
+      <div class="p-en">RESEARCH · UBS</div>
+      <h2 class="p-h2">2027년 말 S&amp;P 500 기본 상단 8,200선 vs 'AI 버블 붕괴' 시 5,500선 양극 시나리오</h2>
+      <p class="p-sub">AI 주도 랠리 지속 시 8,200 도달 가능 · AI 버블 붕괴 현실화 시 33% 급락 위험 공존</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-l">상단 목표 (2027 말)</div><div class="kpi-v">8,200선</div></div>
+        <div class="kpi"><div class="kpi-l">AI 버블 붕괴 시</div><div class="kpi-v">5,500선</div></div>
+        <div class="kpi"><div class="kpi-l">시나리오 진폭</div><div class="kpi-v">2,700pt 격차</div></div>
+      </div>
+      <div class="p-b">
+        <div class="grp"><ul>
+          <li>2027년 말까지 S&amp;P 500 지수가 8,200선에 도달할 수 있다.</li>
+          <li>반면 'AI 버블 붕괴(AI Bust)' 시나리오가 현실화될 경우 S&amp;P 500 지수는 5,500선까지 하락할 수 있다.</li>
+        </ul></div>
+      </div>
+      <div class="p-src">SOURCE · UBS (UBS) · 2026.11.18</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && location.hash && location.hash.startsWith('#n')) {
+      location.hash = '#close';
+    }
+  });
+</script>
+</body>
+</html>
